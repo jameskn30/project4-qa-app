@@ -32,4 +32,8 @@ add vitest.config.mts
 3. Add react-icons  
 npx install react-icons
 
+4. Add user analytics
+
+5. Add SEO for each page
+
 
