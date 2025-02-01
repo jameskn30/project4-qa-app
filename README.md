@@ -29,6 +29,7 @@ npx create-next-app@latest
 npm install -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/dom vite-tsconfig-paths
 add vitest.config.mts
 
-3. 
+3. Add react-icons  
+npx install react-icons
 
 
