@@ -8,17 +8,13 @@
 
 # Starter commands
 
-
-
 # Tech stack
 https://fastapi.tiangolo.com/project-generation/
 
 # TODO
 
-1. Setup fastapi project
 2. Setup pytest basic
 3. Setup basic Docker
-4. Build simple websocket app
 5. Connect next.js to websocket, next.js act as proxy between client and FastAPI
 6. Redis PubSub
 7. Start with basic endpoints
@@ -29,6 +25,7 @@ https://fastapi.tiangolo.com/project-generation/
 12. Improve the routing organization
 
 # DONE
-
+1. Setup fastapi project [OK]
+4. Build simple websocket app [OK]
 
 
