@@ -19,21 +19,13 @@ LLM agent: haystack
 Docker
 Groq API
 Firebase : user auth, db 
+Redis PubSub
 
-## Frontend setup
+## 3. TOODs for backend, frontend is in README.md in those folders
 
-1. Start next.js 
-npx create-next-app@latest
+## 4. Load test the system to make sure it works as intended
 
-2. add vitest framework (https://nextjs.org/docs/app/building-your-application/testing/vitest)
-npm install -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/dom vite-tsconfig-paths
-add vitest.config.mts
 
-3. Add react-icons  
-npx install react-icons
 
-4. Add user analytics
-
-5. Add SEO for each page
 
 
