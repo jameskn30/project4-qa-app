@@ -6,6 +6,13 @@
 - Redis Pub/Sub to distribute messages across multiple FastAPI instance on the cloud
 - 
 
+# Starter commands
+
+
+
+# Tech stack
+https://fastapi.tiangolo.com/project-generation/
+
 # TODO
 
 1. Setup fastapi project
@@ -18,11 +25,9 @@
 8. Test the performance
 9. Push to Koyeb, find out the way to deploy and scale multiple instances if usage increases 
 10. Find out how to test if multiple FastAPI instances work properly in group chat settings
-11. Build LLM microservices
-12. 
+11. Setup sentry for logging, monitor, performance reports
+
+# DONE
 
 
 
-
-# Tech stack
-https://fastapi.tiangolo.com/project-generation/
