@@ -1,6 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import logging
-from pprint import pprint
 from typing import List, Dict
 from dataclasses import dataclass, field
 from uuid import uuid4
@@ -29,8 +28,8 @@ def gen_random_username(length: int = 8) -> str:
 class UserConnection:
     user_id: str
     username: str
-    user_host: str
-    websocket: WebSocket
+    user_host: str = ""
+    websocket: WebSocket = None
 
 class WebSocketManager:
     def __init__(self):
@@ -39,6 +38,7 @@ class WebSocketManager:
         self.user_id_to_room: Dict[str, str] = {}
     
     async def join_room(self, room_id: str, websocket: WebSocket, user_id: str = None, username: str = None):
+        logger.info(f"Attempting to join room {room_id} with user_id {user_id} and username {username}")
         await websocket.accept()
 
         user_conn = UserConnection(
@@ -61,6 +61,7 @@ class WebSocketManager:
         return user_id
     
     async def leave_room(self, room_id: str, user_id: str):
+        logger.info(f"Attempting to leave room {room_id} with user_id {user_id}")
         if user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
             await user_conn.websocket.close()
@@ -69,30 +70,34 @@ class WebSocketManager:
             del self.user_id_to_room[user_id]
             logger.info(f'User {user_id} left room {room_id}')
         else:
+            logger.error(f'User {user_id} not found in room {room_id}')
             raise AssertionError(f'User {user_id} not found in room {room_id}')
     
     async def send_group_message(self, user_id: str, message: str):
+        logger.info(f"Sending group message from user_id {user_id}: {message}")
         room_id = self.user_id_to_room[user_id]
         username = self.user_id_to_conn[user_id].username
         await self._broadcast(room_id, message, username)
 
     async def notify_new_member(self, user_id: str, room_id: str):
+        logger.info(f"Notifying new member {user_id} in room {room_id}")
         username = self.user_id_to_conn[user_id].username
         await self._broadcast(room_id, f'{username} just joined', '<greet_system>')
 
     async def _broadcast(self, room_id: str, message: str, username: str):
+        logger.info(f"Broadcasting message in room {room_id} from {username}: {message}")
         for user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
             await user_conn.websocket.send_json({'message': message, 'username': username})
     
     def get_user_conn(self, user_id):
         return self.user_id_to_conn.get(user_id)
-    
 
 websocket_manager = WebSocketManager()
 
 @router.get("/list_members/{room_id}")
 def list_members(room_id: str):
+    logger.info(f"Listing members in room {room_id}")
     if room_id in websocket_manager.active_room:
         return [websocket_manager.user_id_to_conn[user_id].username for user_id in websocket_manager.active_room[room_id]]
     return []
@@ -125,3 +130,10 @@ async def join_room(websocket: WebSocket, room_id: str):
         if user_id:
             await websocket_manager.leave_room(room_id, user_id)
         logger.error(f"WebSocket connection closed for room {room_id}")
+
+# Suggestions:
+# 1. Ensure `websocket.client.host` is unique for each user. If multiple users share the same host, it could cause issues.
+# 2. Consider adding error handling for cases where `websocket.client.host` is not found in `user_id_to_room`.
+# 3. Optimize the `leave_room` method to handle cases where the room is empty after a user leaves.
+# 4. Add more logging for debugging purposes, especially in error cases.
+# 5. Ensure that `user_id_to_conn` and `user_id_to_room` are properly cleaned up to avoid memory leaks.
