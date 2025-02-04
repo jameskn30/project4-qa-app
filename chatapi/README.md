@@ -26,6 +26,7 @@ https://fastapi.tiangolo.com/project-generation/
 9. Push to Koyeb, find out the way to deploy and scale multiple instances if usage increases 
 10. Find out how to test if multiple FastAPI instances work properly in group chat settings
 11. Setup sentry for logging, monitor, performance reports
+12. Improve the routing organization
 
 # DONE
 
