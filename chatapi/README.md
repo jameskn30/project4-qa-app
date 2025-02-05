@@ -13,21 +13,21 @@ https://fastapi.tiangolo.com/project-generation/
 
 # TODO
 
-- Redis PubSub
-- Add a buffer to messages. will need to handle this when there are 10k people sending messages to the server that same time -> every new message, system scans all users in room, send message to each websocket,Having a buffer, collect messages and will send many messages to each user for every scan, 
+- next.js act as proxy between client and FastAPI (do integration between 2 systems)
 - Test the performance, how system handles communication between different instances with PubSub
 - Push to Koyeb, find out the way to deploy and scale multiple instances if usage increases 
 - Setup sentry for logging, monitor, performance reports
-- next.js act as proxy between client and FastAPI (do integration between 2 systems)
 - Setup pytest basic, unittest, integration test, loads test
-- Setup basic Docker
+- Add a buffer to messages. will need to handle this when there are 10k people sending messages to the server that same time -> every new message, system scans all users in room, send message to each websocket,Having a buffer, collect messages and will send many messages to each user for every scan, 
 
 
 # DONE
-1. Setup fastapi project [OK]
-4. Build simple websocket app [OK]
-5. add websocket to FastAPI [OK]
-7. added  basic endpoints [OK]
+- Setup fastapi project [OK]
+- Build simple websocket app [OK]
+- add websocket to FastAPI [OK]
+- added  basic endpoints [OK]
+- Redis PubSub [OK]
+- Setup basic Docker, compose redis and docker image for chatpi [OK]
 
 # TESTS IDEAS:
 
