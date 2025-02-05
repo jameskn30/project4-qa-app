@@ -29,4 +29,3 @@ volumes:
 
 networks:
   chatapi-network:
-    driver: bridge

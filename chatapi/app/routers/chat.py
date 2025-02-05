@@ -13,12 +13,10 @@ logger = logging.getLogger("chat")
 
 router = APIRouter()
 
-REDIS_URL = os.getenv("REDIS_URL", "localhost")
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
-print('url = ', REDIS_URL)
-print('port = ', REDIS_PORT)
 
-redis_client = Redis.from_url(f"redis://{REDIS_URL}:{REDIS_PORT}")
+redis_client = Redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
 #==== 
 

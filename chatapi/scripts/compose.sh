@@ -20,14 +20,15 @@ fi
 # Function to remove all Docker containers
 
 # Check if --down is present in the argument list
+if [[ " $@ " =~ " --purge " ]]; then
+    echo "Shutting down all services and removing images and volumes..."
+    sudo docker compose down --rmi all --volumes
+else
+    echo "Shutting down all services"
+    sudo docker compose down
+fi
+
 if [[ " $@ " =~ " --down " ]]; then
-    if [[ " $@ " =~ " --purge " ]]; then
-        echo "Shutting down all services and removing images and volumes..."
-        sudo docker-compose down --rmi all --volumes
-    else
-        echo "Shutting down all services"
-        sudo docker-compose down --rmi all --volumes
-    fi
     exit 0
 fi
 
@@ -40,7 +41,7 @@ fi
 # Check if --detach is present in the argument list
 if [[ " $@ " =~ " --detach " ]]; then
     echo "Running Docker containers in detached mode..."
-    sudo docker-compose up -d
+    sudo docker compose up -d
 else
-    sudo docker-compose up
+    sudo docker compose up
 fi
