@@ -6,6 +6,7 @@ display_help() {
     echo "Options: argument order is corresponded to the order of execution"
     echo "  --purge     Remove all Docker containers before building and running"
     echo "  --down      Shutdown all services related to this and remove images and volumes"
+    echo "  --no-cache  Build with no cache" 
     echo "  --detach    Run Docker containers in detached mode"
     echo "  --help      Display help message"
 }
@@ -30,7 +31,11 @@ if [[ " $@ " =~ " --down " ]]; then
     exit 0
 fi
 
-sudo docker compose build 
+if [[ " $@ " =~ " --no-cache " ]]; then
+    sudo docker compose build --no-cache
+else
+    sudo docker compose build
+fi
 
 # Check if --detach is present in the argument list
 if [[ " $@ " =~ " --detach " ]]; then

@@ -14,9 +14,7 @@ export default function handler(
     // they'll have the  Websocket URL forever, think up a solution to this
     // currently, the next.js app not really a http-proxy, the client
     // still connects directly to the fastapi backend anyway
-
-
-    const chatApiEndpoint = process.env.CHATAPI_ENDPOINT || 'Not set';
+    const chatApiEndpoint = process.env.CHATAPI_ENDPOINT || null;
     const roomId = req.query.roomId;
     res.status(200).json({ websocketUrl: `${chatApiEndpoint}/join/${roomId}` });
   } else {

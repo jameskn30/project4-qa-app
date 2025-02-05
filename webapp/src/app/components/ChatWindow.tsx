@@ -1,7 +1,7 @@
 const Message = ({ username, content, flag }: { username: string; content: string; flag: string }) => {
   return (
     <div className="mb-1 p-1 text-sm flex items-center hover:bg-slate-200 hover:cursor-pointer">
-      <div className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center mr-2">
+      <div className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center mr-2 shadow-md">
         {username.charAt(0).toUpperCase()}
       </div>
       <div className="flex-1">

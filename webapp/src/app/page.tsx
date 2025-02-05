@@ -6,9 +6,9 @@ import Navbar from '@/app/components/Navbar';
 import React, { useEffect, useCallback, useRef } from 'react';
 
 export default function Home() {
+  const roomId = '1'; // test room id = 1
 
   const connectWebSocket = useCallback(async () => {
-    const roomId = '1'; // test room id = 1
     const response = await fetch(`/api/chat?roomId=${roomId}`);
     const data = await response.json();
     console.log(data)
@@ -30,14 +30,25 @@ export default function Home() {
       console.error('WebSocket error:', error);
     };
 
-
     return () => {
       ws.close();
     };
   }, []);
 
+  const getRoomMembers = useCallback(async () => {
+
+    const response = await fetch(`/api/list_members?roomtId=${roomId}`)
+
+    const data = await response.json()
+    console.log('list of members ')
+    console.log(data.message)
+  }, [])
+
   useEffect(() => {
     const cleanup = connectWebSocket();
+
+    getRoomMembers()
+
     return () => {
       cleanup.then((close) => close && close());
     };

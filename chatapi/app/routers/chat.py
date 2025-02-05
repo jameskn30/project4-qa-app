@@ -13,8 +13,10 @@ logger = logging.getLogger("chat")
 
 router = APIRouter()
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost")
+REDIS_URL = os.getenv("REDIS_URL", "localhost")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+print('url = ', REDIS_URL)
+print('port = ', REDIS_PORT)
 
 redis_client = Redis.from_url(f"redis://{REDIS_URL}:{REDIS_PORT}")
 
@@ -74,11 +76,15 @@ class WebSocketManager:
         logger.info(f"Attempting to leave room {room_id} with user_id {user_id}")
         if user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
-            await user_conn.websocket.close()
+            username = user_conn.username
+            # if not user_conn.websocket.client_state.closed:
+            #     await user_conn.websocket.close()
             self.active_room[room_id].remove(user_id)
             del self.user_id_to_conn[user_id]
             del self.user_id_to_room[user_id]
             logger.info(f'User {user_id} left room {room_id}')
+            await self._broadcast_redis_system(room_id, 'User {username} left the room')
+            
         else:
             logger.error(f'User {user_id} not found in room {room_id}')
             raise AssertionError(f'User {user_id} not found in room {room_id}')
@@ -94,11 +100,16 @@ class WebSocketManager:
         logger.info(f"Notifying new member {user_id} in room {room_id}")
         username = self.user_id_to_conn[user_id].username
         # await self._broadcast(room_id, f'{username} just joined', '<greet_system>')
-        await self._broadcast_redis(room_id, f'{username} just joined', '<greet_system>')
+        await self._broadcast_redis_system(room_id, f'{username} just joined')
 
     async def _broadcast_redis(self, room_id: str, message: str, username: str):
         data = {'message': message, 'username': username}
         logger.info(f"Broadcasting message with redis pubsub in room {room_id} from {username}: {message}")
+        await redis_client.publish(f"chat:{room_id}", json.dumps(data))
+
+    async def _broadcast_redis_system(self, room_id: str, message: str):
+        data = {'message': message, 'username': 'system'}
+        logger.info(f"Broadcast room {room_id} from system: {message}")
         await redis_client.publish(f"chat:{room_id}", json.dumps(data))
 
     async def _broadcast(self, room_id: str, message: str, username: str):
@@ -119,20 +130,10 @@ def list_members(room_id: str):
         return [websocket_manager.user_id_to_conn[user_id].username for user_id in websocket_manager.active_room[room_id]]
     return []
 
-@router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    logger.info("WebSocket connection established")
-    try:
-        while True:
-            data = await websocket.receive_text()
-            logger.info(f"Message received: {data}")
-            await websocket.send_text(f"Message text was: {data}")
-    except WebSocketDisconnect:
-        logger.info("WebSocket connection closed")
-
 @router.websocket("/join/{room_id}")
 async def join_room(websocket: WebSocket, room_id: str):
+    user_id = None
+
     try:
         user_id = await websocket_manager.join_room(room_id, websocket)
 
@@ -142,11 +143,13 @@ async def join_room(websocket: WebSocket, room_id: str):
             message = await websocket.receive_text()
             await websocket_manager.send_group_message(user_id, message)
 
-    except WebSocketDisconnect:
-        user_id = websocket_manager.user_id_to_room.get(websocket.client.host)
+    except WebSocketDisconnect as e:
+        logger.error(f"WebSocket of user_id {user_id} connection closed for room {room_id}")
+    finally:
+        # user_id = websocket_manager.user_id_to_room.get(websocket.client.host)
+        print('user id = ', user_id)
         if user_id:
             await websocket_manager.leave_room(room_id, user_id)
-        logger.error(f"WebSocket connection closed for room {room_id}")
 
 # Used by main.py on app.startup_event
 async def redis_listener():
