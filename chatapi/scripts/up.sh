@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Function to display help message
+display_help() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  --purge     Remove all Docker containers before building and runnning"
+    echo "  --detach    Run Docker containers in detached mode"
+    echo "  --help      Display help message"
+}
+
+# Check if --help is present in the argument list
+if [[ " $@ " =~ " --help " ]]; then
+    display_help
+    exit 0
+fi
+
 # Function to remove all Docker containers
 remove_all_containers() {
     all=$(sudo docker ps -a -q)
