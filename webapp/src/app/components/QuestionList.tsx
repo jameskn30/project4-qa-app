@@ -29,7 +29,8 @@ const QuestionList = () => {
     const questions = Array.from({ length: 10 }, () => generateRandomQuestion());
 
     return (
-        <div className="p-4 overflow-y-auto h-full">
+        <div className="p-4 overflow-y-auto h-full flex flex-col gap-2">
+            <p className="text-lg text-center font-bold">Questions</p>
             {questions.map((question, index) => (
                 <Question key={index} order={index + 1} text={question} />
             ))}

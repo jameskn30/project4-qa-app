@@ -10,7 +10,7 @@ export default function Home() {
         <div className="flex-1 overflow-y-auto">
           <QuestionList />
         </div>
-        <div className="flex-1 ">
+        <div className="flex-1 border-s-2">
           <ChatWindow />
         </div>
       </div>
