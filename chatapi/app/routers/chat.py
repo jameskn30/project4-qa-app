@@ -7,12 +7,16 @@ import random
 import string
 from redis.asyncio import Redis
 import json
+import os
 
 logger = logging.getLogger("chat")
 
 router = APIRouter()
 
-redis_client = Redis.from_url("redis://localhost:6379")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost")
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+
+redis_client = Redis.from_url(f"redis://{REDIS_URL}:{REDIS_PORT}")
 
 #==== 
 

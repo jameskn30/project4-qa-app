@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  project4-chatapi:
+    build: .
+    container_name: project4-chatapi
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - logs:/app/logs
+    networks:
+      - chatapi-network
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - chatapi-network
+
+volumes:
+  logs:
+
+networks:
+  chatapi-network:
+    driver: bridge
