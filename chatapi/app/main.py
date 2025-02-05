@@ -5,6 +5,7 @@ from logging.handlers import TimedRotatingFileHandler
 import os
 from datetime import datetime
 from routers import chat
+import asyncio
 
 
 # Create logs directory if it doesn't exist
@@ -51,6 +52,11 @@ app.include_router(chat.router)
 #TODO:
 # add sentry for monitoring
 
+@app.on_event("startup")
+def startup_event():
+    logger.info("Startup events:")
+    asyncio.create_task(chat.redis_listener())
+    logger.info("redis_listener task started")
 
 if __name__ == "__main__":
     import uvicorn

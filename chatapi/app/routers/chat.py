@@ -5,10 +5,16 @@ from dataclasses import dataclass, field
 from uuid import uuid4
 import random
 import string
+from redis.asyncio import Redis
+import json
 
 logger = logging.getLogger("chat")
 
 router = APIRouter()
+
+redis_client = Redis.from_url("redis://localhost:6379")
+
+#==== 
 
 # utils
 def gen_random_user_id():
@@ -77,12 +83,19 @@ class WebSocketManager:
         logger.info(f"Sending group message from user_id {user_id}: {message}")
         room_id = self.user_id_to_room[user_id]
         username = self.user_id_to_conn[user_id].username
-        await self._broadcast(room_id, message, username)
+        # await self._broadcast(room_id, message, username)
+        await self._broadcast_redis(room_id, message, username)
 
     async def notify_new_member(self, user_id: str, room_id: str):
         logger.info(f"Notifying new member {user_id} in room {room_id}")
         username = self.user_id_to_conn[user_id].username
-        await self._broadcast(room_id, f'{username} just joined', '<greet_system>')
+        # await self._broadcast(room_id, f'{username} just joined', '<greet_system>')
+        await self._broadcast_redis(room_id, f'{username} just joined', '<greet_system>')
+
+    async def _broadcast_redis(self, room_id: str, message: str, username: str):
+        data = {'message': message, 'username': username}
+        logger.info(f"Broadcasting message with redis pubsub in room {room_id} from {username}: {message}")
+        await redis_client.publish(f"chat:{room_id}", json.dumps(data))
 
     async def _broadcast(self, room_id: str, message: str, username: str):
         logger.info(f"Broadcasting message in room {room_id} from {username}: {message}")
@@ -130,6 +143,27 @@ async def join_room(websocket: WebSocket, room_id: str):
         if user_id:
             await websocket_manager.leave_room(room_id, user_id)
         logger.error(f"WebSocket connection closed for room {room_id}")
+
+# Used by main.py on app.startup_event
+async def redis_listener():
+    pubsub = redis_client.pubsub()
+    logger.info("pubsub subscribe to all channels")
+    await pubsub.psubscribe("chat:*")
+
+    async for message in pubsub.listen():
+        # if pubsub is pattern subscribed, message type is pmessage
+        # else type = message
+
+        if message['type'] == 'message':
+            pass
+        elif message['type'] == 'pmessage':
+            channel, room_id = message['channel'].decode('utf-8').split(":")
+            if room_id in websocket_manager.active_room:
+                data = json.loads(message['data'])
+                username, message = data['username'], data['message']
+                logger.info(f"Received from {username} in channel {channel} message = {message}")
+                print(websocket_manager)
+                await websocket_manager._broadcast(room_id, message, username)
 
 # Suggestions:
 # 1. Ensure `websocket.client.host` is unique for each user. If multiple users share the same host, it could cause issues.
