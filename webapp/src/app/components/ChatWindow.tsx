@@ -3,25 +3,35 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import MessageInput from '@/app/components/MessageInput'
 import { Toaster, toast } from 'sonner';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 const MessageListItem = ({ username, content, flag }: { username: string; content: string; flag: string }) => {
-
   if (username === 'system')
     return (
-      <div className="mb-1 p-1 text-sm flex items-center justify-center hover:bg-slate-200 hover:cursor-pointer">
+      <div className="relative mb-1 px-2 text-sm flex items-center justify-center">
         <p className="text-gray-700 text-sm">{content}</p>
       </div>
     )
 
   return (
-    <div className="mb-1 p-1 text-sm flex items-center hover:bg-slate-200 hover:cursor-pointer">
-      <div className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center mr-2 shadow-md">
-        {username.charAt(0).toUpperCase()}
-      </div>
-      <div className="flex-1">
-        <strong className="text-purple-700">{username}</strong> <span className="ml-1">{flag}</span> <span className="text-gray-700">{content}</span>
-      </div>
-    </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <div className="relative mb-1 px-2 text-sm flex items-center hover:bg-slate-200 hover:cursor-pointer">
+          <div className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center mr-2 shadow-md">
+            {username.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1">
+            <strong className="text-purple-700">{username}</strong> <span className="ml-1">{flag}</span> <span className="text-gray-700">{content}</span>
+          </div>
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="p-2 w-auto">
+        <button className="rounded-md p-1 hover:bg-gray-200">👍</button>
+        <button className="rounded-md p-1 hover:bg-gray-200">❤️</button>
+        <button className="rounded-md p-1 hover:bg-gray-200">👏</button>
+        <button className="rounded-md p-1 hover:bg-gray-200">😂</button>
+      </PopoverContent>
+    </Popover>
   );
 };
 
