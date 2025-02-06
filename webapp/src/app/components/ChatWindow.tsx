@@ -4,7 +4,15 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import MessageInput from '@/app/components/MessageInput'
 // import { genRandomMessages } from '@/app/utils/mock'
 
-const Message = ({ username, content, flag }: { username: string; content: string; flag: string }) => {
+const MessageListItem = ({ username, content, flag }: { username: string; content: string; flag: string }) => {
+
+  if (username === 'system')
+    return (
+      <div className="mb-1 p-1 text-sm flex items-center justify-center hover:bg-slate-200 hover:cursor-pointer">
+        <p className="text-gray-700 text-sm">{content}</p>
+      </div>
+    )
+
   return (
     <div className="mb-1 p-1 text-sm flex items-center hover:bg-slate-200 hover:cursor-pointer">
       <div className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center mr-2 shadow-md">
@@ -52,7 +60,7 @@ const ChatWindow = () => {
       const content = parsedData.message
       const username = parsedData.username
 
-      const message:Message = {username, content, flag: '🇺🇸'};
+      const message: Message = { username, content, flag: '🇺🇸' };
 
       setMessages((prevMessages) => [...prevMessages, message]);
     };
@@ -98,10 +106,10 @@ const ChatWindow = () => {
     <div className="flex-1 flex flex-col h-full overflow-y-auto bg-white">
       <div className="flex-1 overflow-y-auto flex flex-col">
         {messages.map((msg, index) => (
-          <Message key={index} username={msg.username} content={msg.content} flag={msg.flag} />
+          <MessageListItem key={index} username={msg.username} content={msg.content} flag={msg.flag} />
         ))}
       </div>
-      <MessageInput onSent={onSent}/>
+      <MessageInput onSent={onSent} />
       <div className="border-t border-gray-300"></div>
     </div>
   );
