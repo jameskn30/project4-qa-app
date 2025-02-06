@@ -10,12 +10,17 @@ const MessageInput = ({onSent} : MessageInputProps) => {
 
     const handleOnChangeMessage = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMessage(e.target.value)
-        console.log()
     }
 
-    const handleOnSend = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleOnSend = () => {
         onSent(message)
         setMessage('')
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleOnSend();
+        }
     }
 
     return (
@@ -24,6 +29,7 @@ const MessageInput = ({onSent} : MessageInputProps) => {
                 type="text"
                 value={message}
                 onChange={handleOnChangeMessage}
+                onKeyDown={handleKeyDown}
                 className="flex-1 p-2 border border-gray-300 rounded-l"
                 placeholder="Type your message..."
             />

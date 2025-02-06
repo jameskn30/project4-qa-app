@@ -81,7 +81,7 @@ class WebSocketManager:
             del self.user_id_to_conn[user_id]
             del self.user_id_to_room[user_id]
             logger.info(f'User {user_id} left room {room_id}')
-            await self._broadcast_redis_system(room_id, 'User {username} left the room')
+            await self._broadcast_redis_system(room_id, f'User {username} left the room')
             
         else:
             logger.error(f'User {user_id} not found in room {room_id}')

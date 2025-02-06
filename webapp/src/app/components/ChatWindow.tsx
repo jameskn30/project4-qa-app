@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import MessageInput from '@/app/components/MessageInput'
-// import { genRandomMessages } from '@/app/utils/mock'
+import { Toaster, toast } from 'sonner';
 
 const MessageListItem = ({ username, content, flag }: { username: string; content: string; flag: string }) => {
 
@@ -40,6 +40,16 @@ const ChatWindow = () => {
 
   const [messages, setMessages] = useState<Message[]>([]);
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const connectWebSocket = useCallback(async () => {
     const response = await fetch(`/api/chat?roomId=${roomId}`);
     const data = await response.json();
@@ -71,6 +81,7 @@ const ChatWindow = () => {
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      toast.error("WebSocket error: " + error, )
     };
 
     return () => {
@@ -78,18 +89,12 @@ const ChatWindow = () => {
     };
   }, [roomId]);
 
-  // const getRoomMembers = useCallback(async () => {
-
-  //   const response = await fetch(`/api/list_members?roomtId=${roomId}`)
-
-  //   const data = await response.json()
-  //   console.log('list of members ')
-  //   console.log(data.message)
-  // }, [])
 
   const onSent = (message: string) => {
     console.log('sending message')
-    wsRef.current?.send(message)
+    if (message !== ''){
+      wsRef.current?.send(message)
+    }
   }
 
   useEffect(() => {
@@ -102,12 +107,15 @@ const ChatWindow = () => {
     };
   }, [connectWebSocket]);
 
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto bg-white">
+      <Toaster expand={true} position='top-center' richColors/>
       <div className="flex-1 overflow-y-auto flex flex-col">
         {messages.map((msg, index) => (
           <MessageListItem key={index} username={msg.username} content={msg.content} flag={msg.flag} />
         ))}
+        <div ref={messagesEndRef} />
       </div>
       <MessageInput onSent={onSent} />
       <div className="border-t border-gray-300"></div>
