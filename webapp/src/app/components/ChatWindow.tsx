@@ -26,10 +26,8 @@ const MessageListItem = ({ username, content, flag }: { username: string; conten
         </div>
       </PopoverTrigger>
       <PopoverContent className="p-2 w-auto">
-        <button className="rounded-md p-1 hover:bg-gray-200">👍</button>
-        <button className="rounded-md p-1 hover:bg-gray-200">❤️</button>
-        <button className="rounded-md p-1 hover:bg-gray-200">👏</button>
-        <button className="rounded-md p-1 hover:bg-gray-200">😂</button>
+        <button className="rounded-md p-1 hover:bg-gray-200">☝️</button>
+        <button className="rounded-md p-1 hover:bg-gray-200">👎️️</button>
       </PopoverContent>
     </Popover>
   );
