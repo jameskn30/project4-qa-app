@@ -10,12 +10,11 @@
 
 
 # TODO
-- connecting t
+- send, receive messages from users feature
 
 
 # DONE
 - setup basic layout
-- setup 
 
 --
 # TESTS
