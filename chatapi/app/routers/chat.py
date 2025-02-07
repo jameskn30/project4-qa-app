@@ -21,6 +21,12 @@ redis_client = Redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
 #==== 
 
+# Type
+class RoomRequest(BaseModel):
+    roomId: str
+
+#===
+
 # utils
 def gen_random_user_id():
     return str(uuid4())
@@ -37,8 +43,8 @@ def gen_random_username(length: int = 8) -> str:
 
 def gen_random_phrase() -> str:
     adjectives = ["Quick", "Lazy", "Happy", "Sad", "Bright", "Dark", "Clever", "Brave"]
-    nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear", "Lion", "Tiger", "Wolf", "Dragon", "Unicorn", "Phoenix", "Sword", "Shield", "Wizard", "Elf", "Dwarf", "Goblin"]
-    return f"{random.choice(adjectives).lower()} {random.choice(nouns).lower()}"
+    nouns = ["Cat", "Dog", "Fox", "Bear", "Lion", "Tiger", "Wolf", "Mouse", "Deer", "Frog", "Fish", "Bird", "Ant", "Bee", "Duck", "Goat", "Hawk", "Lamb", "Mole", "Owl"]
+    return f"{random.choice(adjectives).lower()} {random.choice(nouns).lower()} {random.randint(0,9)}{random.randint(0,9)}"
 
 @dataclass
 class UserConnection:
@@ -134,8 +140,20 @@ def list_members(room_id: str):
         return [websocket_manager.user_id_to_conn[user_id].username for user_id in websocket_manager.active_room[room_id]]
     return []
 
-class RoomRequest(BaseModel):
-    roomId: str
+@router.post("/room_exists")
+async def if_room_exists(req: RoomRequest):
+    room_id = req.roomId
+    if room_id in websocket_manager.active_room:
+        return {"message": 'OK'}
+    else:
+        raise HTTPException(status_code=404, detail=f"Room {room_id} is found")
+
+
+@router.get("/get_random_room_id")
+async def random_room_id():
+    room_id = gen_random_phrase()
+    logger.info(f"Generated new room ID: {room_id}")
+    return {"roomId": room_id}
 
 @router.post("/create_room")
 async def create_room(req: RoomRequest):
@@ -151,13 +169,7 @@ async def create_room(req: RoomRequest):
         raise HTTPException(status_code=400, detail=detail)
     websocket_manager.active_room[room_id] = []
     logger.info(f"deleted room id = {room_id}")
-    return {"message": f"Room {room_id} created successfully"}
-
-@router.get("/get_random_room_id")
-async def random_room_id():
-    room_id = gen_random_phrase()
-    logger.info(f"Generated new room ID: {room_id}")
-    return {"roomId": room_id}
+    return {"message": f"Room {room_id} created"}
 
 @router.delete("/delete_room")
 async def delete_room(req: RoomRequest):

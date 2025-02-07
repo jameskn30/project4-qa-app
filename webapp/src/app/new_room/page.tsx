@@ -2,7 +2,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { useQRCode } from 'next-qrcode';
-import { IoMdRefresh } from "react-icons/io";
+import { FaRandom } from "react-icons/fa";
+import { Toaster, toast } from 'sonner';
+import _ from 'lodash';
 
 import {
     Tabs,
@@ -14,7 +16,7 @@ import {
 const NewRoomPage = () => {
     const [roomId, setRoomId] = useState('');
 
-    const fetchRoomId = useCallback(async () => {
+    const fetchRoomId = useCallback(_.debounce(async () => {
         try {
             console.log('fetched room id ')
             const response = await fetch('/chatapi/get_random_room_id');
@@ -23,17 +25,43 @@ const NewRoomPage = () => {
         } catch (error) {
             console.error('Error fetching room ID:', error);
         }
-    }, []);
+    }, 1000), []);
+
+    const handleStartRoom = useCallback(_.debounce(async () => {
+        try {
+            const response = await fetch('/chatapi/room_exists', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ roomId: roomId }),
+            });
+
+            if (response.ok) {
+                toast.error('Room already exists');
+            } else {
+                const createResponse = await fetch('/chatapi/create_room', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ roomId: roomId }),
+                });
+                const data = await createResponse.json();
+                console.log('Room created:', data);
+                toast.success('Room created successfully');
+            }
+        } catch (error) {
+            console.error('Error creating room:', error);
+            toast.error('Error creating room');
+        }
+    }, 1000), [roomId]);
 
     useEffect(() => {
         fetchRoomId();
-    }, []);
+    }, [fetchRoomId]);
 
     const { Canvas } = useQRCode();
-
-    const handleJoinRoom = () => {
-        console.log(`Joining room with ID: ${roomId}`);
-    };
 
     const handleRefreshName = () => {
         fetchRoomId();
@@ -41,6 +69,7 @@ const NewRoomPage = () => {
 
     return (
         <div className="flex items-center flex-col justify-center h-screen bg-gradient-to-r from-blue-300 to-purple-400 gap-3">
+            <Toaster expand={true} position='top-center' richColors />
             <h1 className="text-2xl">Hello world</h1>
             <Tabs defaultValue="account" className="w-[350px] flex justify-center flex-col items-center">
                 <TabsList className="grid w-full grid-cols-2">
@@ -61,7 +90,7 @@ const NewRoomPage = () => {
                                 className="mb-4 w-full bg-white"
                             />
                             <button
-                                onClick={handleJoinRoom}
+                                onClick={handleStartRoom}
                                 className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
                             >
                                 Join
@@ -73,11 +102,11 @@ const NewRoomPage = () => {
                     <div className="bg-white bg-opacity-80 p-2 rounded-lg gap-4 flex flex-col justify-center
                     shadow-lg text-center border-2 border-slate-100 w-[350px] h-[350px]">
                         <div className="flex gap-3 justify-center">
-                            <p className="text-4xl flex-1 ">{roomId} </p>
+                            <p className="text-4xl flex-1 text-center">{roomId}</p>
                             <button className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2"
                             onClick={handleRefreshName}
                             >
-                                <IoMdRefresh/>
+                                <FaRandom/>
                             </button>
                         </div>
                         <div className='flex justify-center'>
@@ -96,7 +125,7 @@ const NewRoomPage = () => {
                             />
                         </div>
                         <button
-                            onClick={handleJoinRoom}
+                            onClick={handleStartRoom}
                             className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
                         >
                             Start room
