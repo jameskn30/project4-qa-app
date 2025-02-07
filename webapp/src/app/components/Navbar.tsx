@@ -1,11 +1,11 @@
 'use client'
 
-import React from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
+import { useRoomContext } from '@/app/room/[roomId]/RoomContext'
 
 interface ButtonLinkProp extends React.LinkHTMLAttributes<HTMLLinkElement> {
-  children: React.ReactNode
+  children: React.ReactNode | null
   href: string
 }
 
@@ -17,9 +17,17 @@ const ButtonLink = ({ children, href, className, ...props }: ButtonLinkProp) => 
   )
 }
 
-const Navbar = () => {
+interface NavbarProps {}
+
+const Navbar = ({ }: NavbarProps) => {
+  const { command, setCommand } = useRoomContext()
+
+  const handleOnLeave = () => {
+    setCommand("leave")
+  }
+
   return (
-    <div className="sticky z-10  bg-transparent">
+    <div className="sticky z-10 bg-transparent">
       <nav className="flex justify-between items-center px-5 py-1">
         <div className="flex space-x-4 cl border border-slate-300 p-1 bg-white rounded-xl shadow-md hover:shadow-lg items-center">
           <ButtonLink href="/">
@@ -38,19 +46,13 @@ const Navbar = () => {
           </li>
 
           <li>
-            <ButtonLink href="/new_room">
-              Join new room
-            </ButtonLink>
-          </li>
-          <li>
-            <ButtonLink href="#section3">
+            <ButtonLink href="#" onClick={handleOnLeave}>
               Leave
             </ButtonLink>
           </li>
         </ul>
 
         <div className='flex gap-3'>
-
           <ul className="flex space-x-4 cl border border-slate-300 py-2 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
             <li>
               <ButtonLink href="#section2">
@@ -65,7 +67,6 @@ const Navbar = () => {
           </ul>
         </div>
       </nav>
-
     </div>
   )
 }

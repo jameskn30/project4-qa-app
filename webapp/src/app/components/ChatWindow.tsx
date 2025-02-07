@@ -1,11 +1,19 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, use } from 'react';
 import MessageInput from '@/app/components/MessageInput'
 import { Toaster, toast } from 'sonner';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { useRoomContext } from '@/app/room/[roomId]/RoomContext'
+import { useRouter, useParams } from 'next/navigation'; // Change import to 'next/navigation'
 
-const MessageListItem = ({ username, content, flag }: { username: string; content: string; flag: string }) => {
+type Message = {
+  username: string;
+  content: string;
+  flag: string;
+}
+
+const MessageListItem = ({ username, content, flag }: Message) => {
   if (username === 'system')
     return (
       <div className="relative mb-1 px-2 text-sm flex items-center justify-center">
@@ -33,18 +41,17 @@ const MessageListItem = ({ username, content, flag }: { username: string; conten
   );
 };
 
-type Message = {
-  username: string;
-  content: string;
-  flag: string;
-}
 
 const ChatWindow = () => {
 
   // const randomMessages = genRandomMessages()
-  const roomId = '1'; // test room id = 1
+  const params = useParams<{ roomId: string }>()
+
+  const roomId = params?.roomId
 
   const wsRef = useRef<WebSocket | null>(null);
+
+  const router = useRouter()
 
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -54,17 +61,30 @@ const ChatWindow = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const { command, setCommand } = useRoomContext()
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+
+
+  //handle command change in room context provider
+  useEffect(() => {
+    console.log('received command from ChatWindow ', command)
+    if (command === 'leave') {
+      wsRef.current?.close();
+      setCommand(null); // Set command to null
+      router.push("/")
+    }
+  }, [command])
+
   const connectWebSocket = useCallback(async () => {
     const response = await fetch(`/api/chat?roomId=${roomId}`);
     const data = await response.json();
-
     const ws = new WebSocket(data.websocketUrl);
 
-    wsRef.current = ws
+    wsRef.current = ws;
 
     console.log('open web socket')
 
@@ -73,10 +93,10 @@ const ChatWindow = () => {
     };
 
     ws.onmessage = (event) => {
-      const parsedData = JSON.parse(event.data)
-      console.log(parsedData)
-      const content = parsedData.message
-      const username = parsedData.username
+      const parsedData = JSON.parse(event.data);
+      console.log(parsedData);
+      const content = parsedData.message;
+      const username = parsedData.username;
 
       const message: Message = { username, content, flag: '🇺🇸' };
 
@@ -89,7 +109,7 @@ const ChatWindow = () => {
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
-      toast.error("WebSocket error: " + error, )
+      toast.error("WebSocket error: " + error);
     };
 
     return () => {
@@ -97,10 +117,9 @@ const ChatWindow = () => {
     };
   }, [roomId]);
 
-
   const onSent = (message: string) => {
     console.log('sending message')
-    if (message !== ''){
+    if (message !== '') {
       wsRef.current?.send(message)
     }
   }
@@ -108,13 +127,10 @@ const ChatWindow = () => {
   useEffect(() => {
     const cleanup = connectWebSocket();
 
-    // getRoomMembers()
-
     return () => {
       cleanup.then((close) => close && close());
     };
   }, [connectWebSocket]);
-
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto bg-white">
