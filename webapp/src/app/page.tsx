@@ -8,6 +8,8 @@ export default function Home() {
     <div className="flex flex-col h-screen" data-testid="container">
       <Navbar />
       <div className="flex flex-1 overflow-hidden">
+        <div className="hidden lg:flex lg:flex-1">
+        </div>
         <div className="flex-1 overflow-y-auto">
           <QuestionList />
         </div>
