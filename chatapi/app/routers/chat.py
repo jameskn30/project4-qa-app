@@ -1,7 +1,8 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Request
 import logging
 from typing import List, Dict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from pydantic import BaseModel
 from uuid import uuid4
 import random
 import string
@@ -127,6 +128,42 @@ def list_members(room_id: str):
     if room_id in websocket_manager.active_room:
         return [websocket_manager.user_id_to_conn[user_id].username for user_id in websocket_manager.active_room[room_id]]
     return []
+
+class RoomRequest(BaseModel):
+    roomId: str
+
+@router.post("/create_room")
+async def create_room(req: RoomRequest):
+    logger.info(f"/create_room")
+    room_id = req.roomId
+    if not room_id:
+        raise HTTPException(status_code=400, detail="Room ID is required")
+
+
+    if room_id in websocket_manager.active_room:
+        detail = f"room {room_id} already exists"
+        logger.error(detail)
+        raise HTTPException(status_code=400, detail=detail)
+    websocket_manager.active_room[room_id] = []
+    logger.info(f"deleted room id = {room_id}")
+    return {"message": f"Room {room_id} created successfully"}
+
+@router.delete("/delete_room")
+async def delete_room(req: RoomRequest):
+    room_id = req.roomId
+    logger.info(f"/delete_room")
+    if room_id not in websocket_manager.active_room:
+        detail = f"room {room_id} not found"
+        logger.error(detail)
+        raise HTTPException(status_code=404, detail=detail)
+    
+    # Notify all users in the room about the deletion
+    for user_id in websocket_manager.active_room[room_id]:
+        await websocket_manager.leave_room(room_id, user_id)
+
+    del websocket_manager.active_room[room_id]
+    logger.info(f"Deleted room id = {room_id} ")
+    return {"message": f"Room {room_id} deleted successfully"}
 
 @router.websocket("/join/{room_id}")
 async def join_room(websocket: WebSocket, room_id: str):
