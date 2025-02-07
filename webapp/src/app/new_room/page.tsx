@@ -29,11 +29,11 @@ const NewRoomPage = () => {
             <h1 className="text-2xl">Hello world</h1>
             <Tabs defaultValue="account" className="w-[300px] flex justify-center flex-col items-center">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="account">Account</TabsTrigger>
-                    <TabsTrigger value="password">Password</TabsTrigger>
+                    <TabsTrigger value="account">Join Room</TabsTrigger>
+                    <TabsTrigger value="password">New Room</TabsTrigger>
                 </TabsList>
                 <TabsContent value="account">
-                    <div className="bg-white bg-opacity-80 p-10 rounded-lg 
+                    <div className="bg-white bg-opacity-80 p-5 rounded-lg 
                     shadow-lg text-center border-2 border-slate-100 w-[300px] h-[300px]">
                         <h1 className="text-3xl font-bold mb-6">Join new room</h1>
                         <p className="text-sm mb-6">Or you can scan QR code</p>
@@ -56,11 +56,9 @@ const NewRoomPage = () => {
 
                 </TabsContent>
                 <TabsContent value="password">
-
-                    <div id="create-qr" className="bg-white items-center bg-opacity-80 
-                    p-5 rounded-lg text-center border-2 border-slate-100 max-w-sm w-[300px] h-[300px]">
-                        <p className="text-2xl font-bold mb-4 flex justify-center items-center gap-2">Create your room <span><FaPlus /></span></p>
-                        <p className="text-sm ">Scan this QR</p>
+                    <div className="bg-white bg-opacity-80 p-2 rounded-lg gap-2 flex flex-col
+                    shadow-lg text-center border-2 border-slate-100 w-[300px] h-[300px]">
+                        <p className="text-2xl ">ROOM ID: 12345 </p>
                         <div className='flex justify-center'>
                             <Canvas
                                 text={'https://github.com/bunlong/next-qrcode'}
@@ -70,8 +68,8 @@ const NewRoomPage = () => {
                                     scale: 4,
                                     width: 200,
                                     color: {
-                                        dark: '#010599FF',
-                                        light: '#FFBF60FF',
+                                        dark: '#000000', // Black
+                                        light: '#FFFFFF', // White
                                     },
                                 }}
                             />
