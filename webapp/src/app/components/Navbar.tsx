@@ -17,7 +17,6 @@ const ButtonLink = ({ children, href, className, ...props }: ButtonLinkProp) => 
   )
 }
 
-
 const Navbar = () => {
   return (
     <div className="sticky z-10  bg-transparent">
@@ -39,7 +38,7 @@ const Navbar = () => {
           </li>
 
           <li>
-            <ButtonLink href="#section2">
+            <ButtonLink href="/new_room">
               Join new room
             </ButtonLink>
           </li>

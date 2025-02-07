@@ -35,6 +35,11 @@ def gen_random_username(length: int = 8) -> str:
     
     return f"{adjective}{noun}{number}"
 
+def gen_random_phrase() -> str:
+    adjectives = ["Quick", "Lazy", "Happy", "Sad", "Bright", "Dark", "Clever", "Brave"]
+    nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear", "Lion", "Tiger", "Wolf", "Dragon", "Unicorn", "Phoenix", "Sword", "Shield", "Wizard", "Elf", "Dwarf", "Goblin"]
+    return f"{random.choice(adjectives).lower()} {random.choice(nouns).lower()}"
+
 @dataclass
 class UserConnection:
     user_id: str
@@ -148,6 +153,12 @@ async def create_room(req: RoomRequest):
     logger.info(f"deleted room id = {room_id}")
     return {"message": f"Room {room_id} created successfully"}
 
+@router.get("/get_random_room_id")
+async def random_room_id():
+    room_id = gen_random_phrase()
+    logger.info(f"Generated new room ID: {room_id}")
+    return {"roomId": room_id}
+
 @router.delete("/delete_room")
 async def delete_room(req: RoomRequest):
     room_id = req.roomId
@@ -157,7 +168,7 @@ async def delete_room(req: RoomRequest):
         logger.error(detail)
         raise HTTPException(status_code=404, detail=detail)
     
-    # Notify all users in the room about the deletion
+    # disconnect all current connections in the room
     for user_id in websocket_manager.active_room[room_id]:
         await websocket_manager.leave_room(room_id, user_id)
 
