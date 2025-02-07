@@ -146,7 +146,7 @@ async def if_room_exists(req: RoomRequest):
     if room_id in websocket_manager.active_room:
         return {"message": 'OK'}
     else:
-        raise HTTPException(status_code=404, detail=f"Room {room_id} is found")
+        raise HTTPException(status_code=404, detail=f"Room {room_id} is not found")
 
 
 @router.get("/get_random_room_id")
