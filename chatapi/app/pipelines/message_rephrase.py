@@ -139,13 +139,20 @@ def rephrase_messages(messages, llm):
     rephrase_groups = []
 
     for group in groups:
-        res = pipe.run({'prompt': {'messages': group}})
-        if len(group) > 1:
-            rephrase = res['llm']['replies']
-        else:
-            rephrase = group
-        rephrase_groups.append(rephrase)
-        sleep(0.2)
+        try:
+            res = pipe.run({'prompt': {'messages': group}})
+            if len(group) > 1:
+                rephrase = res['llm']['replies']
+            else:
+                rephrase = group
+            rephrase_groups.append(rephrase)
+            logger.info(f"Rephrased group: {rephrase}")
+        except Exception as e:
+            logger.error(f"Error rephrasing group {group}: {e}")
+            # Fallback to original group in case of error
+            rephrase_groups.append(group[0])  
+        # this prevents 429, too many requests from GroqAPI 
+        sleep(0.5)
 
     logger.info("Rephrasing completed")
     return rephrase_groups
