@@ -144,7 +144,7 @@ const ChatWindow = () => {
     } else {
       setShake(true);
       setTimeout(() => setShake(false), 500);
-      toast.error(`Name: ${username} already taken`)
+      toast.error(`Name: ${usernameData} already taken`)
     }
   }, 1000);
 
@@ -153,8 +153,6 @@ const ChatWindow = () => {
 
     const formData = new FormData(e.currentTarget)
     const usernameData = formData.get('username') as string;
-    console.log('username data = ' + usernameData)
-
     isUsernameUnique(usernameData);
   };
 

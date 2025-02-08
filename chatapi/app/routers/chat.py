@@ -217,7 +217,7 @@ async def is_username_unique(req: RoomRequest):
     username = req.username
     logger.info(f"/is_username_unique")
 
-    if not websocket_manager._is_username_unique(room_id, username):
+    if not websocket_manager._is_username_unique(room_id, username) or req.username == 'system':
         raise HTTPException(status_code=400, detail=f"Username {username} is already taken in room {room_id}")
     return {"message": "OK"}
 
