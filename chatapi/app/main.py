@@ -1,10 +1,10 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
 from datetime import datetime
-from routers import chat
+from routers import chat, llm
 import asyncio
 
 
@@ -48,6 +48,7 @@ def healthcheck():
     return {"status": "ok"}
 
 app.include_router(chat.router)
+app.include_router(llm.router)
     
 #TODO:
 # add sentry for monitoring
