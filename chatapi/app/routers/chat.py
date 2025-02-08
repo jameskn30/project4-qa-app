@@ -109,7 +109,6 @@ class WebSocketManager:
     async def notify_new_member(self, user_id: str, room_id: str):
         logger.info(f"Notifying new member {user_id} in room {room_id}")
         username = self.user_id_to_conn[user_id].username
-        # await self._broadcast(room_id, f'{username} just joined', '<greet_system>')
         await self._broadcast_redis_system(room_id, f'{username} just joined')
 
     async def _broadcast_redis(self, room_id: str, message: str, username: str):
@@ -190,6 +189,10 @@ async def delete_room(req: RoomRequest):
 
 @router.websocket("/join/{room_id}")
 async def join_room(websocket: WebSocket, room_id: str):
+
+    if room_id not in websocket_manager.active_room:
+        raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
+
     user_id = None
 
     try:
@@ -205,7 +208,6 @@ async def join_room(websocket: WebSocket, room_id: str):
         logger.error(f"WebSocket of user_id {user_id} connection closed for room {room_id}")
     finally:
         # user_id = websocket_manager.user_id_to_room.get(websocket.client.host)
-        print('user id = ', user_id)
         if user_id:
             await websocket_manager.leave_room(room_id, user_id)
 

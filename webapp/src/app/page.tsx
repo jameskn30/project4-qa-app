@@ -6,6 +6,8 @@ import { FaRandom } from "react-icons/fa";
 import { Toaster, toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import _ from 'lodash';
+import {useRouter} from 'next/navigation'
+import {isRoomExists} from '@/utils/room'
 
 import {
     Tabs,
@@ -19,6 +21,7 @@ const NewRoomPage = () => {
     const [roomIdInput, setRoomIdInput] = useState('')
     const [joiningLoader, setJoiningLoader] = useState(false);
     const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
+    const router = useRouter();
 
     const { Canvas } = useQRCode();
 
@@ -41,17 +44,13 @@ const NewRoomPage = () => {
     }
 
     const handleStartRoom = useCallback(_.debounce(async () => {
+        if (roomId === null) return
         try {
-            const createResponse = await fetch('/chatapi/create_room', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ roomId: roomId }),
-            });
-            const data = await createResponse.json();
-            console.log('Room created:', data);
-            toast.success('Room created successfully');
+            const roomExists = await isRoomExists(roomId)
+            if(roomExists){
+                router.push(`/room/${roomId}`)
+                toast.success('Room created successfully');
+            }
         } catch (error) {
             console.error('Error creating room:', error);
             toast.error('Error creating room');
@@ -59,6 +58,7 @@ const NewRoomPage = () => {
     }, 1000), [roomId]);
 
     const handleJoinRoom = async () => {
+
         if (!roomIdInput || roomIdInput === '') {
             toast.error('Please enter a room ID');
             return;
@@ -76,7 +76,7 @@ const NewRoomPage = () => {
             });
 
             if (response.ok) {
-                toast.success('Can join room')
+                router.push(`/room/${roomIdInput}`)
             } else {
                 toast.error('Room does not exist')
             }

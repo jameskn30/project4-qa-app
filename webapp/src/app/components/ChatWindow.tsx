@@ -134,7 +134,7 @@ const ChatWindow = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto bg-white">
-      <Toaster expand={true} position='top-center' richColors/>
+      <Toaster expand={true} position='top-center' richColors />
       <div className="flex-1 overflow-y-auto flex flex-col">
         {messages.map((msg, index) => (
           <MessageListItem key={index} username={msg.username} content={msg.content} flag={msg.flag} />
