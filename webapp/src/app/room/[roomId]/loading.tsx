@@ -4,7 +4,8 @@ const Loading = () => {
   const GIF = [
     "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeW9oZHBsY2QxNHpmM213Zm96bTBkN2lxMXljcmluMHFidzhmbjB5ZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/BAnl0HDW9PDONr5hm6/giphy.gif",
     "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExcWFwc2Zmcno2ZWg2cmF6dTU1YWt4ZWhrZnF2OHVmYmgxNzBzMGd0dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/tMqK6aXiwushxQUeMz/giphy.gif",
-    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2FrcG41cnAwa21hcXBhNnZyZ2phc2s2aThzam9sa3lhZXRnNGY3YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lWY7KIoUckm8iCjY79/giphy.gif"
+    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2FrcG41cnAwa21hcXBhNnZyZ2phc2s2aThzam9sa3lhZXRnNGY3YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lWY7KIoUckm8iCjY79/giphy.gif",
+    "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGd4eXRydWp1MnQwYm4xZnhjdXR1aXh1Y3V3bXg0NTAxNzd6eng4NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lWFVeTCj4wiX6q24dM/giphy.gif"
   ];
   const randomGif = GIF[Math.floor(Math.random() * GIF.length)];
 

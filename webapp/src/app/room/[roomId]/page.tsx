@@ -28,7 +28,6 @@ const RoomPage: React.FC = () => {
     checkRoomExists();
   }, [roomId, router]);
 
-
   if (loading){
     return <Loading/>
   }

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Request
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 from pydantic import BaseModel
 from uuid import uuid4
@@ -24,6 +24,7 @@ redis_client = Redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}")
 # Type
 class RoomRequest(BaseModel):
     roomId: str
+    username: Optional[str] = None
 
 #===
 
@@ -31,15 +32,15 @@ class RoomRequest(BaseModel):
 def gen_random_user_id():
     return str(uuid4())
 
-def gen_random_username(length: int = 8) -> str:
+def gen_random_username(length: int = 2) -> str:
     adjectives = ["Quick", "Lazy", "Happy", "Sad", "Bright", "Dark", "Clever", "Brave"]
     nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear", "Lion", "Tiger", "Wolf"]
     
     adjective = random.choice(adjectives)
     noun = random.choice(nouns)
-    number = ''.join(random.choices(string.digits, k=length))
+    number = '_'.join(random.choices(string.digits, k=length))
     
-    return f"{adjective}{noun}{number}"
+    return f"{adjective} {noun} {number}"
 
 def gen_random_phrase() -> str:
     adjectives = ["Quick", "Lazy", "Happy", "Sad", "Bright", "Dark", "Clever", "Brave"]
@@ -58,6 +59,13 @@ class WebSocketManager:
         self.active_room: Dict[str, List[str]] = {}
         self.user_id_to_conn: Dict[str, UserConnection] = {}
         self.user_id_to_room: Dict[str, str] = {}
+        # self.room_to_username: Dict[str, Set[str]] = {}  # Change to Set for uniqueness
+    
+    def _is_username_unique(self, room_id: str, username: str) -> bool:
+        for user_id in self.active_room[room_id]:
+            if self.user_id_to_conn[user_id].username == username:
+                return False
+        return True
     
     async def join_room(self, room_id: str, websocket: WebSocket, user_id: str = None, username: str = None):
         logger.info(f"Attempting to join room {room_id} with user_id {user_id} and username {username}")
@@ -76,9 +84,18 @@ class WebSocketManager:
 
         if room_id not in self.active_room:
             self.active_room[room_id] = []
+            # self.room_to_username[room_id] = set()  # Initialize set for usernames
+
+        # if username in self.room_to_username[room_id]:
+        #     msg = f"Username {username} is already taken in room {room_id}"
+        #     await websocket.close(code=1000, reason=msg)
+        #     # raise HTTPException(status_code=403, detail=msg)
+        #     raise AssertionError(f'User {username} exists in room {room_id}')
 
         self.active_room[room_id].append(user_id)
         self.user_id_to_room[user_id] = room_id
+        # self.room_to_username[room_id].add(username)  # Add username to set
+
         logger.info(f'User {user_id}:{websocket.client.host} joined room {room_id}')
         return user_id
     
@@ -87,11 +104,13 @@ class WebSocketManager:
         if user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
             username = user_conn.username
-            # if not user_conn.websocket.client_state.closed:
-            #     await user_conn.websocket.close()
+
+            #perform clean up for rooms and userid
             self.active_room[room_id].remove(user_id)
+            # self.room_to_username[room_id].remove(username)
             del self.user_id_to_conn[user_id]
             del self.user_id_to_room[user_id]
+
             logger.info(f'User {user_id} left room {room_id}')
             await self._broadcast_redis_system(room_id, f'User {username} left the room')
             
@@ -166,7 +185,9 @@ async def create_room(req: RoomRequest):
         detail = f"room {room_id} already exists"
         logger.error(detail)
         raise HTTPException(status_code=400, detail=detail)
+
     websocket_manager.active_room[room_id] = []
+
     logger.info(f"deleted room id = {room_id}")
     return {"message": f"Room {room_id} created"}
 
@@ -187,16 +208,32 @@ async def delete_room(req: RoomRequest):
     logger.info(f"Deleted room id = {room_id} ")
     return {"message": f"Room {room_id} deleted successfully"}
 
-@router.websocket("/join/{room_id}")
-async def join_room(websocket: WebSocket, room_id: str):
+@router.post("/is_username_uniqe")
+async def is_username_unique(req: RoomRequest):
+    room_id = req.roomId
+    if req.username is None:
+        raise HTTPException(status_code=400, detail=f"username not provided")
 
+    username = req.username
+    logger.info(f"/is_username_unique")
+
+    if not websocket_manager._is_username_unique(room_id, username):
+        raise HTTPException(status_code=400, detail=f"Username {username} is already taken in room {room_id}")
+    return {"message": "OK"}
+
+@router.websocket("/join/{room_id}/{username}")
+async def join_room(websocket: WebSocket, room_id: str, username: str):
     if room_id not in websocket_manager.active_room:
-        raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
+        await websocket.close(code=1000, reason=f"Room {room_id} not found")
+
+    elif websocket_manager._is_username_unique(room_id, username) == False:
+        msg = f"Username {username} is already taken in room {room_id}"
+        await websocket.close(code=1000, reason=msg)
 
     user_id = None
 
     try:
-        user_id = await websocket_manager.join_room(room_id, websocket)
+        user_id = await websocket_manager.join_room(room_id, websocket, username=username)
 
         await websocket_manager.notify_new_member(user_id, room_id)
 
@@ -207,7 +244,6 @@ async def join_room(websocket: WebSocket, room_id: str):
     except WebSocketDisconnect as e:
         logger.error(f"WebSocket of user_id {user_id} connection closed for room {room_id}")
     finally:
-        # user_id = websocket_manager.user_id_to_room.get(websocket.client.host)
         if user_id:
             await websocket_manager.leave_room(room_id, user_id)
 
