@@ -19,6 +19,7 @@ https://fastapi.tiangolo.com/project-generation/
 - Setup sentry for logging, monitor, performance reports
 - Setup pytest basic, unittest, integration test, loads test
 - Add a buffer to messages. will need to handle this when there are 10k people sending messages to the server that same time -> every new message, system scans all users in room, send message to each websocket,Having a buffer, collect messages and will send many messages to each user for every scan, 
+- Include LLM functionality in chatapi for now. Keep it simple for MVP
 
 # DONE
 - Setup fastapi project [OK]
@@ -27,6 +28,8 @@ https://fastapi.tiangolo.com/project-generation/
 - added  basic endpoints [OK]
 - Redis PubSub [OK]
 - Setup basic Docker, compose redis and docker image for chatpi [OK]
+
+
 
 # TESTS IDEAS:
 
