@@ -5,7 +5,10 @@ import { Toaster, toast } from 'sonner';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useRoomContext } from '@/app/room/[roomId]/RoomContext'
 import { useRouter, useParams } from 'next/navigation';
-import {Input} from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
+import './ChatWindow.css'; // Import the CSS file for animations
+import _ from 'lodash'
+import { generateRandomUsername } from '@/utils/common';
 
 type Message = {
   username: string;
@@ -47,8 +50,10 @@ const ChatWindow = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([]);
-  const [username, setUsername] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>(generateRandomUsername());
+  const [usernameInput, setUsernameInput] = useState<string>(username);
   const [showDialog, setShowDialog] = useState(true);
+  const [shake, setShake] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const { command, setCommand } = useRoomContext()
 
@@ -69,7 +74,12 @@ const ChatWindow = () => {
   }, [command])
 
   const connectWebSocket = useCallback(async () => {
-    const response = await fetch(`/api/chat?roomId=${roomId}`);
+    if (username === null) {
+      toast.error('Internal error')
+      return
+    }
+
+    const response = await fetch(`/api/chat?roomId=${roomId}&username=${username}`);
     const data = await response.json();
     const ws = new WebSocket(data.websocketUrl);
 
@@ -100,7 +110,7 @@ const ChatWindow = () => {
     return () => {
       ws.close();
     };
-  }, [roomId]);
+  }, [roomId, username]);
 
   const onSent = (message: string) => {
     if (message !== '') {
@@ -109,19 +119,43 @@ const ChatWindow = () => {
   }
 
   useEffect(() => {
-    if (username) {
+    if (username && !showDialog) {
       const cleanup = connectWebSocket();
       return () => {
         cleanup.then((close) => close && close());
       };
     }
-  }, [connectWebSocket, username]);
+  }, [connectWebSocket, username, showDialog]);
 
-  const handleUsernameSubmit = (e: React.FormEvent) => {
+
+  const isUsernameUnique = _.debounce(async (usernameData: string) => {
+    const response = await fetch('/chatapi/is_username_unique', {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ roomId: roomId, username: usernameData })
+    })
+
+    if (response.ok) {
+      console.log('setting username = ' + usernameData)
+      setUsername(usernameData);
+      setShowDialog(false);
+    } else {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      toast.error(`Name: ${username} already taken`)
+    }
+  }, 1000);
+
+  const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const input = (e.target as HTMLFormElement).elements.namedItem('username') as HTMLInputElement;
-    setUsername(input.value);
-    setShowDialog(false);
+
+    const formData = new FormData(e.currentTarget)
+    const usernameData = formData.get('username') as string;
+    console.log('username data = ' + usernameData)
+
+    isUsernameUnique(usernameData);
   };
 
   return (
@@ -138,9 +172,9 @@ const ChatWindow = () => {
 
       {showDialog && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm">
-          <form onSubmit={handleUsernameSubmit} className="bg-white p-6 rounded-xl shadow-lg border-2 boder-slate-100">
+          <form onSubmit={handleUsernameSubmit} className={`bg-white p-6 rounded-xl shadow-lg border-2 boder-slate-100 ${shake ? 'shake' : ''}`}>
             <label className="block text-sm font-medium text-gray-700">What's your name? ☺️ </label>
-            <Input type="text" id="name" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" required />
+            <Input type="text" id="username" name="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" required />
             <button type="submit" className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md">Submit</button>
           </form>
         </div>

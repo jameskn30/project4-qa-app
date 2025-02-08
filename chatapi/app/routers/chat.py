@@ -208,7 +208,7 @@ async def delete_room(req: RoomRequest):
     logger.info(f"Deleted room id = {room_id} ")
     return {"message": f"Room {room_id} deleted successfully"}
 
-@router.post("/is_username_uniqe")
+@router.post("/is_username_unique")
 async def is_username_unique(req: RoomRequest):
     room_id = req.roomId
     if req.username is None:

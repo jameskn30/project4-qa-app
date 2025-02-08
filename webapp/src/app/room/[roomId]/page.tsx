@@ -1,5 +1,4 @@
 'use client'
-
 import QuestionList from '@/app/components/QuestionList';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';

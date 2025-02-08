@@ -8,7 +8,7 @@ export default function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  if (req.method === 'GET' && req.query.roomId) {
+  if (req.method === 'GET' && req.query.roomId && req.query.username) {
     //TODO: forward request to retrieve the websocket url, 
     // meant to authorize the websocket URL but if user is authorized once, 
     // they'll have the  Websocket URL forever, think up a solution to this
@@ -16,7 +16,8 @@ export default function handler(
     // still connects directly to the fastapi backend anyway
     const chatApiEndpoint = process.env.CHATAPI_ENDPOINT || null;
     const roomId = req.query.roomId;
-    res.status(200).json({ websocketUrl: `${chatApiEndpoint}/join/${roomId}` });
+    const username = req.query.username;
+    res.status(200).json({ websocketUrl: `${chatApiEndpoint}/join/${roomId}/${username}` });
   } else {
     res.status(400).json({ websocketUrl: 'null' });
   }
