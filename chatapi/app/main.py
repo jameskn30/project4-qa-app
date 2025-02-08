@@ -7,6 +7,8 @@ from datetime import datetime
 from routers import chat, llm
 import asyncio
 
+# Get environment type
+env_type = os.getenv("ENV_TYPE", "dev")
 
 # Create logs directory if it doesn't exist
 if not os.path.exists("logs"):
@@ -63,4 +65,5 @@ if __name__ == "__main__":
     import uvicorn
     # SERVER_WORKERS = int(os.getenv("SERVER_WORKERS", 1))
     logger.info("Starting the FastAPI application")
+    logger.info("ENV_TYPE: " +  env_type)
     uvicorn.run(app, host="0.0.0.0", port=8000)

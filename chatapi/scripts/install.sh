@@ -8,7 +8,7 @@ fi
 
 source .env/bin/activate
 
-pip install websockets fastapi redis uvicorn sentence-transformer
+pip install websockets fastapi redis uvicorn sentence-transformer haystack ollama-haystack
 
 pip freeze > requirements.txt
 

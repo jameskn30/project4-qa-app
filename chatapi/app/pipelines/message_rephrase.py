@@ -1,6 +1,6 @@
 from haystack import Pipeline, component
 from haystack.components.builders.prompt_builder import PromptBuilder
-# from haystack_integrations.components.generators.ollama import OllamaGenerator
+from haystack_integrations.components.generators.ollama import OllamaGenerator
 from haystack.components.generators import OpenAIGenerator
 from haystack.utils import Secret
 from typing import List
@@ -13,6 +13,8 @@ from time import sleep
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
 
 hf_token = False
 groq_token = False
@@ -175,4 +177,9 @@ def load_groq_llm():
     logger.info("Groq LLM loaded")
     return groq
 
+def load_ollama_llm():
+    #This for local testing without stressing the GroqAPI
+    MODEL = 'llama3.2:3b'
+    llm = OllamaGenerator(model = MODEL, url="http://localhost:11434") 
+    return llm
 
