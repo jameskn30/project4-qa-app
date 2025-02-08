@@ -247,7 +247,6 @@ async def join_room(websocket: WebSocket, room_id: str, username: str):
         if user_id:
             await websocket_manager.leave_room(room_id, user_id)
 
-# Used by main.py on app.startup_event
 async def redis_listener():
     pubsub = redis_client.pubsub()
     logger.info("pubsub subscribe to all channels")
