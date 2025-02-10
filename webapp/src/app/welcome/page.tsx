@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Toaster, toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
 
 const LandingPageNavbar = () => {
     const scrollToWaitlist = () => {
@@ -57,19 +58,20 @@ const WaitlistForm = () => {
 
 const Footer = () => {
     return (
-        <footer className="w-full bg-gray-700 text-white py-3 flex justify-center mt-10 fixed bottom-0">
-            <div className="flex flex-col md:flex-row items-center justify-between container px-4">
-                <div className="md:mb-0 flex items-center gap-7">
+        <footer className="w-full bg-gray-700 text-white py-1 flex justify-center mt-10 fixed bottom-0">
+            <div className="flex flex-col md:flex-row items-center justify-center container px-4">
+                <div className="md:mb-0 flex items-center gap-7 flex-col lg:flex-row py-3">
                     <h2 className="text-xl font-bold">Let's connect:</h2>
-                    <ul className="flex space-x-4">
-                        <li><a href="#" className="hover:underline">LinkedIn</a></li>
-                        <li><a href="#" className="hover:underline">Twitter</a></li>
-                        <li><a href="#" className="hover:underline">GitHub</a></li>
+                    <ul className="flex justify-center items-center space-x-4">
+                        <div className="flex items-center space-x-4 ">
+
+                        <li><a href="#" className="hover:underline" ><FaLinkedin/></a></li>
+                        <li><a href="#" className="hover:underline" ><FaXTwitter/></a></li>
+                        <li><a href="#" className="hover:underline" ><FaGithub/></a></li>
+                        <li><a href="#" className="hover:underline" ><FaInstagram/></a></li>
+                        </div>
+                        <li><a href="#" className="hover:underline" ><span className="font-bold">Email: </span>jameskn30@gmail.com</a></li>
                     </ul>
-                </div>
-                <div>
-                    <h2 className="text-xl font-bold">Contact Information</h2>
-                    <p className="text-sm">Email: jameskn30@gmail.com</p>
                 </div>
             </div>
         </footer>
