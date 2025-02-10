@@ -87,14 +87,14 @@ const WelcomePage = () => {
 
             <div className="flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10">
                 <div className="flex flex-1 mb-10 lg:mb-0" id="intro-container">
-                    <div className="flex flex-col gap-10 font-mono">
-                        <p className="text-8xl font-bold text-center w-full">Bolt.qa</p>
+                    <div className="flex flex-col gap-10 font-mono text-center lg:text-left">
+                        <p className="text-6xl lg:text-8xl font-bold text-center w-full">Bolt.qa</p>
 
-                        <p className="text-4xl font-bold max-w-[600px]">
+                        <p className="text-3xl lg:text-4xl font-bold max-w-[600px] mx-auto lg:mx-0">
                             <span className="inline-block -rotate-3 bg-yellow-300">Group </span> your audience questions so you can answer the <span className="inline-block -rotate-2 bg-green-300">most relevant </span> <span className="bg-yellow-300 inline-block transform rotate-3"> quickly</span>
                         </p>
 
-                        <p className="text-3xl max-w-[500px]">
+                        <p className="text-2xl lg:text-3xl max-w-[500px] mx-auto lg:mx-0">
                             <span className="inline-block -rotate-3 bg-yellow-300">Don't</span> waste time passing the microphone 🎤. Let your audience <span className="inline-block rotate-2 bg-green-300">ask and vote 👍</span> which question they want answered 👏 in <span className="underline">real time</span>
                         </p>
                     </div>
