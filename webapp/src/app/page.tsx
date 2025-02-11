@@ -1,12 +1,14 @@
 'use client'
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Toaster, toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
-import { motion } from 'framer-motion';
+import LoginDialog from '@/app/components/LoginDialog';
 
-const LandingPageNavbar = () => {
+
+const LandingPageNavbar = ({ openDialog }: { openDialog: () => void }) => {
     const scrollToWaitlist = () => {
         document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth'});
     };
@@ -22,7 +24,7 @@ const LandingPageNavbar = () => {
             </div>
 
             <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <a href="/join_room" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Join room</a>
+                <button onClick={openDialog} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login/Signup</button>
             </div>
         </nav>
     )
@@ -36,7 +38,7 @@ const WaitlistForm = () => {
     return (
         <Card className="w-full max-w-[400px] mx-auto shadow-xl rounded-xl mb-32 lg:mb-0">
             <CardHeader>
-                <CardTitle className="text-center">Join our wait list with 34 others</CardTitle>
+                <CardTitle className="text-center">Sign up to join waitlist with 34 others</CardTitle>
                 <p className="text-slate-500 text-sm">free 10 PRO sessions, 250 people per session</p>
             </CardHeader>
             <CardContent>
@@ -50,7 +52,7 @@ const WaitlistForm = () => {
                         <Input id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <div>
-                        <label htmlFor="profession" className="block text-sm font-medium text-gray-700">Your profession</label>
+                        <label htmlFor="profession" className="block text-sm font-medium text-gray-700">Profession (Optional)</label>
                         <Input id="profession" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <Button onClick={(e) => handleJoinWaitlist(e)} type='button' className="w-full mt-4 bg-blue-500 hover:bg-blue-800  text-white rounded-md shadow-md">Join Waitlist</Button>
@@ -84,10 +86,19 @@ const Footer = () => {
 };
 
 const WelcomePage = () => {
+    const [isLoginOpen, setLoginOpen] = useState(false);
+
+    const openDialog = () => {
+        setLoginOpen(true);
+    };
+
+    const handleCloseLogin = () => {
+        setLoginOpen(false);
+    };
 
     return (
         <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
-            <LandingPageNavbar />
+            <LandingPageNavbar openDialog={openDialog} />
             <Toaster expand={true} position='top-center' richColors />
 
             <div className="flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10">
@@ -132,6 +143,7 @@ const WelcomePage = () => {
             </div>
 
 
+            <LoginDialog isOpen={isLoginOpen} onClose={handleCloseLogin} />
             <Footer />
         </div>
     );

@@ -1,7 +1,6 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useQRCode } from 'next-qrcode';
 import { FaRandom } from "react-icons/fa";
 import { Toaster, toast } from 'sonner';
@@ -10,101 +9,31 @@ import _ from 'lodash';
 import { useRouter } from 'next/navigation';
 import { isRoomExists } from '@/utils/room';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogClose
-
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button'
-
-import {
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs";
 
-const NavBar = ({ onLoginClick } :{onLoginClick: () => void}) => {
+const NavBar = () => {
     return (
         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
             <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
                 <a href="/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">⚡ Bolt.qa</a>
             </div>
             <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <button onClick={onLoginClick} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login</button>
+                <button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login</button>
             </div>
         </nav>
     )
 }
 
-const LoginDialog = ({ isOpen, onClose }: {isOpen: boolean, onClose: ()=>void}) => {
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader className="flex justify-center items-center">
-                    <DialogTitle>
-                        ⚡ Bolt.qa
-                    </DialogTitle>
-                    <DialogDescription>
-                        Login or sign up for full perks.
-                    </DialogDescription>
-                </DialogHeader>
-                <Tabs defaultValue="login" className="w-full h-[350px] items-center">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="login">Login</TabsTrigger>
-                        <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="login">
-                        <form className="space-y-4">
-                            <div>
-                                <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</Label>
-                                <Input id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
-                            </div>
-                            <div>
-                                <Label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</Label>
-                                <Input id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
-                            </div>
-                            <DialogFooter>
-                                <Button type="button" className="w-full mt-4 bg-blue-500 text-white rounded-md shadow-md">Login</Button>
-                            </DialogFooter>
-                        </form>
-                    </TabsContent>
-                    <TabsContent value="signup">
-                        <form className="space-y-4">
-                            <div>
-                                <Label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</Label>
-                                <Input id="name" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
-                            </div>
-                            <div>
-                                <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</Label>
-                                <Input id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
-                            </div>
-                            <div>
-                                <Label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</Label>
-                                <Input id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
-                            </div>
-                            <DialogFooter>
-                                <Button type="button" className="w-full mt-4 bg-green-500 text-white rounded-md shadow-md">Sign Up</Button>
-                            </DialogFooter>
-                        </form>
-                    </TabsContent>
-                </Tabs>
-            </DialogContent>
-        </Dialog>
-    );
-};
 
 const NewRoomPage = () => {
     const [roomId, setRoomId] = useState(null);
     const [roomIdInput, setRoomIdInput] = useState('');
     const [joiningLoader, setJoiningLoader] = useState(false);
     const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
-    const [isLoginOpen, setLoginOpen] = useState(false);
     const router = useRouter();
 
     const { Canvas } = useQRCode();
@@ -170,18 +99,10 @@ const NewRoomPage = () => {
         }
     };
 
-    const handleLoginClick = () => {
-        setLoginOpen(true);
-    };
-
-    const handleCloseLogin = () => {
-        setLoginOpen(false);
-        console.log('close dialog')
-    };
 
     return (
         <div className="flex items-center flex-col h-screen bg-gradient-to-r from-white to-purple-200 gap-3">
-            <NavBar onLoginClick={handleLoginClick} />
+            <NavBar />
             <Toaster expand={true} position='top-center' richColors />
             <div className="w-full h-full flex justify-center items-center">
                 <Tabs defaultValue="account" className="w-[350px] flex justify-center flex-col items-center">
@@ -257,7 +178,6 @@ const NewRoomPage = () => {
                 </Tabs>
             </div>
 
-            <LoginDialog isOpen={isLoginOpen} onClose={handleCloseLogin} />
         </div>
     );
 };
