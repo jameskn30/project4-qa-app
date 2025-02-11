@@ -1,185 +1,141 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
-import { useQRCode } from 'next-qrcode';
-import { FaRandom } from "react-icons/fa";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Toaster, toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
-import _ from 'lodash';
-import {useRouter} from 'next/navigation'
-import {isRoomExists} from '@/utils/room'
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
+import { motion } from 'framer-motion';
 
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs"
-
-const NewRoomPage = () => {
-    const [roomId, setRoomId] = useState(null);
-    const [roomIdInput, setRoomIdInput] = useState('')
-    const [joiningLoader, setJoiningLoader] = useState(false);
-    const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
-    const router = useRouter();
-
-    const { Canvas } = useQRCode();
-
-    const fetchRoomId = useCallback(_.debounce(async () => {
-        try {
-            console.log('fetched room id ')
-            const response = await fetch('/chatapi/get_random_room_id');
-            const data = await response.json();
-            setRoomId(data.roomId);
-        } catch (error) {
-            console.error('Error fetching room ID:', error);
-        } finally {
-            setFetchingRandomRoomId(false);
-        }
-    }, 1000), []);
-
-    const handleFetchRandomId = () => {
-        setFetchingRandomRoomId(true);
-        fetchRoomId();
-    }
-
-    const handleStartRoom = useCallback(_.debounce(async () => {
-        if (roomId === null) return
-        try {
-            const roomExists = await isRoomExists(roomId)
-            if(roomExists){
-                router.push(`/room/${roomId}`)
-                toast.success('Room created successfully');
-            }
-        } catch (error) {
-            console.error('Error creating room:', error);
-            toast.error('Error creating room');
-        }
-    }, 1000), [roomId]);
-
-    const handleJoinRoom = async () => {
-
-        if (!roomIdInput || roomIdInput === '') {
-            toast.error('Please enter a room ID');
-            return;
-        }
-
-        setJoiningLoader(true)
-
-        try {
-            const response = await fetch('/chatapi/room_exists', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ roomId: roomIdInput }),
-            });
-
-            if (response.ok) {
-                router.push(`/room/${roomIdInput}`)
-            } else {
-                toast.error('Room does not exist')
-            }
-        } catch (e) {
-            toast.error('Unxpected error')
-        } finally {
-            setJoiningLoader(false);
-        }
-    }
-
+const LandingPageNavbar = () => {
+    const scrollToWaitlist = () => {
+        document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth'});
+    };
 
     return (
-        <div className="flex items-center flex-col justify-center h-screen bg-gradient-to-r from-blue-300 to-purple-400 gap-3">
-            <Toaster expand={true} position='top-center' richColors />
-            <h1 className="text-2xl">Hello world</h1>
-            <Tabs defaultValue="account" className="w-[350px] flex justify-center flex-col items-center">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="account">Join Room</TabsTrigger>
-                    <TabsTrigger value="password" onClick={() => {
-                        if (roomId === null) {
-                            handleFetchRandomId()
-                        }
-                    }}>New Room</TabsTrigger>
-                </TabsList>
-                <TabsContent value="account">
-                    <div className="bg-white bg-opacity-80 p-5 rounded-lg justify-center items-center
-                    shadow-lg text-center border-2 border-slate-100 w-[350px] h-[350px]">
-                        <h1 className="text-3xl font-bold mb-6">Join new room</h1>
-                        <p className="text-sm mb-6">Or you can scan QR code</p>
-                        <div className="flex gap-2 w-full flex-col">
-                            <Input
-                                type="text"
-                                placeholder="Enter Room ID"
-                                value={roomIdInput}
-                                onChange={(e) => setRoomIdInput(e.target.value)}
-                                className="mb-4 w-full bg-white"
-                            />
+        <nav className="sticky top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
+            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
+                <button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">⚡ Bolt.qa</button>
+            </div>
+            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
+                <a href="https://jameskn30.github.io/portfolio/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl" target="_blank">About me</a>
+                <button onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Wait list</button>
+            </div>
 
-                            <div className="flex gap-3">
+            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
+                <a href="/join_room" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Join room</a>
+            </div>
+        </nav>
+    )
+}
 
-                                <button
-                                    onClick={handleJoinRoom}
-                                    className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
-                                >
-                                    Join
-                                </button>
-                                {
-                                    joiningLoader &&
-                                    <Spinner />
-                                }
-                            </div>
+const WaitlistForm = () => {
+    const handleJoinWaitlist = (e) => {
+        toast.success("Joined wait list 👏")
+    }
+
+    return (
+        <Card className="w-full max-w-[400px] mx-auto shadow-xl rounded-xl mb-32 lg:mb-0">
+            <CardHeader>
+                <CardTitle className="text-center">Join our wait list with 34 others</CardTitle>
+                <p className="text-slate-500 text-sm">free 10 PRO sessions, 250 people per session</p>
+            </CardHeader>
+            <CardContent>
+                <form className="space-y-4">
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                        <Input id="name" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
+                    </div>
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                        <Input id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
+                    </div>
+                    <div>
+                        <label htmlFor="profession" className="block text-sm font-medium text-gray-700">Your profession</label>
+                        <Input id="profession" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
+                    </div>
+                    <Button onClick={(e) => handleJoinWaitlist(e)} type='button' className="w-full mt-4 bg-blue-500 hover:bg-blue-800  text-white rounded-md shadow-md">Join Waitlist</Button>
+                </form>
+            </CardContent>
+        </Card>
+
+    );
+};
+
+const Footer = () => {
+    return (
+        <footer className="w-full bg-gray-700 text-white py-1 flex justify-center mt-10 fixed bottom-0">
+            <div className="flex flex-col md:flex-row items-center justify-center container px-4">
+                <div className="md:mb-0 flex items-center gap-7 flex-col lg:flex-row py-3">
+                    <h2 className="text-xl font-bold">Connect:</h2>
+                    <ul className="flex justify-center items-center space-x-4">
+                        <div className="flex items-center space-x-4 ">
+
+                        <li><a href="#" className="hover:underline" ><FaLinkedin/></a></li>
+                        <li><a href="#" className="hover:underline" ><FaXTwitter/></a></li>
+                        <li><a href="#" className="hover:underline" ><FaGithub/></a></li>
+                        <li><a href="#" className="hover:underline" ><FaInstagram/></a></li>
                         </div>
+                        <li><a href="#" className="hover:underline" ><span className="font-bold">email: </span>jameskn30@gmail.com</a></li>
+                    </ul>
+                </div>
+            </div>
+        </footer>
+    );
+};
+
+const WelcomePage = () => {
+
+    return (
+        <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
+            <LandingPageNavbar />
+            <Toaster expand={true} position='top-center' richColors />
+
+            <div className="flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10">
+                <div className="flex flex-1 mb-10 lg:mb-0" id="intro-container">
+                    <div className="flex flex-col gap-10 font-mono text-center lg:text-left">
+                        <p className="text-6xl lg:text-8xl font-bold text-center w-full">Bolt.qa</p>
+
+                        <p className="text-3xl lg:text-4xl font-bold max-w-[600px] mx-auto lg:mx-0">
+                            <span className="inline-block -rotate-3 bg-yellow-300">Group </span> your audience questions so you can answer the <span className="inline-block -rotate-2 bg-green-300">most relevant </span> <span className="bg-yellow-300 inline-block transform rotate-3"> quickly</span>
+                        </p>
+
+                        <p className="text-2xl lg:text-3xl max-w-[500px] mx-auto lg:mx-0">
+                            <span className="inline-block -rotate-3 bg-yellow-300">Don't</span> waste time passing the microphone 🎤. Let your audience <span className="inline-block rotate-2 bg-green-300">ask and vote 👍</span> which question they want answered 👏 in <span className="underline">real time</span>
+                        </p>
                     </div>
-                </TabsContent>
-                <TabsContent value="password">
-                    <div className="bg-white bg-opacity-80 p-2 rounded-lg gap-4 flex flex-col justify-center
-                    shadow-lg text-center border-2 border-slate-100 w-[350px] h-[350px]">
-                        {
-                            fetchingRandomRoomId &&
-                            <>
-                                <Spinner />
-                            </>
-                        }
-                        {
-                            fetchingRandomRoomId === false && (
-                                <>
-                                    <div className="flex gap-3 justify-center">
-                                        <p className="text-4xl flex-1 text-center">{roomId}</p>
-                                        <button className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2"
-                                            onClick={handleFetchRandomId}
-                                        >
-                                            <FaRandom />
-                                        </button>
-                                    </div>
-                                    <div className='flex justify-center'>
-                                        <Canvas
-                                            text={`this is a mock https that has room id in it ${roomId}`}
-                                            options={{
-                                                errorCorrectionLevel: 'M',
-                                                margin: 3,
-                                                scale: 4,
-                                                width: 200,
-                                                color: {
-                                                    dark: '#000000', // Black
-                                                    light: '#FFFFFF', // White
-                                                },
-                                            }}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={handleStartRoom}
-                                        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
-                                    >
-                                        Start room
-                                    </button>
-                                </>
-                            )
-                        }
-                    </div>
-                </TabsContent>
-            </Tabs>
+                </div>
+
+                <div className="flex items-center" id="waitlist-container">
+                    <section id="waitlist" className="w-full flex">
+                        <WaitlistForm />
+
+                    </section>
+                </div>
+            </div>
+
+            {/* Quick demo sections */}
+            <div className='w-full h-96 bg-slate-300'>
+
+            </div>
+            
+
+            {/* Pricing section */}
+            <div className='w-full h-96 bg-blue-300'>
+
+            </div>
+
+            {/* Customer testimony section */}
+
+            {/* Brief about me section */}
+            <div className='w-full h-96 bg-yellow-300'>
+
+            </div>
+
+
+            <Footer />
         </div>
     );
 };
 
-export default NewRoomPage;
+export default WelcomePage;
+
