@@ -1,16 +1,39 @@
-import React from 'react';
+'use client'
+import React, { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
+import { createClient } from '@/utils/supabase/component'
 
 const LoginDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+    const supabase = createClient()
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    const onLoginHandle = async (event: React.FormEvent<HTMLFormElement>) => {
-        console.log('login request')
-       
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setIsLoggedIn(!!session);
+        };
+
+        checkUser();
+    }, [supabase]);
+
+    const onLoginHandle = async (formData: FormData) => {
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+            toast.error(error.message);
+            return;
+        }
+
+        toast.success('Login successful');
+        setIsLoggedIn(true);
     };
 
     return (
@@ -21,7 +44,7 @@ const LoginDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
                         ⚡ Bolt.qa
                     </DialogTitle>
                     <DialogDescription>
-                        Login or sign up for full perks.
+                        {isLoggedIn ? 'Logged In' : 'Not Logged In'}
                     </DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="login" className="w-full h-[350px] items-center">
@@ -30,18 +53,18 @@ const LoginDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
                         <TabsTrigger value="signup">Sign Up</TabsTrigger>
                     </TabsList>
                     <TabsContent value="login">
-                        <form className="space-y-4" onSubmit={onLoginHandle}>
+                        <form className="space-y-4" >
                             <div>
                                 <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</Label>
                                 <Input value={"jameskn30@yopmail.com"} name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
                             </div>
                             <div>
                                 <Label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</Label>
-                                <Input value="testpass" name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
+                                <Input value="test123" name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
                             </div>
                             <DialogFooter>
                                 <Button
-                                    type="submit"
+                                    formAction={onLoginHandle}
                                     className="w-full mt-4 bg-blue-500 text-white rounded-md shadow-md">Login</Button>
                             </DialogFooter>
                         </form>
