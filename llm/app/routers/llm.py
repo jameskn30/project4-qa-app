@@ -25,10 +25,10 @@ async def group_messages(request: MessagesRequest):
 
     #Use OLLAMA for dev environment, else use GROQ
     logger.info("/group_messages")
-    if env_type == 'dev':
-        llm = load_ollama_llm()
-    else:
+    if env_type == 'prod':
         llm = load_groq_llm()
+    else:
+        llm = load_ollama_llm()
 
     rephrases = rephrase_messages(request.messages, llm)
     

@@ -29,7 +29,7 @@ export default function RootLayout({
         <meta name="description" content="A QA app enable livestreamers and instructors to answer the most relevant questions by followers or students" />
         <meta name="keywords" content="question, answer, livestream, education, utility, saas, ai" />
         <meta name="author" content="Your Name" />
-        <title>Question & Answer</title>
+        <title>BoltQA</title>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

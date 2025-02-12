@@ -20,7 +20,6 @@ import {
     MenubarItem,
     MenubarMenu,
     MenubarSeparator,
-    MenubarShortcut,
     MenubarTrigger,
 } from "@/components/ui/menubar"
 import { createClient } from '@/utils/supabase/component'
@@ -52,7 +51,6 @@ const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData|
                             </MenubarItem>
                             <MenubarSeparator />
                             <MenubarItem>Settings</MenubarItem>
-                            <MenubarSeparator />
                         </MenubarContent>
                     </MenubarMenu>
                 </Menubar>

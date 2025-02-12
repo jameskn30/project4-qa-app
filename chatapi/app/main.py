@@ -4,7 +4,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
 from datetime import datetime
-from routers import chat, llm
+from routers import chat
 import asyncio
 
 # Get environment type
@@ -50,7 +50,6 @@ def healthcheck():
     return {"status": "ok"}
 
 app.include_router(chat.router)
-app.include_router(llm.router)
     
 #TODO:
 # add sentry for monitoring
