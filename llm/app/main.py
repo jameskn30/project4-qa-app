@@ -10,6 +10,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 app = FastAPI()
+ENV_TYPE = os.environ.get('ENV', 'dev')
 
 # SETUP LOGS
 if not os.path.exists("logs"):
@@ -43,6 +44,16 @@ async def healthcheck():
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info(f"Starting the LLM API, env = {os.environ.get('ENV', 'dev')}")
+    logger.info(f"Starting the LLM API, env = {ENV_TYPE}")
     # Only in dev mode
-    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
+    OLLAMA_URL = os.environ.get('OLLAMA_URL','http://localhost')
+    OLLAMA_PORT = os.environ.get('OLLAMA_PORT','11434')
+
+    logger.info(f"ollama URL: {OLLAMA_URL}:{OLLAMA_PORT}")
+
+    if ENV_TYPE == 'dev':
+        reload = True
+    else:
+        reload = False
+    
+    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=reload)

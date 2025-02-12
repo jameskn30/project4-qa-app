@@ -4,6 +4,7 @@
 display_help() {
     echo "Usage: $0 [options]"
     echo "Options: argument order is corresponded to the order of execution"
+    echo "  --install   install dependencies"
     echo "  --purge     Remove all Docker containers before building and running"
     echo "  --down      Shutdown all services related to this and remove images and volumes"
     echo "  --no-cache  Build with no cache" 
@@ -15,6 +16,12 @@ display_help() {
 if [[ " $@ " =~ " --help " ]]; then
     display_help
     exit 0
+fi
+
+# Check if --install is present in the argument list
+if [[ " $@ " =~ " --install " ]]; then
+    echo "Running script/install.sh..."
+    ./script/install.sh
 fi
 
 # Function to remove all Docker containers
