@@ -13,6 +13,5 @@ services:
       - logs:/app/logs
     network_mode: "host"
 
-
 volumes:
   logs:

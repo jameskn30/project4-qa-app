@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  project4-chatapi:
+    build:
+      context: ./chatapi
+      dockerfile: Dockerfile
+    container_name: project4-chatapi
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - logs:/app/logs
+    networks:
+      - project4-network
+    depends_on:
+      - redis
+
+  project4-llm:
+    build:
+      context: ./llm
+      dockerfile: Dockerfile
+    container_name: project4-llm
+    ports:
+      - "8001:8001"
+    environment:
+      - ENV_TYPE=dev
+      - OLLAMA_PORT=11434
+    volumes:
+      - logs:/app/logs
+    network_mode: "host"
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - project4-network
+
+volumes:
+  logs:
+
+networks:
+  project4-network:

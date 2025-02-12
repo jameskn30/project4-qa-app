@@ -29,9 +29,6 @@ fi
 # Check if --down is present in the argument list
 if [[ " $@ " =~ " --purge " ]]; then
     echo "Shutting down all services and removing images and volumes..."
-    all=$(sudo docker ps -a -q)
-    sudo docker stop $all
-    sudo docker rm $all
     sudo docker compose down --rmi all --volumes
 else
     echo "Shutting down all services"

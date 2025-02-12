@@ -122,16 +122,14 @@ const NewRoomPage = () => {
     };
 
     const handleStartRoom = useCallback(_.debounce(async () => {
+        console.log(`handleStartRoom`)
         if (roomId === null) return;
         try {
             const roomExists = await isRoomExists(roomId);
-            if (roomExists) {
-                router.push(`/room/${roomId}`);
-                toast.success('Room created successfully');
-            }
         } catch (error) {
-            console.error('Error creating room:', error);
-            toast.error('Error creating room');
+            console.error('Error creating room:')
+            console.error(error);
+            toast.error('Error while creating room');
         }
     }, 1000), [roomId]);
 
