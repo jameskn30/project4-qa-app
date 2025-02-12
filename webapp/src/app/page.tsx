@@ -1,19 +1,22 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Toaster, toast } from 'sonner';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
 import LoginDialog from '@/app/components/LoginDialog';
 import { createClient } from '@/utils/supabase/component'
 import { Spinner } from '@/components/ui/spinner';
-import { onLoginHandle, onSignOut } from '@/app/utils/auth';
+import { login, signout } from '@/app/utils/auth';
 import { useRouter } from 'next/navigation';
+import SignupForm from './components/SignupForm';
+import LoginForm from './components/LoginForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut, openDialog }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void, openDialog: () => void }) => {
     const scrollToWaitlist = () => {
-        document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+        const element = document.getElementById('waitlist');
+        const yOffset = -100; // Margin of 10px
+        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
     };
 
     return (
@@ -37,7 +40,7 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut, openDialog }:
                                 <button onClick={onSignOut} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Log out</button>
                             </>
                         ) : (
-                            <button onClick={openDialog} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login/Signup</button>
+                            <button onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login/Signup</button>
                         )
                     )
                 }
@@ -45,39 +48,6 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut, openDialog }:
         </nav>
     )
 }
-
-const WaitlistForm = () => {
-    const handleJoinWaitlist = (e) => {
-        toast.success("Joined wait list 👏")
-    }
-
-    return (
-        <Card className="w-full max-w-[400px] mx-auto shadow-xl rounded-xl mb-32 lg:mb-0">
-            <CardHeader>
-                <CardTitle className="text-center">Sign up to join waitlist with 34 others</CardTitle>
-                <p className="text-slate-500 text-sm">free 10 PRO sessions, 250 people per session</p>
-            </CardHeader>
-            <CardContent>
-                <form className="space-y-4">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                        <Input id="name" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
-                    </div>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                        <Input id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
-                    </div>
-                    <div>
-                        <label htmlFor="profession" className="block text-sm font-medium text-gray-700">Profession (Optional)</label>
-                        <Input id="profession" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
-                    </div>
-                    <Button onClick={(e) => handleJoinWaitlist(e)} type='button' className="w-full mt-4 bg-blue-500 hover:bg-blue-800  text-white rounded-md shadow-md">Join Waitlist</Button>
-                </form>
-            </CardContent>
-        </Card>
-
-    );
-};
 
 const Footer = () => {
     return (
@@ -103,6 +73,7 @@ const Footer = () => {
 
 const WelcomePage = () => {
     const [isLoginOpen, setLoginOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("signup");
     const supabase = createClient()
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
@@ -122,7 +93,7 @@ const WelcomePage = () => {
     }, [supabase]);
 
     const handleLogin = async (formData: FormData) => {
-        const success = await onLoginHandle(formData);
+        const success = await login(formData);
         if (success) {
             setIsLoggedIn(true);
             router.push('/dashboard')
@@ -130,7 +101,7 @@ const WelcomePage = () => {
     };
 
     const handleSignOut = async () => {
-        const success = await onSignOut();
+        const success = await signout();
         if (success) {
             toast.success("Logged out successfully")
             setIsLoggedIn(false);
@@ -168,10 +139,20 @@ const WelcomePage = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center" id="waitlist-container">
+                <div className="flex items-center" id="waitlist-container mt-10">
                     <section id="waitlist" className="w-full flex">
-                        <WaitlistForm />
-
+                        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full h-[500px]">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="login">Login</TabsTrigger>
+                                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="login">
+                                <LoginForm/>
+                            </TabsContent>
+                            <TabsContent value="signup">
+                                <SignupForm />
+                            </TabsContent>
+                        </Tabs>
                     </section>
                 </div>
             </div>

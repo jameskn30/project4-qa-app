@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/tabs";
 import { createClient } from '@/utils/supabase/component'
 import Loading from './loading'
-import { onSignOut } from '@/app/utils/auth';
+import { signout } from '@/app/utils/auth';
 
 const NavBar = ({handleSignOut}:{handleSignOut: () => void}) => {
 
@@ -51,7 +51,7 @@ const NewRoomPage = () => {
     const { Canvas } = useQRCode();
 
     const handleSignOut = async () => {
-        await onSignOut();
+        await signout();
         router.push('/');
     };
 
