@@ -2,16 +2,23 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
-import LoginDialog from '@/app/components/LoginDialog';
 import { createClient } from '@/utils/supabase/component'
 import { Spinner } from '@/components/ui/spinner';
-import { login, signout } from '@/app/utils/auth';
+import { login, signout, signup } from '@/app/utils/auth';
 import { useRouter } from 'next/navigation';
 import SignupForm from './components/SignupForm';
 import LoginForm from './components/LoginForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    Menubar,
+    MenubarContent,
+    MenubarItem,
+    MenubarMenu,
+    MenubarShortcut,
+    MenubarTrigger,
+} from "@/components/ui/menubar"
 
-const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void, openDialog: () => void }) => {
+const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void }) => {
     const scrollToWaitlist = () => {
         const element = document.getElementById('waitlist');
         const yOffset = -100; // Margin of 10px
@@ -37,7 +44,19 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
                         isLoggedIn ? (
                             <>
                                 <a href="/dashboard" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Dashboard</a>
-                                <button onClick={onSignOut} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Log out</button>
+                                <Menubar>
+                                    <MenubarMenu>
+                                        <MenubarTrigger className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">
+                                            Menu
+                                        </MenubarTrigger>
+                                        <MenubarContent>
+                                            <MenubarItem>
+                                                Profile <MenubarShortcut>⌘P</MenubarShortcut>
+                                            </MenubarItem>
+                                            <MenubarItem onClick={onSignOut}>Logout</MenubarItem>
+                                        </MenubarContent>
+                                    </MenubarMenu>
+                                </Menubar>
                             </>
                         ) : (
                             <button onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login/Signup</button>
@@ -72,8 +91,8 @@ const Footer = () => {
 };
 
 const WelcomePage = () => {
-    const [isLoginOpen, setLoginOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("signup");
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
     const supabase = createClient()
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
@@ -100,7 +119,9 @@ const WelcomePage = () => {
     }, [isLoggedIn])
 
     const handleLogin = async (formData: FormData) => {
+        setIsLoggingIn(true);
         const { success, error } = await login(formData);
+        setIsLoggingIn(false);
         console.log('login')
         if (success) {
             setIsLoggedIn(true);
@@ -114,7 +135,6 @@ const WelcomePage = () => {
     const handleSignOut = async () => {
         const { success, error } = await signout();
         if (success) {
-            setIsLoggedIn(true);
             setIsLoggedIn(false);
         }
         else if (error) {
@@ -122,10 +142,25 @@ const WelcomePage = () => {
         }
     };
 
-    const openDialog = () => {
-        console.log("open dialog")
-        setLoginOpen(true);
-    };
+    const handleSignup = async (formData: FormData) => {
+
+        const { success, error } = await signup(formData);
+
+        if (success) {
+            setIsLoggedIn(true);
+            toast.success(`Verification email sent to ${formData.get("email") as string}`)
+        }
+        else if (error) {
+            toast.error(error.message)
+        }
+
+
+    }
+
+    // const openDialog = () => {
+    //     console.log("open dialog")
+    //     // setLoginOpen(true);
+    // };
 
     // const handleCloseLogin = () => {
     //     setLoginOpen(false);
@@ -133,7 +168,7 @@ const WelcomePage = () => {
 
     return (
         <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
-            <LandingPageNavbar openDialog={openDialog} isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={handleSignOut} />
+            <LandingPageNavbar isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={handleSignOut} />
             <Toaster expand={true} position='top-center' richColors />
 
             <div className="flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10">
@@ -152,21 +187,19 @@ const WelcomePage = () => {
                 </div>
 
                 <div className="flex items-center" id="waitlist-container mt-10">
-                    <section id="waitlist" className="w-full flex">
+                    <section id="waitlist" className="w-full flex justify-center">
                         <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-[350px] h-[500px]">
-                            <>
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="login">Login</TabsTrigger>
-                                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="login">
-                                    <LoginForm onLoginHandle={handleLogin} />
-                                </TabsContent>
-                                <TabsContent value="signup">
-                                    <SignupForm />
-                                </TabsContent>
-                            </>
-
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="login">Login</TabsTrigger>
+                                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="login">
+                                <LoginForm onLoginHandle={handleLogin} />
+                                {isLoggingIn && <Spinner />}
+                            </TabsContent>
+                            <TabsContent value="signup">
+                                <SignupForm handleSignUp={handleSignup} />
+                            </TabsContent>
                         </Tabs>
                     </section>
                 </div>

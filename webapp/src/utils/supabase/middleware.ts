@@ -31,9 +31,6 @@ export const updateSession = async (request: NextRequest) => {
         )
 
         const { data: { user } } = await supabase.auth.getUser()
-        console.log('middleware')
-        console.log(user)
-        console.log(request.nextUrl.pathname)
 
         if (!user && request.nextUrl.pathname !== '/') {
             console.log('redirecting back to welcome page')

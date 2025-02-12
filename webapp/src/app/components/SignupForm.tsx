@@ -2,12 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
-const SignupForm = () => {
-    const handleJoinWaitlist = (e) => {
-        toast.success("Joined wait list 👏")
-    }
+const SignupForm = ({handleSignUp} : {handleSignUp: (formData: FormData) => void}) => {
 
     const handleGoogleSignIn = () => {
         toast.success("Test sign in with Google 👏")
@@ -23,17 +19,17 @@ const SignupForm = () => {
                 <form className="space-y-4">
                     <div>
                         <label htmlFor="fullname" className="block text-sm font-medium text-gray-700">Full name</label>
-                        <Input name="fullname" id="fullname" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value="James Nguyen" name="fullname" id="fullname" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                        <Input name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value="jameskn3010@yopmail.com" name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                        <Input name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value="test123" name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
-                    <Button onClick={(e) => handleJoinWaitlist(e)} type='button' className="w-full mt-4 bg-blue-500 hover:bg-blue-800 text-white rounded-md shadow-md">Sign up</Button>
+                    <Button formAction={handleSignUp} type='submit' className="w-full mt-4 bg-blue-500 hover:bg-blue-800 text-white rounded-md shadow-md">Sign up</Button>
                 </form>
                 <div className="flex items-center my-4">
                     <hr className="flex-grow border-t border-gray-300" />

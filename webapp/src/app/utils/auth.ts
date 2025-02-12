@@ -37,10 +37,26 @@ export const signout = async () => {
     }
 };
 
-export const onSignin = async () => {
-    const { error } = await supabase.auth.signOut();
+export const signup = async (formData: FormData) => {
+    const fullname = formData.get('fullname') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    const { error } = await supabase.auth.signUp(
+        {
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    full_name: fullname
+                }
+            }
+        },
+    );
 
     if (error) {
+        console.log('sign up error ')
+        console.error(error)
         return {
             success: false,
             error: error

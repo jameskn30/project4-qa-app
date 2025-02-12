@@ -14,24 +14,52 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+    Menubar,
+    MenubarContent,
+    MenubarItem,
+    MenubarMenu,
+    MenubarSeparator,
+    MenubarShortcut,
+    MenubarTrigger,
+} from "@/components/ui/menubar"
 import { createClient } from '@/utils/supabase/component'
 import Loading from './loading'
 import { signout } from '@/app/utils/auth';
+import { Button } from '@/components/ui/button';
 
-const NavBar = ({handleSignOut}:{handleSignOut: () => void}) => {
+type UserData = {
+    username: string,
+    email: string,
+}
+
+const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData|null, handleSignOut: () => void, isLoggingOut: boolean }) => {
 
     return (
         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
             <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <a href="/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">⚡ Bolt.qa</a>
+                <button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">⚡ Bolt.qa</button>
             </div>
-            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <div className='flex gap-2'>
-                    <div className="bg-slate-200 rounded-xl py-1 px-2 flex">
-                        <p>Username here</p>
-                    </div>
-                    <button onClick={handleSignOut} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Logout</button>
-                </div>
+            <div className='flex gap-2 p-3'>
+                <Menubar>
+                    <MenubarMenu>
+                        <MenubarTrigger>
+                            { userdata ? userdata.username : "Loading ..."}
+                        </MenubarTrigger>
+                        <MenubarContent >
+                            <MenubarItem>
+                                email: { userdata ? userdata.email : "Loading ..."}
+                            </MenubarItem>
+                            <MenubarSeparator />
+                            <MenubarItem>Settings</MenubarItem>
+                            <MenubarSeparator />
+                        </MenubarContent>
+                    </MenubarMenu>
+                </Menubar>
+
+                <Button className="bg-red-600" onClick={handleSignOut} disabled={isLoggingOut}>
+                    {isLoggingOut ? <Spinner /> : "Logout"}
+                </Button>
             </div>
         </nav>
     )
@@ -42,16 +70,38 @@ const NewRoomPage = () => {
     const [roomIdInput, setRoomIdInput] = useState('');
     const [joiningLoader, setJoiningLoader] = useState(false);
     const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
 
     const supabase = createClient()
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
 
+    const [userData, setUserData] = useState<UserData|null>(null)
+
     const { Canvas } = useQRCode();
 
+    useEffect(() => {
+
+        const getUserData = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            const userData: UserData = {
+                username: user?.user_metadata.full_name,
+                email: user?.user_metadata.email,
+            }
+
+            setUserData(userData)
+        }
+
+        getUserData()
+
+    }, [supabase])
+
+
     const handleSignOut = async () => {
+        setIsLoggingOut(true);
         await signout();
+        setIsLoggingOut(false);
         router.push('/');
     };
 
@@ -137,7 +187,7 @@ const NewRoomPage = () => {
 
     return (
         <div className="flex items-center flex-col h-screen bg-gradient-to-r from-white to-purple-200 gap-3">
-            <NavBar handleSignOut={handleSignOut} />
+            <NavBar handleSignOut={handleSignOut} userdata={userData} isLoggingOut={isLoggingOut} />
             <Toaster expand={true} position='top-center' richColors />
             <div className="w-full h-full flex justify-center items-center">
                 <Tabs defaultValue="account" className="w-[350px] flex justify-center flex-col items-center">

@@ -22,7 +22,7 @@ const LoginForm = ({onLoginHandle}:{onLoginHandle: (formData: FormData) => void}
                 <form className="space-y-4">
                     <div>
                         <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</Label>
-                        <Input value="jameskn30@yopmail.com" name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value="jameskn3010@yopmail.com" name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <div>
                         <Label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</Label>
