@@ -4,9 +4,9 @@ import { Spinner } from '@/components/ui/spinner';
 
 const Loading = () => {
     return (
-        <div className="flex justify-center items-center h-screen gap-3">
+        <div className="flex flex-col justify-center items-center h-screen gap-3">
             <Spinner />
-            <p>Loading authentication</p>
+            <p>Loading user data</p>
         </div>
     );
 };

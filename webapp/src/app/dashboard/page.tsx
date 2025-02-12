@@ -16,16 +16,23 @@ import {
 } from "@/components/ui/tabs";
 import { createClient } from '@/utils/supabase/component'
 import Loading from './loading'
+import { onSignOut } from '@/app/utils/auth';
 
-const NavBar = () => {
+const NavBar = ({handleSignOut}:{handleSignOut: () => void}) => {
+
     return (
         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
             <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
                 <a href="/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">⚡ Bolt.qa</a>
             </div>
-            {/* <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login</button>
-            </div> */}
+            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
+                <div className='flex gap-2'>
+                    <div className="bg-slate-200 rounded-xl py-1 px-2 flex">
+                        <p>Username here</p>
+                    </div>
+                    <button onClick={handleSignOut} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Logout</button>
+                </div>
+            </div>
         </nav>
     )
 }
@@ -42,6 +49,11 @@ const NewRoomPage = () => {
     const [authLoading, setAuthLoading] = useState(true);
 
     const { Canvas } = useQRCode();
+
+    const handleSignOut = async () => {
+        await onSignOut();
+        router.push('/');
+    };
 
     const fetchRoomId = useCallback(_.debounce(async () => {
         try {
@@ -119,13 +131,13 @@ const NewRoomPage = () => {
     }, [supabase])
 
 
-    if(authLoading) {
-        return <Loading/>
+    if (authLoading) {
+        return <Loading />
     }
 
     return (
         <div className="flex items-center flex-col h-screen bg-gradient-to-r from-white to-purple-200 gap-3">
-            <NavBar />
+            <NavBar handleSignOut={handleSignOut} />
             <Toaster expand={true} position='top-center' richColors />
             <div className="w-full h-full flex justify-center items-center">
                 <Tabs defaultValue="account" className="w-[350px] flex justify-center flex-col items-center">

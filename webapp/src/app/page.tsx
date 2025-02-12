@@ -8,8 +8,10 @@ import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
 import LoginDialog from '@/app/components/LoginDialog';
 import { createClient } from '@/utils/supabase/component'
 import { Spinner } from '@/components/ui/spinner';
+import { onLoginHandle, onSignOut } from '@/app/utils/auth';
+import { useRouter } from 'next/navigation';
 
-const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut, openDialog }: { isLoggedIn: boolean, isLoadingAuth:boolean, onSignOut: () => {}, openDialog: () => void }) => {
+const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut, openDialog }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void, openDialog: () => void }) => {
     const scrollToWaitlist = () => {
         document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
     };
@@ -31,8 +33,8 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut, openDialog }:
                     ) : (
                         isLoggedIn ? (
                             <>
-                            <a href="/dashboard" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Dashboard</a>
-                            <button onClick={onSignOut} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Log out</button>
+                                <a href="/dashboard" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Dashboard</a>
+                                <button onClick={onSignOut} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Log out</button>
                             </>
                         ) : (
                             <button onClick={openDialog} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login/Signup</button>
@@ -104,6 +106,7 @@ const WelcomePage = () => {
     const supabase = createClient()
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
+    const router = useRouter()
 
     useEffect(() => {
         const checkUser = async () => {
@@ -118,35 +121,23 @@ const WelcomePage = () => {
 
     }, [supabase]);
 
-    const onLoginHandle = async (formData: FormData) => {
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
-            toast.error(error.message);
-            return;
+    const handleLogin = async (formData: FormData) => {
+        const success = await onLoginHandle(formData);
+        if (success) {
+            setIsLoggedIn(true);
+            router.push('/dashboard')
         }
-
-        toast.success('Login successful');
-        setIsLoggedIn(true);
     };
 
-    const onSignOut = async () => {
-        console.log("onSignOut")
-        let { error } = await supabase.auth.signOut()
-
-        if (error) {
-            toast.error(error.message)
-            return
+    const handleSignOut = async () => {
+        const success = await onSignOut();
+        if (success) {
+            toast.success("Logged out successfully")
+            setIsLoggedIn(false);
+        } else {
+            toast.error("An error happened while signing out")
         }
-        toast.success('Sign out successful')
-        setIsLoggedIn(false)
-    }
-
-
-
+    };
 
     const openDialog = () => {
         console.log("open dialog")
@@ -157,10 +148,9 @@ const WelcomePage = () => {
         setLoginOpen(false);
     };
 
-
     return (
         <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
-            <LandingPageNavbar openDialog={openDialog} isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={onSignOut}/>
+            <LandingPageNavbar openDialog={openDialog} isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={handleSignOut} />
             <Toaster expand={true} position='top-center' richColors />
 
             <div className="flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10">
@@ -209,7 +199,7 @@ const WelcomePage = () => {
                         <Spinner />
                     </div>
                 ) : (
-                    !isLoggedIn && <LoginDialog isOpen={isLoginOpen} onClose={handleCloseLogin} onLoginHandle={onLoginHandle} />
+                    !isLoggedIn && <LoginDialog isOpen={isLoginOpen} onClose={handleCloseLogin} onLoginHandle={handleLogin} />
                 )
             }
             <Footer />
