@@ -9,26 +9,47 @@ export const login = async (formData: FormData) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-        return false;
+        return {
+            success: false,
+            error: error
+        }
     }
 
-    return true;
+    return {
+        success: true,
+        error: null
+    }
 };
 
 export const signout = async () => {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-        return false;
+        return {
+            success: false,
+            error: error
+        }
     }
-    return true;
+
+    return {
+        success: true,
+        error: null
+    }
 };
 
 export const onSignin = async () => {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-        return false;
+        return {
+            success: false,
+            error: error
+        }
     }
-    return true;
+
+    return {
+        success: true,
+        error: null
+    }
+
 };

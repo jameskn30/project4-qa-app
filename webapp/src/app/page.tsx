@@ -11,7 +11,7 @@ import SignupForm from './components/SignupForm';
 import LoginForm from './components/LoginForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut, openDialog }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void, openDialog: () => void }) => {
+const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void, openDialog: () => void }) => {
     const scrollToWaitlist = () => {
         const element = document.getElementById('waitlist');
         const yOffset = -100; // Margin of 10px
@@ -88,25 +88,37 @@ const WelcomePage = () => {
 
         checkUser();
 
+
         console.log('isLoggedIn ' + isLoggedIn)
 
     }, [supabase]);
 
+    useEffect(() => {
+        if (isLoggedIn) {
+            router.push('/dashboard')
+        }
+    }, [isLoggedIn])
+
     const handleLogin = async (formData: FormData) => {
-        const success = await login(formData);
+        const { success, error } = await login(formData);
+        console.log('login')
         if (success) {
             setIsLoggedIn(true);
             router.push('/dashboard')
         }
+        else if (error) {
+            toast.error(error.message)
+        }
     };
 
     const handleSignOut = async () => {
-        const success = await signout();
+        const { success, error } = await signout();
         if (success) {
-            toast.success("Logged out successfully")
+            setIsLoggedIn(true);
             setIsLoggedIn(false);
-        } else {
-            toast.error("An error happened while signing out")
+        }
+        else if (error) {
+            toast.error(error.message)
         }
     };
 
@@ -115,9 +127,9 @@ const WelcomePage = () => {
         setLoginOpen(true);
     };
 
-    const handleCloseLogin = () => {
-        setLoginOpen(false);
-    };
+    // const handleCloseLogin = () => {
+    //     setLoginOpen(false);
+    // };
 
     return (
         <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
@@ -141,17 +153,20 @@ const WelcomePage = () => {
 
                 <div className="flex items-center" id="waitlist-container mt-10">
                     <section id="waitlist" className="w-full flex">
-                        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full h-[500px]">
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="login">Login</TabsTrigger>
-                                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="login">
-                                <LoginForm/>
-                            </TabsContent>
-                            <TabsContent value="signup">
-                                <SignupForm />
-                            </TabsContent>
+                        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-[350px] h-[500px]">
+                            <>
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="login">Login</TabsTrigger>
+                                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="login">
+                                    <LoginForm onLoginHandle={handleLogin} />
+                                </TabsContent>
+                                <TabsContent value="signup">
+                                    <SignupForm />
+                                </TabsContent>
+                            </>
+
                         </Tabs>
                     </section>
                 </div>
@@ -175,12 +190,10 @@ const WelcomePage = () => {
 
             </div>
             {
-                authLoading ? (
+                authLoading && (
                     <div className="flex justify-center items-center h-full">
                         <Spinner />
                     </div>
-                ) : (
-                    !isLoggedIn && <LoginDialog isOpen={isLoginOpen} onClose={handleCloseLogin} onLoginHandle={handleLogin} />
                 )
             }
             <Footer />

@@ -14,7 +14,7 @@ const SignupForm = () => {
     }
 
     return (
-        <Card className="w-full w-[350px] mx-auto shadow-xl rounded-xl mb-32 lg:mb-0">
+        <Card className="w-full mx-auto shadow-xl rounded-xl mb-32 lg:mb-0">
             <CardHeader>
                 <CardTitle className="text-center">Sign up to join waitlist with 34 others</CardTitle>
                 <p className="text-slate-500 text-sm">free 10 PRO sessions, 250 people per session</p>

@@ -4,17 +4,17 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const LoginForm = () => {
-    const handleJoinWaitlist = (e) => {
-        toast.success("Joined wait list 👏")
-    }
+const LoginForm = ({onLoginHandle}:{onLoginHandle: (formData: FormData) => void}) => {
+    // const handleJoinWaitlist = (e) => {
+    //     toast.success("Joined wait list 👏")
+    // }
 
     const handleGoogleSignIn = () => {
         toast.success("Test sign in with Google 👏")
     }
 
     return (
-        <Card className="w-full w-[350px] mx-auto shadow-xl rounded-xl mb-32 lg:mb-0">
+        <Card className="w-full mx-auto shadow-xl rounded-xl mb-32 lg:mb-0">
             <CardHeader>
                 <CardTitle className="text-center">Login</CardTitle>
             </CardHeader>
@@ -22,13 +22,13 @@ const LoginForm = () => {
                 <form className="space-y-4">
                     <div>
                         <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</Label>
-                        <Input name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value="jameskn30@yopmail.com" name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <div>
                         <Label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</Label>
-                        <Input name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value="test123" name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
-                    <Button onClick={(e) => handleJoinWaitlist(e)} type='button' className="w-full mt-4 bg-blue-500 hover:bg-blue-800 text-white rounded-md shadow-md">Sign up</Button>
+                    <Button formAction={onLoginHandle} type='submit' className="w-full mt-4 bg-blue-500 hover:bg-blue-800 text-white rounded-md shadow-md">Sign in</Button>
                 </form>
                 <div className="flex items-center my-4">
                     <hr className="flex-grow border-t border-gray-300" />
