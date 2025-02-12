@@ -17,6 +17,7 @@ import {
     MenubarShortcut,
     MenubarTrigger,
 } from "@/components/ui/menubar"
+import { Button } from "@/components/ui/button"
 
 const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void }) => {
     const scrollToWaitlist = () => {
@@ -28,38 +29,23 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
 
     return (
         <nav className="sticky top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
-            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">⚡ Bolt.qa</button>
+            <div className="flex p-1 space-2 bg-white  shadow-xl rounded-2xl border border-slate-200">
+                <Button variant={'ghost'} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">⚡ Bolt.qa</Button>
             </div>
-            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <a href="https://jameskn30.github.io/portfolio/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl" target="_blank">About me</a>
-                <button onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Wait list</button>
+            <div className="flex p-1 gap-3 bg-white shadow-xl rounded-2xl border border-slate-200">
+                <Button variant={'ghost'} as="a" href="https://jameskn30.github.io/portfolio/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none" target="_blank">About me</Button>
+                <Button variant={'ghost'} onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Wait list</Button>
             </div>
 
-            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
+            <div className="flex p-1 space-2 bg-white shadow-xl rounded-2xl border border-slate-200">
                 {
                     isLoadingAuth ? (
                         <Spinner />
                     ) : (
-                        isLoggedIn ? (
-                            <>
-                                <a href="/dashboard" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Dashboard</a>
-                                <Menubar>
-                                    <MenubarMenu>
-                                        <MenubarTrigger className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">
-                                            Menu
-                                        </MenubarTrigger>
-                                        <MenubarContent>
-                                            <MenubarItem>
-                                                Profile <MenubarShortcut>⌘P</MenubarShortcut>
-                                            </MenubarItem>
-                                            <MenubarItem onClick={onSignOut}>Logout</MenubarItem>
-                                        </MenubarContent>
-                                    </MenubarMenu>
-                                </Menubar>
-                            </>
-                        ) : (
-                            <button onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login/Signup</button>
+                        isLoggedIn === false ? (
+                            <Button variant={'ghost'} onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Login/Signup</Button>
+                        ): (
+                            <Button variant={'ghost'} as="a" href="/dashboard" onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Dashboard</Button>
                         )
                     )
                 }

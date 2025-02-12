@@ -37,8 +37,8 @@ const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData|
 
     return (
         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
-            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">⚡ Bolt.qa</button>
+            <div className="flex p-1 space-2 bg-white shadow-xl rounded-2xl border border-slate-200">
+                <Button variant={'ghost'}  className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">⚡ Bolt.qa</Button>
             </div>
             <div className='flex gap-2 p-3'>
                 <Menubar>
@@ -57,7 +57,7 @@ const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData|
                     </MenubarMenu>
                 </Menubar>
 
-                <Button className="bg-red-600" onClick={handleSignOut} disabled={isLoggingOut}>
+                <Button variant={"destructive"} onClick={handleSignOut} disabled={isLoggingOut}>
                     {isLoggingOut ? <Spinner /> : "Logout"}
                 </Button>
             </div>
@@ -213,12 +213,12 @@ const NewRoomPage = () => {
                                 />
 
                                 <div className="flex gap-3">
-                                    <button
+                                    <Button
                                         onClick={handleJoinRoom}
-                                        className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
+                                        className="flex-1 bg-white text-black py-2 px-4 hover:bg-blue-300"
                                     >
                                         Join
-                                    </button>
+                                    </Button>
                                     {joiningLoader && <Spinner />}
                                 </div>
                             </div>
@@ -231,9 +231,9 @@ const NewRoomPage = () => {
                                 <>
                                     <div className="flex gap-3 justify-center">
                                         <p className="text-4xl flex-1 text-center">{roomId}</p>
-                                        <button className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2" onClick={handleFetchRandomId}>
+                                        <Button  variant={'ghost'}  className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none" onClick={handleFetchRandomId}>
                                             <FaRandom />
-                                        </button>
+                                        </Button>
                                     </div>
                                     <div className='flex justify-center'>
                                         <Canvas
@@ -250,12 +250,13 @@ const NewRoomPage = () => {
                                             }}
                                         />
                                     </div>
-                                    <button
+                                    <Button
+                                    variant={'ghost'} 
                                         onClick={handleStartRoom}
-                                        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
+                                        className="bg-white text-blue-500 py-2 px-4 rounded hover:bg-blue-700 border-none"
                                     >
                                         Start room
-                                    </button>
+                                    </Button>
                                 </>
                             )}
                         </div>
