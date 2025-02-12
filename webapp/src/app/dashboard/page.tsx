@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { useQRCode } from 'next-qrcode';
 import { FaRandom } from "react-icons/fa";
@@ -14,6 +14,8 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs";
+import { createClient } from '@/utils/supabase/component'
+import Loading from './loading'
 
 const NavBar = () => {
     return (
@@ -21,13 +23,12 @@ const NavBar = () => {
             <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
                 <a href="/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">⚡ Bolt.qa</a>
             </div>
-            <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
+            {/* <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
                 <button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login</button>
-            </div>
+            </div> */}
         </nav>
     )
 }
-
 
 const NewRoomPage = () => {
     const [roomId, setRoomId] = useState(null);
@@ -35,6 +36,10 @@ const NewRoomPage = () => {
     const [joiningLoader, setJoiningLoader] = useState(false);
     const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
     const router = useRouter();
+
+    const supabase = createClient()
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [authLoading, setAuthLoading] = useState(true);
 
     const { Canvas } = useQRCode();
 
@@ -99,6 +104,24 @@ const NewRoomPage = () => {
         }
     };
 
+    useEffect(() => {
+
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setIsLoggedIn(!!session);
+            setAuthLoading(false);
+        };
+
+        checkUser();
+
+        console.log('isLoggedIn ' + isLoggedIn)
+
+    }, [supabase])
+
+
+    if(authLoading) {
+        return <Loading/>
+    }
 
     return (
         <div className="flex items-center flex-col h-screen bg-gradient-to-r from-white to-purple-200 gap-3">
