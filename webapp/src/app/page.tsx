@@ -1,16 +1,17 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Toaster, toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
 import LoginDialog from '@/app/components/LoginDialog';
+import { createClient } from '@/utils/supabase/component'
+import { Spinner } from '@/components/ui/spinner';
 
-
-const LandingPageNavbar = ({ openDialog }: { openDialog: () => void }) => {
+const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut, openDialog }: { isLoggedIn: boolean, isLoadingAuth:boolean, onSignOut: () => {}, openDialog: () => void }) => {
     const scrollToWaitlist = () => {
-        document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth'});
+        document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
     };
 
     return (
@@ -24,7 +25,20 @@ const LandingPageNavbar = ({ openDialog }: { openDialog: () => void }) => {
             </div>
 
             <div className="flex p-1 space-2 bg-white bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl border border-slate-200">
-                <button onClick={openDialog} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login/Signup</button>
+                {
+                    isLoadingAuth ? (
+                        <Spinner />
+                    ) : (
+                        isLoggedIn ? (
+                            <>
+                            <a href="/dashboard" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Dashboard</a>
+                            <button onClick={onSignOut} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Log out</button>
+                            </>
+                        ) : (
+                            <button onClick={openDialog} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl">Login/Signup</button>
+                        )
+                    )
+                }
             </div>
         </nav>
     )
@@ -72,10 +86,10 @@ const Footer = () => {
                     <ul className="flex justify-center items-center space-x-4">
                         <div className="flex items-center space-x-4 ">
 
-                        <li><a href="#" className="hover:underline" ><FaLinkedin/></a></li>
-                        <li><a href="#" className="hover:underline" ><FaXTwitter/></a></li>
-                        <li><a href="#" className="hover:underline" ><FaGithub/></a></li>
-                        <li><a href="#" className="hover:underline" ><FaInstagram/></a></li>
+                            <li><a href="#" className="hover:underline" ><FaLinkedin /></a></li>
+                            <li><a href="#" className="hover:underline" ><FaXTwitter /></a></li>
+                            <li><a href="#" className="hover:underline" ><FaGithub /></a></li>
+                            <li><a href="#" className="hover:underline" ><FaInstagram /></a></li>
                         </div>
                         <li><a href="#" className="hover:underline" ><span className="font-bold">email: </span>jameskn30@gmail.com</a></li>
                     </ul>
@@ -87,8 +101,55 @@ const Footer = () => {
 
 const WelcomePage = () => {
     const [isLoginOpen, setLoginOpen] = useState(false);
+    const supabase = createClient()
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [authLoading, setAuthLoading] = useState(true);
+
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setIsLoggedIn(!!session);
+            setAuthLoading(false);
+        };
+
+        checkUser();
+
+        console.log('isLoggedIn ' + isLoggedIn)
+
+    }, [supabase]);
+
+    const onLoginHandle = async (formData: FormData) => {
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+            toast.error(error.message);
+            return;
+        }
+
+        toast.success('Login successful');
+        setIsLoggedIn(true);
+    };
+
+    const onSignOut = async () => {
+        console.log("onSignOut")
+        let { error } = await supabase.auth.signOut()
+
+        if (error) {
+            toast.error(error.message)
+            return
+        }
+        toast.success('Sign out successful')
+        setIsLoggedIn(false)
+    }
+
+
+
 
     const openDialog = () => {
+        console.log("open dialog")
         setLoginOpen(true);
     };
 
@@ -96,9 +157,10 @@ const WelcomePage = () => {
         setLoginOpen(false);
     };
 
+
     return (
         <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
-            <LandingPageNavbar openDialog={openDialog} />
+            <LandingPageNavbar openDialog={openDialog} isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={onSignOut}/>
             <Toaster expand={true} position='top-center' richColors />
 
             <div className="flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10">
@@ -128,7 +190,7 @@ const WelcomePage = () => {
             <div className='w-full h-96 bg-slate-300'>
 
             </div>
-            
+
 
             {/* Pricing section */}
             <div className='w-full h-96 bg-blue-300'>
@@ -141,9 +203,15 @@ const WelcomePage = () => {
             <div className='w-full h-96 bg-yellow-300'>
 
             </div>
-
-
-            <LoginDialog isOpen={isLoginOpen} onClose={handleCloseLogin} />
+            {
+                authLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                        <Spinner />
+                    </div>
+                ) : (
+                    !isLoggedIn && <LoginDialog isOpen={isLoginOpen} onClose={handleCloseLogin} onLoginHandle={onLoginHandle} />
+                )
+            }
             <Footer />
         </div>
     );

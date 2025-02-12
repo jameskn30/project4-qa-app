@@ -8,34 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import { createClient } from '@/utils/supabase/component'
 
-const LoginDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
-    const supabase = createClient()
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+interface LoginDialogProps {
+    isOpen: boolean
+    onClose: () => void
+    onLoginHandle: (formData: FormData) => void
+}
 
-    useEffect(() => {
-        const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setIsLoggedIn(!!session);
-        };
-
-        checkUser();
-    }, [supabase]);
-
-    const onLoginHandle = async (formData: FormData) => {
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
-            toast.error(error.message);
-            return;
-        }
-
-        toast.success('Login successful');
-        setIsLoggedIn(true);
-    };
-
+const LoginDialog = ({ isOpen, onClose, onLoginHandle }: LoginDialogProps) => {
+   
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">
@@ -44,7 +24,7 @@ const LoginDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
                         ⚡ Bolt.qa
                     </DialogTitle>
                     <DialogDescription>
-                        {isLoggedIn ? 'Logged In' : 'Not Logged In'}
+                        Login or sign up
                     </DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="login" className="w-full h-[350px] items-center">
@@ -53,7 +33,7 @@ const LoginDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
                         <TabsTrigger value="signup">Sign Up</TabsTrigger>
                     </TabsList>
                     <TabsContent value="login">
-                        <form className="space-y-4" >
+                        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onLoginHandle(new FormData(e.currentTarget)); }}>
                             <div>
                                 <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</Label>
                                 <Input value={"jameskn30@yopmail.com"} name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
@@ -64,7 +44,7 @@ const LoginDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
                             </div>
                             <DialogFooter>
                                 <Button
-                                    formAction={onLoginHandle}
+                                    type="submit"
                                     className="w-full mt-4 bg-blue-500 text-white rounded-md shadow-md">Login</Button>
                             </DialogFooter>
                         </form>
