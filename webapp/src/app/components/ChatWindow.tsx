@@ -6,7 +6,6 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { useRoomContext } from '@/app/room/[roomId]/RoomContext'
 import { useRouter, useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input'
-import './ChatWindow.css'; // Import the CSS file for animations
 import _ from 'lodash'
 import { generateRandomUsername } from '@/utils/common';
 
@@ -46,7 +45,7 @@ const MessageListItem = ({ username, content, flag }: Message) => {
 
 const ChatWindow = () => {
   const params = useParams<{ roomId: string }>()
-  const roomId = params?.roomId
+  const roomId = params?.roomId? decodeURIComponent(params.roomId): null
   const wsRef = useRef<WebSocket | null>(null);
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([]);
@@ -69,7 +68,7 @@ const ChatWindow = () => {
     if (command === 'leave') {
       wsRef.current?.close();
       setCommand(null);
-      router.push("/")
+      router.push("/dashboard")
     }
   }, [command])
 

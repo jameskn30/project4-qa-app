@@ -24,7 +24,7 @@ const Navbar = ({ }: NavbarProps) => {
   const { command, setCommand } = useRoomContext()
   const params = useParams<{ roomId: string }>()
 
-  const roomId = params?.roomId
+  const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null
 
   const handleOnLeave = () => {
     setCommand("leave")

@@ -9,15 +9,27 @@ import string
 from redis.asyncio import Redis
 import json
 import os
+from supabase import create_client, Client
 
 logger = logging.getLogger("chat")
 
 router = APIRouter()
 
+# INIT REDIS =======
+
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 
 redis_client = Redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}")
+
+# INIT SUPABASE =======
+
+#TODO: this is not safe, load from env
+# SERVICE_KEY is sensitive, it can by pass all row level policy in supabase. DANGEROUS
+SUPABASE_URL="https://dypuleqmsczlryhqbuoo.supabase.co"
+SUPABASE_SERVICE_KEy="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5cHVsZXFtc2N6bHJ5aHFidW9vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczOTI5MTAwMiwiZXhwIjoyMDU0ODY3MDAyfQ.UxNaQoLzNsspeVWPBRsbAntWKttBTHJMKWtpQt3d0EU"
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEy)
 
 #==== 
 
@@ -54,12 +66,16 @@ class UserConnection:
     user_host: str = ""
     websocket: WebSocket = None
 
+# WEB SOCKET
+
 class WebSocketManager:
     def __init__(self):
         self.active_room: Dict[str, List[str]] = {}
         self.user_id_to_conn: Dict[str, UserConnection] = {}
         self.user_id_to_room: Dict[str, str] = {}
-        # self.room_to_username: Dict[str, Set[str]] = {}  # Change to Set for uniqueness
+
+        #Test data for development
+        self.active_room['test room 10'] = []
     
     def _is_username_unique(self, room_id: str, username: str) -> bool:
         for user_id in self.active_room[room_id]:
@@ -84,13 +100,6 @@ class WebSocketManager:
 
         if room_id not in self.active_room:
             self.active_room[room_id] = []
-            # self.room_to_username[room_id] = set()  # Initialize set for usernames
-
-        # if username in self.room_to_username[room_id]:
-        #     msg = f"Username {username} is already taken in room {room_id}"
-        #     await websocket.close(code=1000, reason=msg)
-        #     # raise HTTPException(status_code=403, detail=msg)
-        #     raise AssertionError(f'User {username} exists in room {room_id}')
 
         self.active_room[room_id].append(user_id)
         self.user_id_to_room[user_id] = room_id
@@ -151,6 +160,7 @@ class WebSocketManager:
 
 websocket_manager = WebSocketManager()
 
+# ROOM
 @router.get("/list_members/{room_id}")
 def list_members(room_id: str):
     logger.info(f"Listing members in room {room_id}")
@@ -179,7 +189,6 @@ async def create_room(req: RoomRequest):
     room_id = req.roomId
     if not room_id:
         raise HTTPException(status_code=400, detail="Room ID is required")
-
 
     if room_id in websocket_manager.active_room:
         detail = f"room {room_id} already exists"
@@ -220,6 +229,22 @@ async def is_username_unique(req: RoomRequest):
     if not websocket_manager._is_username_unique(room_id, username) or req.username == 'system':
         raise HTTPException(status_code=400, detail=f"Username {username} is already taken in room {room_id}")
     return {"message": "OK"}
+
+
+# SUPABASE
+
+@router.get("/fetch_room/{room_id}")
+async def check_room_in_supabase(room_id: str):
+    logger.info(f"Checking room {room_id} in Supabase")
+    response = supabase.table("room").select("*").eq("id", room_id).execute()
+    logger.info(f"Response from Supabase: {response}")
+    if response.data:
+        return {"message": "Room found", "data": response.data}
+    else:
+        raise HTTPException(status_code=404, detail=f"Room {room_id} not found in Supabase")
+
+
+# WEBSOCKET 
 
 @router.websocket("/join/{room_id}/{username}")
 async def join_room(websocket: WebSocket, room_id: str, username: str):

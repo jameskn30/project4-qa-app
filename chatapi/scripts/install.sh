@@ -9,7 +9,7 @@ fi
 
 source .env/bin/activate
 
-pip install websockets fastapi redis uvicorn 
+pip install websockets fastapi redis uvicorn supabase
 
 echo "Freezing requirements.txt"
 

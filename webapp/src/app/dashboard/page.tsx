@@ -7,7 +7,7 @@ import { Toaster, toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import _ from 'lodash';
 import { useRouter } from 'next/navigation';
-import { isRoomExists } from '@/utils/room';
+import { createRoom } from '@/utils/room';
 import {
     Tabs,
     TabsContent,
@@ -125,9 +125,16 @@ const NewRoomPage = () => {
         console.log(`handleStartRoom`)
         if (roomId === null) return;
         try {
-            const roomExists = await isRoomExists(roomId);
+            // const roomExists = await isRoomExists(roomId);
+            if (roomId !== ''){
+                const res = await createRoom(roomId);
+                if (res) {
+                    router.push(`/room/${roomId}`);
+                } else {
+                    toast.error('Error while creating room');
+                }
+            }
         } catch (error) {
-            console.error('Error creating room:')
             console.error(error);
             toast.error('Error while creating room');
         }
@@ -259,7 +266,6 @@ const NewRoomPage = () => {
                     </TabsContent>
                 </Tabs>
             </div>
-
         </div>
     );
 };

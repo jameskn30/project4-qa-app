@@ -36,11 +36,9 @@ logger = logging.getLogger(__name__)
 # SETUP ROUTES
 app.include_router(llm.router, prefix="/llm")
 
-
 @app.get("/healthcheck")
 async def healthcheck():
     return {"message": "ok"}
-
 
 if __name__ == "__main__":
     import uvicorn

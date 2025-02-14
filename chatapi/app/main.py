@@ -65,4 +65,7 @@ if __name__ == "__main__":
     # SERVER_WORKERS = int(os.getenv("SERVER_WORKERS", 1))
     logger.info("Starting the FastAPI application")
     logger.info("ENV_TYPE: " +  env_type)
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    reload = False
+    if env_type == "dev":
+        reload = True
+    uvicorn.run('main:app', host="0.0.0.0", port=8000 , reload = reload )

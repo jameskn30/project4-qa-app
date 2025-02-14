@@ -11,16 +11,17 @@ import Loading from './loading'
 const RoomPage: React.FC = () => {
   const router = useRouter();
   const params = useParams<{ roomId: string }>();
-  const roomId = params?.roomId;
+  const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     //render the loading 
+    console.log('room id = ' + roomId)
     const checkRoomExists = async () => {
       if (!roomId || !(await isRoomExists(roomId))) {
-        router.push('/404');
+        // router.push('/404');
         throw new Error(`Room ${roomId} not found`);
-      }
+      } 
       setLoading(false)
     };
 
