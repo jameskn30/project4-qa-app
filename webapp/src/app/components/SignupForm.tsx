@@ -2,8 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 const SignupForm = ({handleSignUp} : {handleSignUp: (formData: FormData) => void}) => {
+    const [email, setEmail] = useState("jameskn_test@yopmail.com");
+    const [password, setPassword] = useState("test123");
+    const [fullName, setFullName] = useState("James Nguyen");
 
     const handleGoogleSignIn = () => {
         toast.success("Test sign in with Google 👏")
@@ -19,15 +23,15 @@ const SignupForm = ({handleSignUp} : {handleSignUp: (formData: FormData) => void
                 <form className="space-y-4">
                     <div>
                         <label htmlFor="fullname" className="block text-sm font-medium text-gray-700">Full name</label>
-                        <Input value="James Nguyen" name="fullname" id="fullname" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value={fullName} onChange={(e)=>setFullName(e.target.value)} name="fullname" id="fullname" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                        <Input value="jameskn3010@yopmail.com" name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value={email} onChange={(e) => setEmail(e.target.value)} name="email" id="email" type="email" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                        <Input value="test123" name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
+                        <Input value={password} onChange={(e) => setPassword(e.target.value)} name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
                     <Button formAction={handleSignUp} type='submit' className="w-full mt-4 bg-blue-500 hover:bg-blue-800 text-white rounded-md shadow-md">Sign up</Button>
                 </form>

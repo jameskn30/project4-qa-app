@@ -139,18 +139,7 @@ const WelcomePage = () => {
         else if (error) {
             toast.error(error.message)
         }
-
-
     }
-
-    // const openDialog = () => {
-    //     console.log("open dialog")
-    //     // setLoginOpen(true);
-    // };
-
-    // const handleCloseLogin = () => {
-    //     setLoginOpen(false);
-    // };
 
     return (
         <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
