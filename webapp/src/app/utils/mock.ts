@@ -1,4 +1,5 @@
-import Message from '@/app/components/ChatWindow';
+import { Message } from '@/app/components/ChatWindow';
+import { QuestionItem } from '@/app/components/QuestionList';
 
 const randomMessages = [
     "Hello!",
@@ -40,11 +41,28 @@ const randomFlags = [
     "🇺🇸", "🇨🇦", "🇬🇧", "🇫🇷", "🇩🇪", "🇯🇵", "🇮🇳", "🇧🇷", "🇦🇺", "🇮🇹", "🇪🇸", "🇲🇽", "🇨🇳", "🇷🇺", "🇰🇷", "🇸🇪", "🇳🇱", "🇳🇴", "🇩🇰", "🇫🇮"
 ];
 
+export const generateRandomMessages = (count: number): Message[] => {
+    return Array.from({ length: count }, () => ({
+        username: randomUsernames[Math.floor(Math.random() * randomUsernames.length)],
+        content: randomMessages[Math.floor(Math.random() * randomMessages.length)],
+        flag: randomFlags[Math.floor(Math.random() * randomFlags.length)],
+    }));
+};
 
-// export const genRandomMessages = (): Message[] => (Array.from({ length: 20 }, () => (
-//     new Message(
-//         randomUsernames[Math.floor(Math.random() * randomUsernames.length)],
-//         randomMessages[Math.floor(Math.random() * randomMessages.length)],
-//         randomFlags[Math.floor(Math.random() * randomFlags.length)],
-//     )
-// )));
+export const generateRandomQuestions = (count: number): QuestionItem[] => {
+    const words = [
+        "What", "is", "the", "purpose", "of", "this", "app", "How", "do", "I", "use", "chat", "feature", "Can", "upvote", "questions", "Why", "does", "it", "work", "like", "that", "Explain", "more", "about", "functionality", "Is", "there", "any", "documentation", "available"
+    ];
+    return Array.from({ length: count }, (_, i) => {
+        const length = Math.floor(Math.random() * (30 - 10 + 1)) + 10;
+        let question = "";
+        for (let j = 0; j < length; j++) {
+            question += words[Math.floor(Math.random() * words.length)] + " ";
+        }
+        return {
+            id: i + 1,
+            content: question.trim() + "?",
+            votes: Math.floor(Math.random() * 100)
+        };
+    });
+};

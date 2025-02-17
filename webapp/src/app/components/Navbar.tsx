@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import clsx from 'clsx'
-import { useRoomContext } from '@/app/room/[roomId]/RoomContext'
 import { useParams } from 'next/navigation'
 
 interface ButtonLinkProp extends React.LinkHTMLAttributes<HTMLLinkElement> {
@@ -18,16 +17,17 @@ const ButtonLink = ({ children, href, className, ...props }: ButtonLinkProp) => 
   )
 }
 
-interface NavbarProps {}
+interface NavbarProps {
+  onLeave: () => void
+}
 
-const Navbar = ({ }: NavbarProps) => {
-  const { command, setCommand } = useRoomContext()
+const Navbar = ({ onLeave }: NavbarProps) => {
   const params = useParams<{ roomId: string }>()
 
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null
 
   const handleOnLeave = () => {
-    setCommand("leave")
+    onLeave()
   }
 
   return (

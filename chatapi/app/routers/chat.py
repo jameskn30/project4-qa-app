@@ -131,7 +131,6 @@ class WebSocketManager:
         logger.info(f"Sending group message from user_id {user_id}: {message}")
         room_id = self.user_id_to_room[user_id]
         username = self.user_id_to_conn[user_id].username
-        # await self._broadcast(room_id, message, username)
         await self._broadcast_redis(room_id, message, username)
 
     async def notify_new_member(self, user_id: str, room_id: str):
@@ -140,20 +139,21 @@ class WebSocketManager:
         await self._broadcast_redis_system(room_id, f'{username} just joined')
 
     async def _broadcast_redis(self, room_id: str, message: str, username: str):
-        data = {'message': message, 'username': username}
+        data = {'message': message, 'username': username, 'type': 'message'}
         logger.info(f"Broadcasting message with redis pubsub in room {room_id} from {username}: {message}")
         await redis_client.publish(f"chat:{room_id}", json.dumps(data))
 
     async def _broadcast_redis_system(self, room_id: str, message: str):
-        data = {'message': message, 'username': 'system'}
+        data = {'message': message, 'username': 'system', 'type': 'message'}
         logger.info(f"Broadcast room {room_id} from system: {message}")
         await redis_client.publish(f"chat:{room_id}", json.dumps(data))
 
     async def _broadcast(self, room_id: str, message: str, username: str):
+        data = {'message': message, 'username': username, 'type': 'message'}
         logger.info(f"Broadcasting message in room {room_id} from {username}: {message}")
         for user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
-            await user_conn.websocket.send_json({'message': message, 'username': username})
+            await user_conn.websocket.send_json(data)
     
     def get_user_conn(self, user_id):
         return self.user_id_to_conn.get(user_id)

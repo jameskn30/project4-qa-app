@@ -1,35 +1,52 @@
 'use client'
+import { useState, useEffect, useRef, useCallback } from 'react';
 import QuestionList from '@/app/components/QuestionList';
-import React, { useCallback, useRef, useEffect, useState } from 'react';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
 import { isRoomExists } from '@/utils/room';
 import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
-import Error from './error';
+import { generateRandomMessages, generateRandomQuestions } from '@/app/utils/mock';
 import { toast } from 'sonner';
 import { generateRandomUsername } from '@/utils/common';
+import { Message } from '@/app/components/ChatWindow';
+import {QuestionItem} from '@/app/components/QuestionList';
 
 const RoomPage: React.FC = () => {
+  const router = useRouter();
   const params = useParams<{ roomId: string }>();
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
   const [loading, setLoading] = useState(true);
-  const [roomExists, setRoomExists] = useState(true);
-  const [username, setUsername] = useState<string>(generateRandomUsername());
   const wsRef = useRef<WebSocket | null>(null);
+  const [username, setUsername] = useState<string>('');
+  const [messages, setMessages] = useState<Message[]>(generateRandomMessages(10));
+  const [questions, setQuestions] = useState<QuestionItem[]>(generateRandomQuestions(10));
+
+  useEffect(() => {
+    setUsername(generateRandomUsername());
+  }, []);
+
+  useEffect(() => {
+    const checkRoomExists = async () => {
+      if (!roomId || !(await isRoomExists(roomId))) {
+        throw new Error(`Room ${roomId} not found`);
+      }
+      setLoading(false);
+    };
+
+    checkRoomExists();
+  }, [roomId]);
 
   const connectWebSocket = useCallback(async () => {
-
-    if (username === null || roomId === null) {
+    if (username === null) {
+      toast.error('Internal error');
       return;
     }
 
-    console.log('connect websocket');
+    console.log('Connecting to WebSocket...');
     const response = await fetch(`/api/chat?roomId=${roomId}&username=${username}`);
-
     const data = await response.json();
-
     const ws = new WebSocket(data.websocketUrl);
 
     wsRef.current = ws;
@@ -37,6 +54,15 @@ const RoomPage: React.FC = () => {
     ws.onopen = () => {
       console.log('WebSocket connection established');
       toast.success("Joined room");
+    };
+
+    ws.onmessage = (event) => {
+      console.log('WebSocket message received:', event.data);
+      const parsedData = JSON.parse(event.data);
+      const content = parsedData.message;
+      const username = parsedData.username;
+      const message: Message = { username, content, flag: '🇺🇸' };
+      setMessages((prevMessages) => [...prevMessages, message]);
     };
 
     ws.onclose = () => {
@@ -54,44 +80,48 @@ const RoomPage: React.FC = () => {
   }, [roomId, username]);
 
   useEffect(() => {
-    const checkRoomExists = async () => {
-      console.log('if room exists')
-      if (!roomId || !(await isRoomExists(roomId))) {
-        setRoomExists(false);
-      }
-      setLoading(false);
-    };
-
-    checkRoomExists();
-
-    if (username && roomExists) {
+    if (!loading && username) {
       const cleanup = connectWebSocket();
       return () => {
+        console.log('cleaned up ')
         cleanup.then((close) => close && close());
       };
     }
-  }, [connectWebSocket, username, roomExists]);
+  }, [connectWebSocket, loading, username]);
 
   if (loading) {
     return <Loading />;
   }
 
-  if (!roomExists) {
-    return <Error />;
-  }
+  const onSent = (content: string) => {
+    try{
+      if (wsRef.current) {
+        console.log('Sending message:', content);
+        wsRef.current.send(content);
+      }
+    } catch(error){
+      toast.error("Internal error")
+    }
+  };
+
+  const onLeave = () => {
+    console.log('Leaving room');
+    wsRef.current?.close();
+    router.push("/");
+  };
 
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen" data-testid="container">
-        <Navbar />
+        <Navbar onLeave={onLeave} />
         <div className="flex flex-1 overflow-hidden">
           <div className="hidden lg:flex lg:flex-1">
           </div>
           <div className="flex-1 overflow-y-auto">
-            <QuestionList />
+            <QuestionList questions={questions}/>
           </div>
           <div className="flex-1 border-s-2">
-            <ChatWindow wsRef={wsRef} username={username} />
+            <ChatWindow messages={messages} onSent={onSent} />
           </div>
         </div>
       </div>

@@ -13,26 +13,23 @@ const Question = ({ order, text }: { order: number; text: string }) => {
     );
 };
 
-const generateRandomQuestion = () => {
-    const words = [
-        "What", "is", "the", "purpose", "of", "this", "app", "How", "do", "I", "use", "chat", "feature", "Can", "upvote", "questions", "Why", "does", "it", "work", "like", "that", "Explain", "more", "about", "functionality", "Is", "there", "any", "documentation", "available"
-    ];
-    const length = Math.floor(Math.random() * (30 - 10 + 1)) + 10;
-    let question = "";
-    for (let i = 0; i < length; i++) {
-        question += words[Math.floor(Math.random() * words.length)] + " ";
-    }
-    return question.trim() + "?";
-};
+export type QuestionItem = {
+    content: string
+}
 
-const QuestionList = () => {
-    const questions = Array.from({ length: 10 }, () => generateRandomQuestion());
+interface QuestionListProps {
+    questions: QuestionItem[]
+
+}
+
+const QuestionList = ({questions}: QuestionListProps ) => {
+    // const questions = Array.from({ length: 10 }, () => generateRandomQuestion());
 
     return (
         <div className="p-4 overflow-y-auto h-full flex flex-col gap-2">
             <p className="text-lg text-center font-bold">Questions</p>
             {questions.map((question, index) => (
-                <Question key={index} order={index + 1} text={question} />
+                <Question key={index} order={index + 1} text={question.content} />
             ))}
         </div>
     );
