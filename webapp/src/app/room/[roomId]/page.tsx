@@ -129,8 +129,25 @@ const RoomPage: React.FC = () => {
 
   const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setUsername(usernameInput);
-    setShowDialog(false);
+    try {
+      const response = await fetch('/chatapi/is_username_unique', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roomId, username: usernameInput }),
+      });
+
+      if (response.ok) {
+        setUsername(usernameInput);
+        setShowDialog(false);
+      } else {
+        const data = await response.json();
+        toast.error(data.detail || 'Username is already taken');
+      }
+    } catch (error) {
+      toast.error('Error checking username uniqueness');
+    }
   };
 
   return (
@@ -150,7 +167,6 @@ const RoomPage: React.FC = () => {
         {showDialog && (
           <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm">
             <form onSubmit={handleUsernameSubmit} className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100">
-
               <CardHeader>
                 <CardTitle>
                   What's your name? ☺️
