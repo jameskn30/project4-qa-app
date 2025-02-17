@@ -59,8 +59,7 @@ const JoinRoomForm = () => {
                             id="roomCode"
                             placeholder="Room Code"
                         />
-                        <Button type="submit" variant="primary" className="mt-2" disabled={joiningLoader} 
-                        className="bg-blue-500 text-white hover:bg-blue-700 ">
+                        <Button type="submit" variant="primary" disabled={joiningLoader} className="bg-blue-500 text-white hover:bg-blue-700 ">
                             {joiningLoader ? <Spinner /> : 'Join Room'}
                         </Button>
                     </form>

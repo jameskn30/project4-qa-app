@@ -11,6 +11,7 @@ import LoginForm from './components/LoginForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button"
 import Link from 'next/link';
+import JoinRoomForm from './components/JoinRoomForm';
 
 const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void }) => {
     const scrollToWaitlist = () => {
@@ -160,7 +161,16 @@ const WelcomePage = () => {
                     </div>
                 </div>
 
-                {!isLoggedIn && (
+                <div className="flex-1 justify-center items-center">
+                    <JoinRoomForm/>
+                </div>
+
+
+            </div>
+
+            {/* Quick demo sections */}
+            <div className='w-full h-96 bg-slate-300'>
+            {!isLoggedIn && (
                     <div className="flex items-center" id="waitlist-container mt-10">
                         <section id="waitlist" className="w-full flex justify-center">
                             <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-[350px] h-[500px]">
@@ -179,11 +189,6 @@ const WelcomePage = () => {
                         </section>
                     </div>
                 )}
-            </div>
-
-            {/* Quick demo sections */}
-            <div className='w-full h-96 bg-slate-300'>
-
             </div>
 
 
