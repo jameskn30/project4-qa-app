@@ -7,19 +7,26 @@ import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
 import { isRoomExists } from '@/utils/room';
 import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
+import ErrorPage from './error';
 import { generateRandomMessages, generateRandomQuestions } from '@/app/utils/mock';
 import { toast } from 'sonner';
 import { generateRandomUsername } from '@/utils/common';
 import { Message } from '@/app/components/ChatWindow';
 import { QuestionItem } from '@/app/components/QuestionList';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
   const params = useParams<{ roomId: string }>();
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
   const [loading, setLoading] = useState(true);
+  const [roomExists, setRoomExists] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
   const [username, setUsername] = useState<string>('');
+  const [usernameInput, setUsernameInput] = useState<string>('');
+  const [showDialog, setShowDialog] = useState(true);
   const [messages, setMessages] = useState<Message[]>(generateRandomMessages(10));
   const [questions, setQuestions] = useState<QuestionItem[]>(generateRandomQuestions(10));
 
@@ -30,7 +37,9 @@ const RoomPage: React.FC = () => {
   useEffect(() => {
     const checkRoomExists = async () => {
       if (!roomId || !(await isRoomExists(roomId))) {
-        throw new Error(`Room ${roomId} not found`);
+        console.log('room does not exist')
+        setRoomExists(false);
+        return;
       }
       setLoading(false);
     };
@@ -80,14 +89,18 @@ const RoomPage: React.FC = () => {
   }, [roomId, username]);
 
   useEffect(() => {
-    if (!loading && username) {
+    if (!loading && username && roomExists && !showDialog) {
       const cleanup = connectWebSocket();
       return () => {
         console.log('cleaned up ')
         cleanup.then((close) => close && close());
       };
     }
-  }, [connectWebSocket, loading, username]);
+  }, [connectWebSocket, loading, username, roomExists, showDialog]);
+
+  if (!roomExists) {
+    return <ErrorPage />;
+  }
 
   if (loading) {
     return <Loading />;
@@ -114,6 +127,12 @@ const RoomPage: React.FC = () => {
     });
   };
 
+  const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setUsername(usernameInput);
+    setShowDialog(false);
+  };
+
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen" data-testid="container">
@@ -128,6 +147,20 @@ const RoomPage: React.FC = () => {
             <ChatWindow messages={messages} onSent={onSent} />
           </div>
         </div>
+        {showDialog && (
+          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm">
+            <form onSubmit={handleUsernameSubmit} className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100">
+
+              <CardHeader>
+                <CardTitle>
+                  What's your name? ☺️
+                </CardTitle>
+              </CardHeader>
+              <Input type="text" id="username" name="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" required />
+              <Button type="submit" className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md">Submit</Button>
+            </form>
+          </Card>
+        )}
       </div>
     </RoomProvider>
   );
