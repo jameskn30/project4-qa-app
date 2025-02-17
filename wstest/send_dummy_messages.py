@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 import random
+import string
 
 messages = [
     "How do I reset my password?",
@@ -51,24 +52,41 @@ async def send_message(uri, messages_to_send):
         try:
             sent_messages = set()
             for i in range(messages_to_send):
+                wait_time = random.randint(1,5)
                 message = messages[random.randint(0, len(messages)-1)]
                 if message not in sent_messages:
                     sent_messages.add(message)
                 await websocket.send(message)
                 print(f"Message sent, {i+1}/{messages_to_send}")
-                await asyncio.sleep(1)
+                await asyncio.sleep(wait_time)
         except Exception as e:
             print("Error: ", e)
         finally:
             await websocket.close()
 
+def gen_random_username(length: int = 2) -> str:
+    adjectives = ["Quick", "Lazy", "Happy", "Sad", "Bright", "Dark", "Clever", "Brave"]
+    nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear", "Lion", "Tiger", "Wolf"]
+    
+    adjective = random.choice(adjectives)
+    noun = random.choice(nouns)
+    number = '_'.join(random.choices(string.digits, k=length))
+    
+    return f"{adjective} {noun} {number}"
+
 async def main():
     base_uri = "ws://localhost:8000/join/test%20room%2010"
-    messages_to_send = random.randint(5, 20)
-    username = "load_test_process"
-    uri = f"{base_uri}/{username}"
-    print(uri)
-    await send_message(uri, messages_to_send)
+    tasks = []
+
+    for i in range(10):
+        messages_to_send = random.randint(1, 5)
+        username = gen_random_username().replace(" ", "%20")
+        uri = f"{base_uri}/{username}"
+        print(uri)
+        # await send_message(uri, messages_to_send)
+        tasks.append(send_message(uri, messages_to_send))
+
+    await asyncio.gather(*tasks)
         
 if __name__ == "__main__":
     asyncio.run(main())

@@ -9,15 +9,8 @@ import { useRouter } from 'next/navigation';
 import SignupForm from './components/SignupForm';
 import LoginForm from './components/LoginForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Menubar,
-    MenubarContent,
-    MenubarItem,
-    MenubarMenu,
-    MenubarShortcut,
-    MenubarTrigger,
-} from "@/components/ui/menubar"
 import { Button } from "@/components/ui/button"
+import Link from 'next/link';
 
 const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void }) => {
     const scrollToWaitlist = () => {
@@ -37,15 +30,21 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
                 <Button variant={'ghost'} onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Wait list</Button>
             </div>
 
-            <div className="flex p-1 space-2 bg-white shadow-xl rounded-2xl border border-slate-200">
+            <div className="flex p-1 space-2 bg-white shadow-xl rounded-2xl border border-slate-200 gap-3">
                 {
                     isLoadingAuth ? (
                         <Spinner />
                     ) : (
                         isLoggedIn === false ? (
                             <Button variant={'ghost'} onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Login/Signup</Button>
-                        ): (
-                            <Button variant={'ghost'} as="a" href="/dashboard" onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Dashboard</Button>
+                        ) : (
+                            <>
+                                <Button variant={'ghost'} asChild className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">
+                                    <Link href="/dashboard">Dashboard</Link>
+
+                                </Button>
+                                <Button variant={"destructive"} onClick={onSignOut} className="px-2 py-1 rounded-xl ">Logout</Button>
+                            </>
                         )
                     )
                 }
@@ -98,11 +97,11 @@ const WelcomePage = () => {
 
     }, [supabase]);
 
-    useEffect(() => {
-        if (isLoggedIn) {
-            router.push('/dashboard')
-        }
-    }, [isLoggedIn])
+    // useEffect(() => {
+    //     if (isLoggedIn) {
+    //         router.push('/dashboard')
+    //     }
+    // }, [isLoggedIn])
 
     const handleLogin = async (formData: FormData) => {
         setIsLoggingIn(true);
@@ -146,7 +145,7 @@ const WelcomePage = () => {
             <LandingPageNavbar isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={handleSignOut} />
             <Toaster expand={true} position='top-center' richColors />
 
-            <div className="flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10">
+            <div className={`flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10 ${isLoggedIn ? 'justify-center' : ''}`}>
                 <div className="flex flex-1 mb-10 lg:mb-0" id="intro-container">
                     <div className="flex flex-col gap-10 font-mono text-center lg:text-left">
                         <p className="text-6xl lg:text-8xl font-bold text-center w-full">Bolt.qa</p>
@@ -161,23 +160,25 @@ const WelcomePage = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center" id="waitlist-container mt-10">
-                    <section id="waitlist" className="w-full flex justify-center">
-                        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-[350px] h-[500px]">
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="login">Login</TabsTrigger>
-                                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="login">
-                                <LoginForm onLoginHandle={handleLogin} />
-                                {isLoggingIn && <Spinner />}
-                            </TabsContent>
-                            <TabsContent value="signup">
-                                <SignupForm handleSignUp={handleSignup} />
-                            </TabsContent>
-                        </Tabs>
-                    </section>
-                </div>
+                {!isLoggedIn && (
+                    <div className="flex items-center" id="waitlist-container mt-10">
+                        <section id="waitlist" className="w-full flex justify-center">
+                            <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-[350px] h-[500px]">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="login">Login</TabsTrigger>
+                                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="login">
+                                    <LoginForm onLoginHandle={handleLogin} />
+                                    {isLoggingIn && <Spinner />}
+                                </TabsContent>
+                                <TabsContent value="signup">
+                                    <SignupForm handleSignUp={handleSignup} />
+                                </TabsContent>
+                            </Tabs>
+                        </section>
+                    </div>
+                )}
             </div>
 
             {/* Quick demo sections */}
