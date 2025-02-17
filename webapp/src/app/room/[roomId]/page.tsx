@@ -1,35 +1,83 @@
 'use client'
 import QuestionList from '@/app/components/QuestionList';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
-import { useState, useEffect } from 'react';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
 import { isRoomExists } from '@/utils/room';
 import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
+import Error from './error';
+import { toast } from 'sonner';
+import { generateRandomUsername } from '@/utils/common';
 
 const RoomPage: React.FC = () => {
-  const router = useRouter();
   const params = useParams<{ roomId: string }>();
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
   const [loading, setLoading] = useState(true);
+  const [roomExists, setRoomExists] = useState(true);
+  const [username, setUsername] = useState<string>(generateRandomUsername());
+  const wsRef = useRef<WebSocket | null>(null);
+
+  const connectWebSocket = useCallback(async () => {
+
+    if (username === null || roomId === null) {
+      return;
+    }
+
+    console.log('connect websocket');
+    const response = await fetch(`/api/chat?roomId=${roomId}&username=${username}`);
+
+    const data = await response.json();
+
+    const ws = new WebSocket(data.websocketUrl);
+
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('WebSocket connection established');
+      toast.success("Joined room");
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast.error("Error while connecting to room");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [roomId, username]);
 
   useEffect(() => {
-    //render the loading 
-    console.log('room id = ' + roomId)
     const checkRoomExists = async () => {
+      console.log('if room exists')
       if (!roomId || !(await isRoomExists(roomId))) {
-        // router.push('/404');
-        throw new Error(`Room ${roomId} not found`);
-      } 
-      setLoading(false)
+        setRoomExists(false);
+      }
+      setLoading(false);
     };
 
     checkRoomExists();
-  }, [roomId, router]);
 
-  if (loading){
-    return <Loading/>
+    if (username && roomExists) {
+      const cleanup = connectWebSocket();
+      return () => {
+        cleanup.then((close) => close && close());
+      };
+    }
+  }, [connectWebSocket, username, roomExists]);
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (!roomExists) {
+    return <Error />;
   }
 
   return (
@@ -43,7 +91,7 @@ const RoomPage: React.FC = () => {
             <QuestionList />
           </div>
           <div className="flex-1 border-s-2">
-            <ChatWindow />
+            <ChatWindow wsRef={wsRef} username={username} />
           </div>
         </div>
       </div>

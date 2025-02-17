@@ -32,7 +32,7 @@ export const updateSession = async (request: NextRequest) => {
 
         const { data: { user } } = await supabase.auth.getUser()
 
-        if (!user && request.nextUrl.pathname !== '/') {
+        if (!user && request.nextUrl.pathname !== '/' && !request.nextUrl.pathname.startsWith('/room') && !request.nextUrl.pathname.startsWith("/api/chat")) {
             console.log('redirecting back to welcome page')
             //if user not authenticated and not on welcome page, redirect to welcome page  
             const url = request.nextUrl.clone()

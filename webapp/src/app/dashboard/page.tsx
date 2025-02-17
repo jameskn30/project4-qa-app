@@ -26,28 +26,29 @@ import { createClient } from '@/utils/supabase/component'
 import Loading from './loading'
 import { signout } from '@/app/utils/auth';
 import { Button } from '@/components/ui/button';
+import JoinRoomForm from '../components/JoinRoomForm';
 
 type UserData = {
     username: string,
     email: string,
 }
 
-const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData|null, handleSignOut: () => void, isLoggingOut: boolean }) => {
+const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData | null, handleSignOut: () => void, isLoggingOut: boolean }) => {
 
     return (
         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
             <div className="flex p-1 space-2 bg-white shadow-xl rounded-2xl border border-slate-200">
-                <Button variant={'ghost'}  className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">⚡ Bolt.qa</Button>
+                <Button variant={'ghost'} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">⚡ Bolt.qa</Button>
             </div>
             <div className='flex gap-2 p-3'>
                 <Menubar>
                     <MenubarMenu>
                         <MenubarTrigger>
-                            { userdata ? userdata.username : "Loading ..."}
+                            {userdata ? userdata.username : "Loading ..."}
                         </MenubarTrigger>
                         <MenubarContent >
                             <MenubarItem>
-                                email: { userdata ? userdata.email : "Loading ..."}
+                                email: {userdata ? userdata.email : "Loading ..."}
                             </MenubarItem>
                             <MenubarSeparator />
                             <MenubarItem>Settings</MenubarItem>
@@ -65,8 +66,6 @@ const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData|
 
 const NewRoomPage = () => {
     const [roomId, setRoomId] = useState(null);
-    const [roomIdInput, setRoomIdInput] = useState('');
-    const [joiningLoader, setJoiningLoader] = useState(false);
     const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
@@ -75,7 +74,7 @@ const NewRoomPage = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
 
-    const [userData, setUserData] = useState<UserData|null>(null)
+    const [userData, setUserData] = useState<UserData | null>(null)
 
     const { Canvas } = useQRCode();
 
@@ -126,7 +125,7 @@ const NewRoomPage = () => {
         if (roomId === null) return;
         try {
             // const roomExists = await isRoomExists(roomId);
-            if (roomId !== ''){
+            if (roomId !== '') {
                 const res = await createRoom(roomId);
                 if (res) {
                     router.push(`/room/${roomId}`);
@@ -140,34 +139,34 @@ const NewRoomPage = () => {
         }
     }, 1000), [roomId]);
 
-    const handleJoinRoom = async () => {
-        if (!roomIdInput || roomIdInput === '') {
-            toast.error('Please enter a room ID');
-            return;
-        }
+    // const handleJoinRoom = async () => {
+    //     if (!roomIdInput || roomIdInput === '') {
+    //         toast.error('Please enter a room ID');
+    //         return;
+    //     }
 
-        setJoiningLoader(true);
+    //     setJoiningLoader(true);
 
-        try {
-            const response = await fetch('/chatapi/room_exists', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ roomId: roomIdInput }),
-            });
+    //     try {
+    //         const response = await fetch('/chatapi/room_exists', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({ roomId: roomIdInput }),
+    //         });
 
-            if (response.ok) {
-                router.push(`/room/${roomIdInput}`);
-            } else {
-                toast.error('Room does not exist');
-            }
-        } catch (e) {
-            toast.error('Unexpected error');
-        } finally {
-            setJoiningLoader(false);
-        }
-    };
+    //         if (response.ok) {
+    //             router.push(`/room/${roomIdInput}`);
+    //         } else {
+    //             toast.error('Room does not exist');
+    //         }
+    //     } catch (e) {
+    //         toast.error('Unexpected error');
+    //     } finally {
+    //         setJoiningLoader(false);
+    //     }
+    // };
 
     useEffect(() => {
 
@@ -203,29 +202,7 @@ const NewRoomPage = () => {
                         }}>New Room</TabsTrigger>
                     </TabsList>
                     <TabsContent value="account">
-                        <div className="bg-white bg-opacity-80 p-5 rounded-lg justify-center items-center shadow-lg text-center border-2 border-slate-100 w-[350px] h-[350px]">
-                            <h1 className="text-3xl font-bold mb-6">Join new room</h1>
-                            <p className="text-sm mb-6">Or you can scan QR code</p>
-                            <div className="flex gap-2 w-full flex-col">
-                                <Input
-                                    type="text"
-                                    placeholder="Enter Room ID"
-                                    value={roomIdInput}
-                                    onChange={(e) => setRoomIdInput(e.target.value)}
-                                    className="mb-4 w-full bg-white"
-                                />
-
-                                <div className="flex gap-3">
-                                    <Button
-                                        onClick={handleJoinRoom}
-                                        className="flex-1 bg-white text-black py-2 px-4 hover:bg-blue-300"
-                                    >
-                                        Join
-                                    </Button>
-                                    {joiningLoader && <Spinner />}
-                                </div>
-                            </div>
-                        </div>
+                        <JoinRoomForm />
                     </TabsContent>
                     <TabsContent value="password">
                         <div className="bg-white bg-opacity-80 p-2 rounded-lg gap-4 flex flex-col justify-center shadow-lg text-center border-2 border-slate-100 w-[350px] h-[350px]">
@@ -234,7 +211,7 @@ const NewRoomPage = () => {
                                 <>
                                     <div className="flex gap-3 justify-center">
                                         <p className="text-4xl flex-1 text-center">{roomId}</p>
-                                        <Button  variant={'ghost'}  className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none" onClick={handleFetchRandomId}>
+                                        <Button variant={'ghost'} className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none" onClick={handleFetchRandomId}>
                                             <FaRandom />
                                         </Button>
                                     </div>
@@ -254,7 +231,7 @@ const NewRoomPage = () => {
                                         />
                                     </div>
                                     <Button
-                                    variant={'ghost'} 
+                                        variant={'ghost'}
                                         onClick={handleStartRoom}
                                         className="bg-white text-blue-500 py-2 px-4 rounded hover:bg-blue-700 border-none"
                                     >

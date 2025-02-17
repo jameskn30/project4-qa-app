@@ -17,6 +17,7 @@ export default function handler(
     const chatApiEndpoint = process.env.CHATAPI_ENDPOINT || null;
     const roomId = req.query.roomId;
     const username = req.query.username;
+
     res.status(200).json({ websocketUrl: `${chatApiEndpoint}/join/${roomId}/${username}` });
   } else {
     res.status(400).json({ websocketUrl: 'null' });
