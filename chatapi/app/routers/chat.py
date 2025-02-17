@@ -207,7 +207,6 @@ websocket_manager = WebSocketManager()
 
 # ROOM
 
-
 @router.get("/list_members/{room_id}")
 def list_members(room_id: str):
     logger.info(f"Listing members in room {room_id}")

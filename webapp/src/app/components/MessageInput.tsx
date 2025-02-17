@@ -8,7 +8,7 @@ interface MessageInputProps {
     onSent: (message: string) => void;
 }
 
-const MessageInput = ({onSent} : MessageInputProps) => {
+const MessageInput = ({ onSent }: MessageInputProps) => {
     const [message, setMessage] = useState('');
 
     const handleOnChangeMessage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,15 +27,7 @@ const MessageInput = ({onSent} : MessageInputProps) => {
     }
 
     return (
-        <div className="p-4 border-t border-gray-300 flex gap-2 items-center justify-stretch">
-            <button 
-                onClick={handleOnSend} 
-                className="p-3 text-white rounded-md
-                hover:ring-2
-                focus:outline-none "
-            >
-                😊
-            </button>
+        <div className="p-1 flex gap-2 items-center justify-stretch shadow-sm">
             <Input
                 type="text"
                 value={message}
@@ -45,12 +37,12 @@ const MessageInput = ({onSent} : MessageInputProps) => {
                 rounded-lg focus:outline-none focus:ring-2 "
                 placeholder="Type your message..."
             />
-            <button 
-                onClick={handleOnSend} 
+            <button
+                onClick={handleOnSend}
                 className="p-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-700
                  focus:outline-none"
             >
-                <FaPaperPlane/>
+                <FaPaperPlane />
             </button>
         </div>
     )

@@ -29,7 +29,6 @@ const RoomPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
 
-
   useEffect(() => {
     setUsername(generateRandomUsername());
   }, []);
@@ -96,17 +95,17 @@ const RoomPage: React.FC = () => {
       syncRoom(roomId!!).then(res => res.json()).then(data => {
         console.log('sync room')
 
-        //Sync messages
-        setMessages(data.messages.map((message: {username: string, content: string}) => ({
+        // Sync messages
+        setMessages(data.messages.map((message: { username: string, content: string }) => ({
           username: message.username,
           content: message.content,
           flag: '🇺🇸'
         })));
 
-        //Sync questions
+        // Sync questions
         console.log('questions')
         console.log(data.questions);
-        setQuestions(data.questions.map((question: {content: string, upvotes: number, downvotes: number}) => ({
+        setQuestions(data.questions.map((question: { content: string, upvotes: number, downvotes: number }) => ({
           content: question.content,
           upvotes: question.upvotes,
           downvotes: question.downvotes
@@ -178,21 +177,19 @@ const RoomPage: React.FC = () => {
 
   return (
     <RoomProvider>
-      <div className="flex flex-col h-screen" data-testid="container">
+      <div className="flex flex-col h-screen items-center bg-gray-50">
         <Navbar onLeave={onLeave} />
-        <div className="flex flex-1 overflow-hidden">
-          <div className="hidden lg:flex lg:flex-1">
-          </div>
-          <div className="flex-1 overflow-y-auto">
+        <div className="flex flex-1 overflow-hidden w-full lg:w-2/3 flex-col lg:flex-row bg-white shadow-lg rounded-lg">
+          <div className="lg:w-2/3 overflow-y-auto border-r border-gray-300 p-4">
             <QuestionList questions={questions} />
           </div>
-          <div className="flex-1 border-s-2">
+          <div className="lg:w-1/3 flex-1 p-4">
             <ChatWindow messages={messages} onSent={onSent} />
           </div>
         </div>
         {showDialog && (
-          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm">
-            <form onSubmit={handleUsernameSubmit} className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100">
+          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm p-4">
+            <form onSubmit={handleUsernameSubmit} className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm">
               <CardHeader>
                 <CardTitle>
                   What's your name? ☺️

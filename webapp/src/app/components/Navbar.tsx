@@ -31,7 +31,7 @@ const Navbar = ({ onLeave }: NavbarProps) => {
   }
 
   return (
-    <div className="sticky z-10 bg-transparent">
+    <div className="sticky z-10 bg-transparent w-full">
       <nav className="flex justify-between items-center px-5 py-1">
         <div className="flex space-x-4 cl border border-slate-300 p-1 bg-white rounded-xl shadow-md hover:shadow-lg items-center">
           <ButtonLink href="/">
