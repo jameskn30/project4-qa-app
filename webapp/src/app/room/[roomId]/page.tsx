@@ -11,7 +11,7 @@ import { generateRandomMessages, generateRandomQuestions } from '@/app/utils/moc
 import { toast } from 'sonner';
 import { generateRandomUsername } from '@/utils/common';
 import { Message } from '@/app/components/ChatWindow';
-import {QuestionItem} from '@/app/components/QuestionList';
+import { QuestionItem } from '@/app/components/QuestionList';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -94,20 +94,24 @@ const RoomPage: React.FC = () => {
   }
 
   const onSent = (content: string) => {
-    try{
+    try {
       if (wsRef.current) {
         console.log('Sending message:', content);
         wsRef.current.send(content);
       }
-    } catch(error){
-      toast.error("Internal error")
+    } catch (error) {
+      toast.error("Internal error");
     }
   };
 
   const onLeave = () => {
     console.log('Leaving room');
     wsRef.current?.close();
-    router.push("/");
+    router.push("/").then(() => {
+      console.log('Navigated to home page');
+    }).catch((error) => {
+      console.error('Error navigating to home page:', error);
+    });
   };
 
   return (
@@ -118,7 +122,7 @@ const RoomPage: React.FC = () => {
           <div className="hidden lg:flex lg:flex-1">
           </div>
           <div className="flex-1 overflow-y-auto">
-            <QuestionList questions={questions}/>
+            <QuestionList questions={questions} />
           </div>
           <div className="flex-1 border-s-2">
             <ChatWindow messages={messages} onSent={onSent} />

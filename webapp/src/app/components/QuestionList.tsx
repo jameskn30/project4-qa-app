@@ -23,7 +23,6 @@ interface QuestionListProps {
 }
 
 const QuestionList = ({questions}: QuestionListProps ) => {
-    // const questions = Array.from({ length: 10 }, () => generateRandomQuestion());
 
     return (
         <div className="p-4 overflow-y-auto h-full flex flex-col gap-2">
