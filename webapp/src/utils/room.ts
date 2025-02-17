@@ -28,3 +28,7 @@ export const createRoom = async (roomId: string) => {
     return false
 }
 
+export const syncRoom = async (roomId: string) => {
+    return fetch(`/chatapi/sync_room/${roomId}`);
+}
+

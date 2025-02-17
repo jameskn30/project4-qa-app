@@ -27,9 +27,6 @@ const MessageListItem = ({ username, content, flag }: Message) => {
     <Popover>
       <PopoverTrigger asChild>
         <div className="relative mb-1 px-2 text-sm flex items-center hover:bg-slate-200 hover:cursor-pointer">
-          <div className="w-8 h-8 rounded-full bg-purple-700 text-white flex items-center justify-center mr-2 shadow-md">
-            {username.charAt(0).toUpperCase()}
-          </div>
           <div className="flex-1">
             <strong className="text-purple-700">{username}</strong> <span className="ml-1">{flag}</span> <span className="text-gray-700">{content}</span>
           </div>

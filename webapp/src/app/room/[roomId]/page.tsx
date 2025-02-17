@@ -4,11 +4,10 @@ import QuestionList from '@/app/components/QuestionList';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
-import { isRoomExists } from '@/utils/room';
+import { isRoomExists, syncRoom } from '@/utils/room';
 import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
-import { generateRandomMessages, generateRandomQuestions } from '@/app/utils/mock';
 import { toast } from 'sonner';
 import { generateRandomUsername } from '@/utils/common';
 import { Message } from '@/app/components/ChatWindow';
@@ -27,8 +26,9 @@ const RoomPage: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [showDialog, setShowDialog] = useState(true);
-  const [messages, setMessages] = useState<Message[]>(generateRandomMessages(10));
-  const [questions, setQuestions] = useState<QuestionItem[]>(generateRandomQuestions(10));
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [questions, setQuestions] = useState<QuestionItem[]>([]);
+
 
   useEffect(() => {
     setUsername(generateRandomUsername());
@@ -91,6 +91,32 @@ const RoomPage: React.FC = () => {
   useEffect(() => {
     if (!loading && username && roomExists && !showDialog) {
       const cleanup = connectWebSocket();
+
+      console.log('calling sync room')
+      syncRoom(roomId!!).then(res => res.json()).then(data => {
+        console.log('sync room')
+
+        //Sync messages
+        setMessages(data.messages.map((message: {username: string, content: string}) => ({
+          username: message.username,
+          content: message.content,
+          flag: '🇺🇸'
+        })));
+
+        //Sync questions
+        console.log('questions')
+        console.log(data.questions);
+        setQuestions(data.questions.map((question: {content: string, upvotes: number, downvotes: number}) => ({
+          content: question.content,
+          upvotes: question.upvotes,
+          downvotes: question.downvotes
+        })));
+
+      }).catch(err => {
+        toast.error(err);
+        console.error(err)
+      });
+
       return () => {
         console.log('cleaned up ')
         cleanup.then((close) => close && close());
