@@ -33,7 +33,7 @@ export const syncRoom = async (roomId: string) => {
 }
 
 export const groupMessages = async (roomId: string) => {
-    return fetch(`/chatapi/group_messages/${roomId}`, {
+    return fetch(`/chatapi/group_messages`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

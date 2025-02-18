@@ -15,6 +15,7 @@ import { QuestionItem } from '@/app/components/QuestionList';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { groupMessages } from '@/utils/room';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -142,6 +143,8 @@ const RoomPage: React.FC = () => {
     }
   };
 
+
+
   const onLeave = () => {
     console.log('Leaving room');
     wsRef.current?.close();
@@ -175,13 +178,36 @@ const RoomPage: React.FC = () => {
     }
   };
 
+  const handleGroupQuestions = async () => {
+    try {
+      const response = await groupMessages(roomId!!);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('grouped questions :', data.questions);
+        // setQuestions
+
+        setQuestions(data.questions.map((content: string) => ({
+          content: content,
+          upvotes: 0,
+          downvotes: 0
+        })));
+        toast.success('Grouped questions');
+      } else {
+        toast.error('Failed to group questions');
+      }
+    } catch (error) {
+      toast.error('Error grouping questions');
+      console.error(error);
+    }
+  };
+
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gray-50">
         <Navbar onLeave={onLeave} />
         <div className="flex flex-1 overflow-hidden w-full lg:w-2/3 flex-col lg:flex-row bg-white shadow-lg rounded-lg">
           <div className="lg:w-2/3 overflow-y-auto border-r border-gray-300 p-4">
-            <QuestionList questions={questions} />
+            <QuestionList questions={questions} handleGroupQuestions={handleGroupQuestions}/>
           </div>
           <div className="lg:w-1/3 flex-1 p-4">
             <ChatWindow messages={messages} onSent={onSent} />

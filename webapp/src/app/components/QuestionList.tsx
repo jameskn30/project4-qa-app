@@ -1,4 +1,6 @@
 import { FaAngleUp } from "react-icons/fa6";
+import { Button } from "@/components/ui/button";
+import { useParams } from "next/navigation";
 
 const Question = ({ order, text }: { order: number; text: string }) => {
     return (
@@ -19,14 +21,16 @@ export type QuestionItem = {
 
 interface QuestionListProps {
     questions: QuestionItem[]
+    handleGroupQuestions: () => void
 
 }
 
-const QuestionList = ({questions}: QuestionListProps ) => {
+const QuestionList = ({questions, handleGroupQuestions}: QuestionListProps ) => {
 
     return (
         <div className="p-4 overflow-y-auto h-full flex flex-col gap-2">
             <p className="text-lg text-center font-bold">Questions</p>
+            <Button onClick={handleGroupQuestions} className='bg-yellow-500 text-white hover:bg-yellow-700 font-bold'>Group questions</Button>
             {questions.map((question, index) => (
                 <Question key={index} order={index + 1} text={question.content} />
             ))}

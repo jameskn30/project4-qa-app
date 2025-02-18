@@ -204,7 +204,7 @@ class MessagesRequest(BaseModel):
     messages: List[str]
 
 @router.post("/group_messages")
-async def group_messages(request: MessagesRequest):
+async def group_messages(request: RoomRequest):
     """
     Group messages based on their embeddings.
     
@@ -212,20 +212,45 @@ async def group_messages(request: MessagesRequest):
     :return: List of grouped messages.
     """
 
+    roomId = request.roomId
+    logger.info(f"/group_messages for room {roomId}")
 
+    if roomId not in websocket_manager.active_room:
+        raise HTTPException(status_code=404, detail=f"Room {roomId} not found") 
+    
+    messages = [msg['content'] for msg in websocket_manager.messages[roomId]]
 
-def _group_message_llm():
-    #Use OLLAMA for dev environment, else use GROQ
-    logger.info("/group_messages")
     if env_type == 'prod':
         llm = load_groq_llm()
     else:
         llm = load_ollama_llm()
 
-    rephrases = rephrase_messages(request.messages, llm)
-    
+    questions = rephrase_messages(messages, llm)
+
     logger.info("LLM done grouping messages")
-    return {'message': rephrases}
+
+    return {'questions': questions}
+
+# @router.post("/test_grouping_messages")
+# async def group_messages(request: MessagesRequest):
+#     """
+#     Group messages based on their embeddings.
+    
+#     :param request: Request body containing a list of messages.
+#     :return: List of grouped messages.
+#     """
+
+#     #Use OLLAMA for dev environment, else use GROQ
+#     logger.info("/group_messages")
+#     if env_type == 'prod':
+#         llm = load_groq_llm()
+#     else:
+#         llm = load_ollama_llm()
+
+#     rephrases = rephrase_messages(request.messages, llm)
+    
+#     logger.info("LLM done grouping messages")
+#     return {'message': rephrases}
 
 # Suggestions:
 # 1. Ensure `websocket.client.host` is unique for each user. If multiple users share the same host, it could cause issues.

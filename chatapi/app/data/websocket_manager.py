@@ -7,6 +7,7 @@ import string
 from redis.asyncio import Redis
 import json
 from fastapi import WebSocket
+import os
 
 logger = logging.getLogger("chat")
 
@@ -43,14 +44,19 @@ class UserConnection:
     websocket: WebSocket = None
 
 
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+
+redis_client = Redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}")
+
 class WebSocketManager:
+
     def __init__(self):
         self.active_room: Dict[str, List[str]] = {}
         self.user_id_to_conn: Dict[str, UserConnection] = {}
         self.user_id_to_room: Dict[str, str] = {}
         self.messages: Dict[str, List[Dict[str, str]]] = {}
         self.questions: Dict[str, List[Dict[str, str]]] = {}
-
         MOCK_MESSAGES = [
             "How do I reset my password?",
             "I forgot my password, how can I recover it?",
@@ -95,31 +101,12 @@ class WebSocketManager:
             "What security measures are in place to protect my information?"
         ]
 
-        
-
         # Test data for development
         self.active_room['test room 10'] = []
-        self.messages['test room 10'] = [{"username": gen_random_username(), "content": msg} for msg in MOCK_MESSAGES]
+        self.messages['test room 10'] = [
+            {"username": gen_random_username(), "content": msg} for msg in MOCK_MESSAGES]
 
-        self.questions['test room 10'] = [
-            {"content": 'What is your favorite color?',
-                'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite food?', 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite movie?',
-                'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite book?', 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite song?', 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite animal?',
-                'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite hobby?',
-                'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite sport?',
-                'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite season?',
-                'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite holiday?',
-                'upvotes': 0, 'downvotes': 0},
-        ]
+        self.questions['test room 10'] = []
 
         # end test setup
 

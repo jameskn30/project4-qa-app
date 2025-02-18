@@ -24,8 +24,8 @@ secrets_path = current_dir / "secrets"
 
 assert secrets_path.exists(), "secrets file not found"
 
-OLLAMA_URL = os.environ.get('OLLAMA_URL','http://localhost')
-OLLAMA_PORT = os.environ.get('OLLAMA_PORT','11434')
+OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://localhost')
+OLLAMA_PORT = os.environ.get('OLLAMA_PORT', '11434')
 
 with open(secrets_path) as file:
     for line in file.readlines():
@@ -39,43 +39,28 @@ with open(secrets_path) as file:
 assert hf_token, 'HF_TOKEN not found'
 assert groq_token, 'GROQ_API_KEY not found'
 
+
 @component
 class MessageCluster:
-    """
-    A component to cluster messages based on their embeddings.
-    """
 
     def __init__(self, sent_transformer: SentenceTransformer, threshold: float = 0.5):
         self.sent_transformer = sent_transformer
         self.threshold = threshold
 
     @component.output_types(clusters=List[List[str]])
-    def run(self, messages: List[str]):
-        """
-        Run the clustering algorithm on the provided messages.
-
-        :param messages: List of messages to be clustered.
-        :return: List of clusters, each cluster is a list of messages.
-        """
-        logger.info("Clustering messages")
-        clusters = self._cluster_messages(messages, self.threshold)
-        logger.info(f"Generated {len(clusters)} clusters")
+    def run(self, messages1: List[str], messages2: List[str]):
+        clusters = self._cluster_messages(messages1, messages2, self.threshold)
         return clusters
 
     def _group_embeddings(self, sim_matrix, threshold):
-        """
-        Group embeddings based on similarity matrix and threshold.
 
-        :param sim_matrix: Similarity matrix of embeddings.
-        :param threshold: Threshold for grouping.
-        :return: List of groups.
-        """
         num_embeddings = sim_matrix.shape[0]
         visited = [False] * num_embeddings
         groups = []
 
         for i in range(num_embeddings):
             if not visited[i]:
+                # sorted_row = sorted(sim_matrix[i], reverse=True)
                 group = [i]
                 visited[i] = True
                 for j in range(num_embeddings):
@@ -86,27 +71,28 @@ class MessageCluster:
 
         return groups
 
-    def _cluster_messages(self, messages, threshold=0.5):
-        """
-        Cluster messages based on their embeddings.
+    def _cluster_messages(self, messages1, messages2=None, threshold=0.5):
 
-        :param messages: List of messages to be clustered.
-        :param threshold: Threshold for clustering.
-        :return: List of clusters.
-        """
-        test_messages = messages.copy()
         model = SentenceTransformer("all-MiniLM-L6-v2")
-        embeds = model.encode(test_messages)
-        sim_scores = model.similarity(embeds, embeds)
+
+        embeds1 = model.encode(messages1)
+        if messages2 != None:
+            embeds2 = model.encode(messages2)
+        else:
+            embeds2 = embeds1
+
+        sim_scores = model.similarity(embeds1, embeds2)
+
         groups = self._group_embeddings(sim_scores, threshold=threshold)
+
         clustered_messages = []
 
         for group in groups:
-            clustered_messages.append([messages[i] for i in group])
+            clustered_messages.append([messages1[i] for i in group])
         return clustered_messages
 
 
-def rephrase_messages(messages, llm):
+def rephrase_messages(messages1, llm, messages2 = None):
     """
     Rephrase messages into a concise and clear format using an LLM.
 
@@ -117,18 +103,13 @@ def rephrase_messages(messages, llm):
     logger.info("Rephrasing messages")
 
     template = '''
-    Given the following messages:
+    Rephrase the following messages into a single message that captures the essence of the conversation. Do not answer the anything. Do not add any extra information
     {{messages}}
-    Rephrase these messages into 1 message that clarify the question and keep it concise and contain most important key questions. 
-    You are rephrasing, you do not need to answer. If you don't have enough information, just return the original message
-    Just give the final message with no explanation and extra information.
     '''
-
-    MAX_RUN = 10
 
     # component
     prompt_template = PromptBuilder(template=template)
-    pipe = Pipeline(max_runs_per_component=MAX_RUN)
+    pipe = Pipeline()
     pipe.add_component('prompt', prompt_template)
     pipe.add_component('llm', llm)
 
@@ -138,27 +119,19 @@ def rephrase_messages(messages, llm):
     # run pipeline
     model = SentenceTransformer("all-MiniLM-L6-v2")
     cluster = MessageCluster(sent_transformer=model, threshold=0.6)
-    groups = cluster.run(messages)
+    groups = cluster.run(messages1, messages2)
 
     rephrase_groups = []
 
     for group in groups:
-        try:
-            res = pipe.run({'prompt': {'messages': group}})
-            if len(group) > 1:
-                rephrase = res['llm']['replies']
-            else:
-                rephrase = group
-            rephrase_groups.append(rephrase)
-            logger.info(f"Rephrased group: {rephrase}")
-        except Exception as e:
-            logger.error(f"Error rephrasing group {group}: {e}")
-            # Fallback to original group in case of error
-            rephrase_groups.append(group[0])  
-        # this prevents 429, too many requests from GroqAPI 
-        sleep(0.5)
+        res = pipe.run({'prompt': {'messages': ','.join(group)}})
+        if len(group) > 1:
+            rephrase = res['llm']['replies'][0]
+        else:
+            rephrase = group[0]
+        rephrase_groups.append(rephrase)
 
-    logger.info("Rephrasing completed")
+    # build pipeline
     return rephrase_groups
 
 
@@ -179,8 +152,9 @@ def load_groq_llm():
     logger.info("Groq LLM loaded")
     return groq
 
+
 def load_ollama_llm():
-    #This for local testing without stressing the GroqAPI
+    # This for local testing without stressing the GroqAPI
     MODEL = 'llama3.2:3b'
-    llm = OllamaGenerator(model = MODEL, url=f"{OLLAMA_URL}:{OLLAMA_PORT}") 
+    llm = OllamaGenerator(model=MODEL, url=f"{OLLAMA_URL}:{OLLAMA_PORT}")
     return llm
