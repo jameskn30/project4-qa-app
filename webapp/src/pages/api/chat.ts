@@ -23,3 +23,4 @@ export default function handler(
     res.status(400).json({ websocketUrl: 'null' });
   }
 }
+

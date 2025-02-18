@@ -9,7 +9,7 @@ fi
 
 source .env/bin/activate
 
-pip install websockets fastapi redis uvicorn supabase
+pip install websockets fastapi redis uvicorn supabase sentence-transformers haystack ollama-haystack
 
 echo "Freezing requirements.txt"
 

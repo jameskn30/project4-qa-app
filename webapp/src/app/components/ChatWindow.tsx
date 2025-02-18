@@ -66,7 +66,6 @@ const ChatWindow = ({ messages, onSent }: { messages: Message[], onSent: (messag
         <div ref={messagesEndRef} />
       </div>
       <MessageInput onSent={onSent} />
-      {/* <div className="border-t border-gray-300"></div> */}
 
     </div>
   );

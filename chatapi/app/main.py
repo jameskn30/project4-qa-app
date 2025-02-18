@@ -4,8 +4,9 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
 from datetime import datetime
-from routers import chat
+from routers import chat, llm
 import asyncio
+from data.websocket_manager import WebSocketManager
 
 # Get environment type
 env_type = os.getenv("ENV_TYPE", "dev")
@@ -31,6 +32,9 @@ logging.basicConfig(
     ]
 )
 
+async def get_websocket_manager():
+    return WebSocketManager()
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
@@ -50,6 +54,7 @@ def healthcheck():
     return {"status": "ok"}
 
 app.include_router(chat.router)
+# app.include_router(llm.router)
     
 #TODO:
 # add sentry for monitoring

@@ -4,12 +4,16 @@ from typing import List, Dict, Optional
 from dataclasses import dataclass
 from pydantic import BaseModel
 from uuid import uuid4
-import random
-import string
 from redis.asyncio import Redis
 import json
 import os
 from supabase import create_client, Client
+from data.websocket_manager import WebSocketManager, gen_random_phrase  
+
+from pipelines.message_rephrase import rephrase_messages, load_groq_llm, load_ollama_llm
+
+# Get environment type
+env_type = os.getenv("ENV_TYPE", "dev")
 
 logger = logging.getLogger("chat")
 
@@ -24,50 +28,19 @@ redis_client = Redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
 # INIT SUPABASE =======
 
-# TODO: this is not safe, load from env
+#TODO: this is not safe, load from env
 # SERVICE_KEY is sensitive, it can by pass all row level policy in supabase. DANGEROUS
-SUPABASE_URL = "https://dypuleqmsczlryhqbuoo.supabase.co"
-SUPABASE_SERVICE_KEy = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5cHVsZXFtc2N6bHJ5aHFidW9vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczOTI5MTAwMiwiZXhwIjoyMDU0ODY3MDAyfQ.UxNaQoLzNsspeVWPBRsbAntWKttBTHJMKWtpQt3d0EU"
+SUPABASE_URL="https://dypuleqmsczlryhqbuoo.supabase.co"
+SUPABASE_SERVICE_KEy="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5cHVsZXFtc2N6bHJ5aHFidW9vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczOTI5MTAwMiwiZXhwIjoyMDU0ODY3MDAyfQ.UxNaQoLzNsspeVWPBRsbAntWKttBTHJMKWtpQt3d0EU"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEy)
 
-# ====
+#==== 
 
 # Type
-
-
 class RoomRequest(BaseModel):
     roomId: str
     username: Optional[str] = None
-
-# ===
-
-# utils
-
-
-def gen_random_user_id():
-    return str(uuid4())
-
-
-def gen_random_username(length: int = 2) -> str:
-    adjectives = ["Quick", "Lazy", "Happy", "Sad",
-                  "Bright", "Dark", "Clever", "Brave"]
-    nouns = ["Fox", "Dog", "Cat", "Mouse", "Bear", "Lion", "Tiger", "Wolf"]
-
-    adjective = random.choice(adjectives)
-    noun = random.choice(nouns)
-    number = '_'.join(random.choices(string.digits, k=length))
-
-    return f"{adjective} {noun} {number}"
-
-
-def gen_random_phrase() -> str:
-    adjectives = ["Quick", "Lazy", "Happy", "Sad",
-                  "Bright", "Dark", "Clever", "Brave"]
-    nouns = ["Cat", "Dog", "Fox", "Bear", "Lion", "Tiger", "Wolf", "Mouse", "Deer",
-             "Frog", "Fish", "Bird", "Ant", "Bee", "Duck", "Goat", "Hawk", "Lamb", "Mole", "Owl"]
-    return f"{random.choice(adjectives).lower()} {random.choice(nouns).lower()} {random.randint(0, 9)}{random.randint(0, 9)}"
-
 
 @dataclass
 class UserConnection:
@@ -76,137 +49,10 @@ class UserConnection:
     user_host: str = ""
     websocket: WebSocket = None
 
-# WEB SOCKET
-
-
-class WebSocketManager:
-    def __init__(self):
-        self.active_room: Dict[str, List[str]] = {}
-        self.user_id_to_conn: Dict[str, UserConnection] = {}
-        self.user_id_to_room: Dict[str, str] = {}
-        self.messages: Dict[str, List[Dict[str, str]]] = {}
-        self.questions: Dict[str, List[Dict[str, str]]] = {}
-
-        # Test data for development
-        self.active_room['test room 10'] = []
-        self.messages['test room 10'] = [
-            {"username": gen_random_username(), "content": "Hello!"},
-            {"username": gen_random_username(), "content": "How are you doing today?"},
-            {"username": gen_random_username(), "content": "This is a short message."},
-            {"username": gen_random_username(), "content": "Here's a longer message to test the layout of the chat window. It should wrap around and display correctly."},
-            {"username": gen_random_username(), "content": "Another short one."},
-            {"username": gen_random_username(), "content": "This is yet another example of a longer message. We want to ensure that the chat window can handle messages of varying lengths without any issues."},
-            {"username": gen_random_username(), "content": "Short again."},
-            {"username": gen_random_username(), "content": "Testing with a medium-length message to see how it fits."},
-            {"username": gen_random_username(), "content": "A very long message to see how the chat window handles it. This message is intentionally verbose to test the overflow and wrapping behavior of the chat window component. It should display correctly and not break the layout."},
-            {"username": gen_random_username(), "content": "Final short message."}
-        ]
-        self.questions['test room 10'] = [
-            {"content": 'What is your favorite color?'  , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite food?'   , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite movie?'  , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite book?'   , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite song?'   , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite animal?' , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite hobby?'  , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite sport?'  , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite season?' , 'upvotes': 0, 'downvotes': 0},
-            {"content": 'What is your favorite holiday?', 'upvotes': 0, 'downvotes': 0},
-        ]
-
-        # end test setup
-
-    def _is_username_unique(self, room_id: str, username: str) -> bool:
-        for user_id in self.active_room[room_id]:
-            if self.user_id_to_conn[user_id].username == username:
-                return False
-        return True
-
-    async def join_room(self, room_id: str, websocket: WebSocket, user_id: str = None, username: str = None):
-        logger.info(
-            f"Attempting to join room {room_id} with user_id {user_id} and username {username}")
-        await websocket.accept()
-
-        user_conn = UserConnection(
-            user_id=user_id if user_id else gen_random_user_id(),
-            websocket=websocket,
-            username=username if username else gen_random_username(),
-            user_host=websocket.client.host
-        )
-
-        user_id = user_conn.user_id
-
-        self.user_id_to_conn[user_id] = user_conn
-
-        if room_id not in self.active_room:
-            self.active_room[room_id] = []
-
-        self.active_room[room_id].append(user_id)
-        self.user_id_to_room[user_id] = room_id
-        # self.room_to_username[room_id].add(username)  # Add username to set
-
-        logger.info(
-            f'User {user_id}:{websocket.client.host} joined room {room_id}')
-        return user_id
-
-    async def leave_room(self, room_id: str, user_id: str):
-        logger.info(
-            f"Attempting to leave room {room_id} with user_id {user_id}")
-        if user_id in self.active_room[room_id]:
-            user_conn = self.user_id_to_conn[user_id]
-            username = user_conn.username
-
-            # perform clean up for rooms and userid
-            self.active_room[room_id].remove(user_id)
-            # self.room_to_username[room_id].remove(username)
-            del self.user_id_to_conn[user_id]
-            del self.user_id_to_room[user_id]
-
-            logger.info(f'User {user_id} left room {room_id}')
-            await self._broadcast_redis_system(room_id, f'User {username} left the room')
-
-        else:
-            logger.error(f'User {user_id} not found in room {room_id}')
-            raise AssertionError(f'User {user_id} not found in room {room_id}')
-
-    async def send_group_message(self, user_id: str, message: str):
-        logger.info(f"Sending group message from user_id {user_id}: {message}")
-        room_id = self.user_id_to_room[user_id]
-        username = self.user_id_to_conn[user_id].username
-        await self._broadcast_redis(room_id, message, username)
-
-    async def notify_new_member(self, user_id: str, room_id: str):
-        logger.info(f"Notifying new member {user_id} in room {room_id}")
-        username = self.user_id_to_conn[user_id].username
-        await self._broadcast_redis_system(room_id, f'{username} just joined')
-
-    async def _broadcast_redis(self, room_id: str, message: str, username: str):
-        data = {'message': message, 'username': username, 'type': 'message'}
-        logger.info(
-            f"Broadcasting message with redis pubsub in room {room_id} from {username}: {message}")
-        await redis_client.publish(f"chat:{room_id}", json.dumps(data))
-
-    async def _broadcast_redis_system(self, room_id: str, message: str):
-        data = {'message': message, 'username': 'system', 'type': 'message'}
-        logger.info(f"Broadcast room {room_id} from system: {message}")
-        await redis_client.publish(f"chat:{room_id}", json.dumps(data))
-
-    async def _broadcast(self, room_id: str, message: str, username: str):
-        data = {'message': message, 'username': username, 'type': 'message'}
-        logger.info(
-            f"Broadcasting message in room {room_id} from {username}: {message}")
-        for user_id in self.active_room[room_id]:
-            user_conn = self.user_id_to_conn[user_id]
-            await user_conn.websocket.send_json(data)
-
-    def get_user_conn(self, user_id):
-        return self.user_id_to_conn.get(user_id)
-
-
+#TOOD: centralized manager will be required
 websocket_manager = WebSocketManager()
 
 # ROOM
-
 @router.get("/list_members/{room_id}")
 def list_members(room_id: str):
     logger.info(f"Listing members in room {room_id}")
@@ -214,15 +60,13 @@ def list_members(room_id: str):
         return [websocket_manager.user_id_to_conn[user_id].username for user_id in websocket_manager.active_room[room_id]]
     return []
 
-
 @router.post("/room_exists")
 async def if_room_exists(req: RoomRequest):
     room_id = req.roomId
     if room_id in websocket_manager.active_room:
         return {"message": 'OK'}
     else:
-        raise HTTPException(
-            status_code=404, detail=f"Room {room_id} is not found")
+        raise HTTPException(status_code=404, detail=f"Room {room_id} is not found")
 
 
 @router.get("/get_random_room_id")
@@ -230,7 +74,6 @@ async def random_room_id():
     room_id = gen_random_phrase()
     logger.info(f"Generated new room ID: {room_id}")
     return {"roomId": room_id}
-
 
 @router.post("/create_room")
 async def create_room(req: RoomRequest):
@@ -245,11 +88,9 @@ async def create_room(req: RoomRequest):
         raise HTTPException(status_code=400, detail=detail)
 
     websocket_manager.active_room[room_id] = []
-    websocket_manager.messages[room_id] = []
 
-    logger.info(f"Created room id = {room_id}")
+    logger.info(f"deleted room id = {room_id}")
     return {"message": f"Room {room_id} created"}
-
 
 @router.delete("/delete_room")
 async def delete_room(req: RoomRequest):
@@ -259,16 +100,14 @@ async def delete_room(req: RoomRequest):
         detail = f"room {room_id} not found"
         logger.error(detail)
         raise HTTPException(status_code=404, detail=detail)
-
+    
     # disconnect all current connections in the room
     for user_id in websocket_manager.active_room[room_id]:
         await websocket_manager.leave_room(room_id, user_id)
 
     del websocket_manager.active_room[room_id]
-    del websocket_manager.messages[room_id]
     logger.info(f"Deleted room id = {room_id} ")
     return {"message": f"Room {room_id} deleted successfully"}
-
 
 @router.post("/is_username_unique")
 async def is_username_unique(req: RoomRequest):
@@ -280,10 +119,8 @@ async def is_username_unique(req: RoomRequest):
     logger.info(f"/is_username_unique")
 
     if not websocket_manager._is_username_unique(room_id, username) or req.username == 'system':
-        raise HTTPException(
-            status_code=400, detail=f"Username {username} is already taken in room {room_id}")
+        raise HTTPException(status_code=400, detail=f"Username {username} is already taken in room {room_id}")
     return {"message": "OK"}
-
 
 @router.get("/sync_room/{room_id}")
 async def sync_room(room_id: str):
@@ -310,11 +147,10 @@ async def check_room_in_supabase(room_id: str):
     if response.data:
         return {"message": "Room found", "data": response.data}
     else:
-        raise HTTPException(
-            status_code=404, detail=f"Room {room_id} not found in Supabase")
+        raise HTTPException(status_code=404, detail=f"Room {room_id} not found in Supabase")
 
 
-# WEBSOCKET
+# WEBSOCKET 
 
 @router.websocket("/join/{room_id}/{username}")
 async def join_room(websocket: WebSocket, room_id: str, username: str):
@@ -337,12 +173,10 @@ async def join_room(websocket: WebSocket, room_id: str, username: str):
             await websocket_manager.send_group_message(user_id, message)
 
     except WebSocketDisconnect as e:
-        logger.error(
-            f"WebSocket of user_id {user_id} connection closed for room {room_id}")
+        logger.error(f"WebSocket of user_id {user_id} connection closed for room {room_id}")
     finally:
         if user_id:
             await websocket_manager.leave_room(room_id, user_id)
-
 
 async def redis_listener():
     pubsub = redis_client.pubsub()
@@ -360,10 +194,38 @@ async def redis_listener():
             if room_id in websocket_manager.active_room:
                 data = json.loads(message['data'])
                 username, message = data['username'], data['message']
-                logger.info(
-                    f"Received from {username} in channel {channel} message = {message}")
+                logger.info(f"Received from {username} in channel {channel} message = {message}")
                 print(websocket_manager)
                 await websocket_manager._broadcast(room_id, message, username)
+
+## LLM
+
+class MessagesRequest(BaseModel):
+    messages: List[str]
+
+@router.post("/group_messages")
+async def group_messages(request: MessagesRequest):
+    """
+    Group messages based on their embeddings.
+    
+    :param request: Request body containing a list of messages.
+    :return: List of grouped messages.
+    """
+
+
+
+def _group_message_llm():
+    #Use OLLAMA for dev environment, else use GROQ
+    logger.info("/group_messages")
+    if env_type == 'prod':
+        llm = load_groq_llm()
+    else:
+        llm = load_ollama_llm()
+
+    rephrases = rephrase_messages(request.messages, llm)
+    
+    logger.info("LLM done grouping messages")
+    return {'message': rephrases}
 
 # Suggestions:
 # 1. Ensure `websocket.client.host` is unique for each user. If multiple users share the same host, it could cause issues.
