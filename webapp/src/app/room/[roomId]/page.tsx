@@ -5,7 +5,7 @@ import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
 import { isRoomExists, syncRoom } from '@/utils/room';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
 import { toast } from 'sonner';
@@ -20,20 +20,27 @@ import { groupMessages } from '@/utils/room';
 const RoomPage: React.FC = () => {
   const router = useRouter();
   const params = useParams<{ roomId: string }>();
+  const pathname = usePathname();
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
   const [loading, setLoading] = useState(true);
   const [roomExists, setRoomExists] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
   const [username, setUsername] = useState<string>('');
   const [usernameInput, setUsernameInput] = useState<string>('');
-  const [showDialog, setShowDialog] = useState(true);
+  const [showDialog, setShowDialog] = useState(!username);
   const [messages, setMessages] = useState<Message[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  // const { Canvas } = useQRCode();
+  const [questionsLeft, setQuestionsLeft] = useState(3)
+  const [upvotesLeft, setUpvotesLeft] = useState(3)
+  const [downvotesLeft, setDownVotesLeft] = useState(3)
 
   useEffect(() => {
-    setUsername(generateRandomUsername());
-  }, []);
+    if (!username) {
+      setUsername(generateRandomUsername());
+    }
+  }, [username]);
 
   useEffect(() => {
     const checkRoomExists = async () => {
@@ -138,6 +145,7 @@ const RoomPage: React.FC = () => {
       if (wsRef.current) {
         console.log('Sending message:', content);
         wsRef.current.send(content);
+        setQuestionsLeft(questionsLeft - 1)
       }
     } catch (error) {
       toast.error("Internal error");
@@ -187,10 +195,10 @@ const RoomPage: React.FC = () => {
         console.log('grouped questions :', data.questions);
         // setQuestions
 
-        setQuestions(data.questions.map((content: string) => ({
-          content: content,
-          upvotes: 0,
-          downvotes: 0
+        setQuestions(data.questions.map((question: {rephrase: string, upvotes: number, downvotes: number}) => ({
+          rephrase: question.rephrase,
+          upvotes: question.upvotes,
+          downvotes: question.downvotes
         })));
         toast.success('Grouped questions');
       } else {
@@ -208,19 +216,41 @@ const RoomPage: React.FC = () => {
     console.log('handleClearQuestion')
     setLoadingQuestions(true);
     setQuestions([])
+    //TODO: send clear messages in room to chatapi
     setLoadingQuestions(false);
   }
+
 
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gray-50">
         <Navbar onLeave={onLeave} />
-        <div className="flex flex-1 overflow-hidden w-full lg:w-2/3 flex-col lg:flex-row bg-white shadow-lg rounded-lg">
-          <div className="lg:w-2/3 overflow-y-auto border-r border-gray-300 p-4">
-            <QuestionList questions={questions} handleGroupQuestions={handleGroupQuestions} loadingQuestions={loadingQuestions} handleClearQuestion={handleClearQuestion}/>
+        {/* <div className='flex justify-center'>
+          <Canvas
+            text={`${window.location.origin}${pathname}`}
+            options={{
+              errorCorrectionLevel: 'M',
+              margin: 3,
+              scale: 4,
+              width: 200,
+              color: {
+                dark: '#000000', // Black
+                light: '#FFFFFF', // White
+              },
+            }}
+          />
+        </div> */}
+        <div className="flex flex-1 overflow-hidden w-full lg:w-4/5 flex-col lg:flex-row bg-white shadow-lg rounded-lg">
+          <div className="flex-1 overflow-y-auto border-r border-gray-300 p-4">
+            <QuestionList
+              questions={questions}
+              handleGroupQuestions={handleGroupQuestions}
+              loadingQuestions={loadingQuestions}
+              roundNumber={1}
+              handleClearQuestion={handleClearQuestion} />
           </div>
-          <div className="lg:w-1/3 flex-1 p-4">
-            <ChatWindow messages={messages} onSent={onSent} />
+          <div className="flex-1 p-4">
+            <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} />
           </div>
         </div>
         {showDialog && (

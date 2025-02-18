@@ -91,16 +91,7 @@ class MessageCluster:
             clustered_messages.append([messages1[i] for i in group])
         return clustered_messages
 
-
 def rephrase_messages(messages1, llm, messages2 = None):
-    """
-    Rephrase messages into a concise and clear format using an LLM.
-
-    :param messages: List of messages to be rephrased.
-    :param llm: Language model to be used for rephrasing.
-    :return: List of rephrased message groups.
-    """
-    logger.info("Rephrasing messages")
 
     template = '''
     Rephrase the following messages into a single message that captures the essence of the conversation. Do not answer the anything. Do not add any extra information
@@ -129,7 +120,7 @@ def rephrase_messages(messages1, llm, messages2 = None):
             rephrase = res['llm']['replies'][0]
         else:
             rephrase = group[0]
-        rephrase_groups.append(rephrase)
+        rephrase_groups.append({'rephrase': rephrase, "upvotes": len(group), 'downvotes': 0})
 
     # build pipeline
     return rephrase_groups

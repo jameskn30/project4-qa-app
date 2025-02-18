@@ -98,12 +98,6 @@ const WelcomePage = () => {
 
     }, [supabase]);
 
-    // useEffect(() => {
-    //     if (isLoggedIn) {
-    //         router.push('/dashboard')
-    //     }
-    // }, [isLoggedIn])
-
     const handleLogin = async (formData: FormData) => {
         setIsLoggingIn(true);
         const { success, error } = await login(formData);

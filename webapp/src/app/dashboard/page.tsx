@@ -78,6 +78,8 @@ const NewRoomPage = () => {
 
     const { Canvas } = useQRCode();
 
+    const URL = 'http://localhost:3000/room';
+
     useEffect(() => {
 
         const getUserData = async () => {
@@ -139,35 +141,6 @@ const NewRoomPage = () => {
         }
     }, 1000), [roomId]);
 
-    // const handleJoinRoom = async () => {
-    //     if (!roomIdInput || roomIdInput === '') {
-    //         toast.error('Please enter a room ID');
-    //         return;
-    //     }
-
-    //     setJoiningLoader(true);
-
-    //     try {
-    //         const response = await fetch('/chatapi/room_exists', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify({ roomId: roomIdInput }),
-    //         });
-
-    //         if (response.ok) {
-    //             router.push(`/room/${roomIdInput}`);
-    //         } else {
-    //             toast.error('Room does not exist');
-    //         }
-    //     } catch (e) {
-    //         toast.error('Unexpected error');
-    //     } finally {
-    //         setJoiningLoader(false);
-    //     }
-    // };
-
     useEffect(() => {
 
         const checkUser = async () => {
@@ -217,7 +190,7 @@ const NewRoomPage = () => {
                                     </div>
                                     <div className='flex justify-center'>
                                         <Canvas
-                                            text={`this is a mock https that has room id in it ${roomId}`}
+                                            text={`${URL}/${encodeURIComponent(roomId!!)}`}
                                             options={{
                                                 errorCorrectionLevel: 'M',
                                                 margin: 3,
