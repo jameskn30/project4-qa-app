@@ -11,11 +11,11 @@ import ErrorPage from './error';
 import { toast } from 'sonner';
 import { generateRandomUsername } from '@/utils/common';
 import { Message } from '@/app/components/ChatWindow';
-import { QuestionItem } from '@/app/components/QuestionList';
+import QuestionItem from '@/app/components/QuestionList';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages } from '@/utils/room';
+import { groupMessages, upvoteMessage } from '@/utils/room';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -76,10 +76,23 @@ const RoomPage: React.FC = () => {
     ws.onmessage = (event) => {
       console.log('WebSocket message received:', event.data);
       const parsedData = JSON.parse(event.data);
-      const content = parsedData.message;
-      const username = parsedData.username;
-      const message: Message = { username, content, flag: '🇺🇸' };
-      setMessages((prevMessages) => [...prevMessages, message]);
+      const type = parsedData.type;
+      if (type === "message"){
+        const content = parsedData.message;
+        const username = parsedData.username;
+        const message: Message = { username, content, flag: '🇺🇸' };
+        setMessages((prevMessages) => [...prevMessages, message]);
+      } 
+      else if (type === "questions"){
+        const newQuestions = parsedData.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
+          uuid: question.uuid,
+          rephrase: question.rephrase,
+          upvotes: question.upvotes,
+          downvotes: question.downvotes
+        }));
+        console.log(newQuestions)
+        setQuestions(newQuestions)
+      }
     };
 
     ws.onclose = () => {
@@ -152,7 +165,6 @@ const RoomPage: React.FC = () => {
     }
   };
 
-
   const onLeave = () => {
     console.log('Leaving room');
     wsRef.current?.close();
@@ -220,30 +232,25 @@ const RoomPage: React.FC = () => {
     setLoadingQuestions(false);
   }
 
+  const handleUpvote = (uuid: string) => {
+    console.log(`handleUpvote for ${uuid}`)
+    upvoteMessage(roomId!!, uuid, username)
+    .then(res => res.json())
+    .catch(err => console.log(err))
+    .finally(() => {})
+  }
 
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gray-50">
+
         <Navbar onLeave={onLeave} />
-        {/* <div className='flex justify-center'>
-          <Canvas
-            text={`${window.location.origin}${pathname}`}
-            options={{
-              errorCorrectionLevel: 'M',
-              margin: 3,
-              scale: 4,
-              width: 200,
-              color: {
-                dark: '#000000', // Black
-                light: '#FFFFFF', // White
-              },
-            }}
-          />
-        </div> */}
+
         <div className="flex flex-1 overflow-hidden w-full lg:w-4/5 flex-col lg:flex-row bg-white shadow-lg rounded-lg">
           <div className="flex-1 overflow-y-auto border-r border-gray-300 p-4">
             <QuestionList
               questions={questions}
+              handleUpvote={handleUpvote}
               handleGroupQuestions={handleGroupQuestions}
               loadingQuestions={loadingQuestions}
               roundNumber={1}
@@ -261,7 +268,9 @@ const RoomPage: React.FC = () => {
                   What's your name? ☺️
                 </CardTitle>
               </CardHeader>
-              <Input type="text" id="username" name="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" required />
+              <Input type="text" id="username" name="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} 
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md" 
+                required />
               <Button type="submit" className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md">Submit</Button>
             </form>
           </Card>

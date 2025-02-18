@@ -40,6 +40,18 @@ export const groupMessages = async (roomId: string) => {
         },
         body: JSON.stringify({ roomId: roomId }),
     });
-
 }
 
+export const upvoteMessage = async (roomId: string, questionId: string, username: string) => {
+    return fetch(`/chatapi/upvote`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            roomId: roomId ,
+            questionId: questionId,
+            username: username
+        }),
+    });
+}

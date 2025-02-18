@@ -192,6 +192,21 @@ class WebSocketManager:
         for user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
             await user_conn.websocket.send_json(data)
+    
+    async def _broadcast_grouped_questions(self, room_id: str, questions: object, username: str):
+        #TODO: check if username is HOST, only host allowed to do this
+        data = {'questions': questions, 'username': username, 'type': 'questions'}
+        logger.info(f"Broadcasting questions in room {room_id}, #questions = {len(questions)}, # participants ={len(self.active_room[room_id])}")
+        for user_id in self.active_room[room_id]:
+            user_conn = self.user_id_to_conn[user_id]
+            await user_conn.websocket.send_json(data)
 
+    async def _broadcast_upvote(self, room_id: str, questionId: object, username: str):
+        #TODO: check if username is HOST, only host allowed to do this
+        data = {'questionId': questionId, 'username': username, 'type': 'upvote'}
+        logger.info(f"Broadcasting upvate question {questionId} in room {room_id} from user: {username}")
+        for user_id in self.active_room[room_id]:
+            user_conn = self.user_id_to_conn[user_id]
+            await user_conn.websocket.send_json(data)
     def get_user_conn(self, user_id):
         return self.user_id_to_conn.get(user_id)

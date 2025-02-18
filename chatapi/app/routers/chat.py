@@ -41,6 +41,12 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEy)
 class RoomRequest(BaseModel):
     roomId: str
     username: Optional[str] = None
+    questionId: Optional[str] = None
+
+class UpvoteRequest(BaseModel):
+    roomId: str
+    username: str
+    questionId: str
 
 @dataclass
 class UserConnection:
@@ -213,12 +219,15 @@ async def group_messages(request: RoomRequest):
     """
 
     roomId = request.roomId
+    username = request.username
     logger.info(f"/group_messages for room {roomId}")
 
     if roomId not in websocket_manager.active_room:
         raise HTTPException(status_code=404, detail=f"Room {roomId} not found") 
+
     
     messages = [msg['content'] for msg in websocket_manager.messages[roomId]]
+
 
     if env_type == 'prod':
         llm = load_groq_llm()
@@ -227,30 +236,33 @@ async def group_messages(request: RoomRequest):
 
     questions = rephrase_messages(messages, llm)
 
+    websocket_manager.questions[roomId] = questions
+
+    #broadcats the result to all users in the room
     logger.info("LLM done grouping messages")
 
-    return {'questions': questions}
+    await websocket_manager._broadcast_grouped_questions(roomId, questions, username)
 
-# @router.post("/test_grouping_messages")
-# async def group_messages(request: MessagesRequest):
-#     """
-#     Group messages based on their embeddings.
-    
-#     :param request: Request body containing a list of messages.
-#     :return: List of grouped messages.
-#     """
+    return {'message': 'OK'}
 
-#     #Use OLLAMA for dev environment, else use GROQ
-#     logger.info("/group_messages")
-#     if env_type == 'prod':
-#         llm = load_groq_llm()
-#     else:
-#         llm = load_ollama_llm()
+@router.post("/upvote")
+async def upvote(request: UpvoteRequest):
+    room_id = request.roomId
+    username = request.username
+    question_id = request.questionId
+    logger.info("/upvote, username = {username}, room_id = {room_id}, question_id = {question_id}")
 
-#     rephrases = rephrase_messages(request.messages, llm)
-    
-#     logger.info("LLM done grouping messages")
-#     return {'message': rephrases}
+    if room_id not in websocket_manager.active_room:
+        raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
+
+    questions = websocket_manager.questions.get(room_id, [])
+    for question in questions:
+        if question['uuid'] == question_id:
+            question['upvotes'] += 1
+            await websocket_manager._broadcast_upvote(room_id, f"{username} upvoted a question", "system")
+            return {"message": "OK"}
+
+    raise HTTPException(status_code=404, detail=f"Question {question_id} not found in room {room_id}")
 
 # Suggestions:
 # 1. Ensure `websocket.client.host` is unique for each user. If multiple users share the same host, it could cause issues.

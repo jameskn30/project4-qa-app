@@ -9,6 +9,8 @@ import os
 import logging
 from pathlib import Path
 from time import sleep
+from uuid import uuid4
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -120,7 +122,7 @@ def rephrase_messages(messages1, llm, messages2 = None):
             rephrase = res['llm']['replies'][0]
         else:
             rephrase = group[0]
-        rephrase_groups.append({'rephrase': rephrase, "upvotes": len(group), 'downvotes': 0})
+        rephrase_groups.append({'uuid': str(uuid4()) ,'rephrase': rephrase, "upvotes": len(group), 'downvotes': 0})
 
     # build pipeline
     return rephrase_groups
