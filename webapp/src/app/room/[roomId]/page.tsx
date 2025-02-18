@@ -29,6 +29,7 @@ const RoomPage: React.FC = () => {
   const [showDialog, setShowDialog] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   useEffect(() => {
     setUsername(generateRandomUsername());
@@ -144,7 +145,6 @@ const RoomPage: React.FC = () => {
   };
 
 
-
   const onLeave = () => {
     console.log('Leaving room');
     wsRef.current?.close();
@@ -179,6 +179,7 @@ const RoomPage: React.FC = () => {
   };
 
   const handleGroupQuestions = async () => {
+    setLoadingQuestions(true);
     try {
       const response = await groupMessages(roomId!!);
       if (response.ok) {
@@ -198,8 +199,17 @@ const RoomPage: React.FC = () => {
     } catch (error) {
       toast.error('Error grouping questions');
       console.error(error);
+    } finally {
+      setLoadingQuestions(false);
     }
   };
+
+  const handleClearQuestion = () => {
+    console.log('handleClearQuestion')
+    setLoadingQuestions(true);
+    setQuestions([])
+    setLoadingQuestions(false);
+  }
 
   return (
     <RoomProvider>
@@ -207,7 +217,7 @@ const RoomPage: React.FC = () => {
         <Navbar onLeave={onLeave} />
         <div className="flex flex-1 overflow-hidden w-full lg:w-2/3 flex-col lg:flex-row bg-white shadow-lg rounded-lg">
           <div className="lg:w-2/3 overflow-y-auto border-r border-gray-300 p-4">
-            <QuestionList questions={questions} handleGroupQuestions={handleGroupQuestions}/>
+            <QuestionList questions={questions} handleGroupQuestions={handleGroupQuestions} loadingQuestions={loadingQuestions} handleClearQuestion={handleClearQuestion}/>
           </div>
           <div className="lg:w-1/3 flex-1 p-4">
             <ChatWindow messages={messages} onSent={onSent} />
