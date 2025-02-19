@@ -32,10 +32,10 @@ const MessageListItem = ({ username, content, flag }: Message) => {
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="p-2 w-auto">
+      {/* <PopoverContent className="p-2 w-auto">
         <button className="rounded-md p-1 hover:bg-gray-200">☝️</button>
         <button className="rounded-md p-1 hover:bg-gray-200">👎️️</button>
-      </PopoverContent>
+      </PopoverContent> */}
     </Popover>
   );
 };
@@ -44,9 +44,10 @@ interface ChatWindowProps {
   messages: Message[],
   onSent: (message: string) => void
   questionsLeft: number
+  upvoteLeft: number
 }
 
-const ChatWindow = ({ messages, onSent, questionsLeft }: ChatWindowProps) => {
+const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft }: ChatWindowProps) => {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -73,7 +74,7 @@ const ChatWindow = ({ messages, onSent, questionsLeft }: ChatWindowProps) => {
       </div>
       <div className="top-0 flex justify-center w-full backdrop-blur-sm p-2 gap-4 text-center">
         <div className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md">{questionsLeft} questions left</div>
-        <div className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md">3 upvotes left</div>
+        <div className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md">{upvoteLeft} upvotes left</div>
       </div>
       {
         (questionsLeft > 0) ?

@@ -175,6 +175,11 @@ const RoomPage: React.FC = () => {
   }
 
   const onSent = (content: string) => {
+    if (questionsLeft <= 0) {
+      toast.error('You have no more questions left')
+      return
+    }
+    setQuestionsLeft(questionsLeft - 1)
     try {
       if (wsRef.current) {
         console.log('Sending message:', content);
@@ -250,6 +255,11 @@ const RoomPage: React.FC = () => {
   }
 
   const handleUpvote = (uuid: string) => {
+    if (upvotesLeft <= 0) {
+      toast.error('You have no more upvotes left')
+      return
+    }
+    setUpvotesLeft(upvotesLeft - 1)
     console.log(`handleUpvote for ${uuid}`)
     upvoteMessage(roomId!!, uuid, username)
       .then(res => res.json())
@@ -292,7 +302,7 @@ const RoomPage: React.FC = () => {
 
           </div>
           <div className="flex-1 p-4">
-            <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} />
+            <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft}/>
           </div>
         </div>
         {showDialog && (
