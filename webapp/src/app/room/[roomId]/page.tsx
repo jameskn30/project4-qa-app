@@ -5,18 +5,16 @@ import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
 import { clearQuestions, isRoomExists, syncRoom } from '@/utils/room';
-import { useRouter, useParams, usePathname } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
 import { toast } from 'sonner';
 import { generateRandomUsername } from '@/utils/common';
 import { Message } from '@/app/components/ChatWindow';
-import QuestionItem from '@/app/components/QuestionList';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { groupMessages, upvoteMessage, newRound } from '@/utils/room';
-import { clear } from 'console';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -78,13 +76,13 @@ const RoomPage: React.FC = () => {
       const parsedData = JSON.parse(event.data);
       const type = parsedData.type;
 
-      if (type === "message"){
+      if (type === "message") {
         const content = parsedData.message;
         const username = parsedData.username;
         const message: Message = { username, content, flag: '🇺🇸' };
         setMessages((prevMessages) => [...prevMessages, message]);
-      } 
-      else if (type === "questions"){
+      }
+      else if (type === "questions") {
         const newQuestions = parsedData.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
           uuid: question.uuid,
           rephrase: question.rephrase,
@@ -94,8 +92,8 @@ const RoomPage: React.FC = () => {
         setQuestions(newQuestions)
         setLoadingQuestions(false)
         setHostMessage("")
-      } 
-      else if (type === 'upvote'){
+      }
+      else if (type === 'upvote') {
         const questionId = parsedData.questionId;
         setQuestions((prevQuestions) =>
           prevQuestions.map((question) =>
@@ -107,21 +105,21 @@ const RoomPage: React.FC = () => {
       }
       else if (type === 'command') {
         const command = parsedData.command;
-        if (command === 'clear_questions'){
+        if (command === 'clear_questions') {
           clearQuestionsAction()
           setHostMessage("Host cleared questions")
         }
-        else if (command === "grouping_questions"){
+        else if (command === "grouping_questions") {
           setLoadingQuestions(true)
           setHostMessage("Host grouping questions")
         }
-        else if (command === "new_round"){
+        else if (command === "new_round") {
           setHostMessage("Host started new round of questions")
           setMessages([])
           setQuestions([])
         }
       }
-      
+
     };
 
     ws.onclose = () => {
@@ -150,7 +148,8 @@ const RoomPage: React.FC = () => {
           flag: '🇺🇸'
         })));
 
-        setQuestions(data.questions.map((question: { rephrase: string, upvotes: number}) => ({
+        setQuestions(data.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
+          uuid: question.uuid,
           rephrase: question.rephrase,
           upvotes: question.upvotes,
         })));
@@ -192,7 +191,7 @@ const RoomPage: React.FC = () => {
     wsRef.current?.close();
     router.push("/").then(() => {
       console.log('Navigated to home page');
-    }).catch((error:any) => {
+    }).catch((error: any) => {
       console.error('Error navigating to home page:', error);
     });
   };
@@ -253,14 +252,23 @@ const RoomPage: React.FC = () => {
   const handleUpvote = (uuid: string) => {
     console.log(`handleUpvote for ${uuid}`)
     upvoteMessage(roomId!!, uuid, username)
-    .then(res => res.json())
-    .catch(err => console.log(err))
-    .finally(() => {})
+      .then(res => res.json())
+      .catch(err => {
+        console.log(err)
+        toast.error('An error occured, try restarting')
+      })
+      .finally(() => { })
   }
 
   const handleRestartRound = () => {
     console.log("handleRestartRound")
     newRound(roomId!!)
+      .then(res => res.json())
+      .then(data => { })
+      .catch(err =>
+        console.error(err)
+      )
+      .finally(() => { })
   }
 
   return (
@@ -278,10 +286,10 @@ const RoomPage: React.FC = () => {
               loadingQuestions={loadingQuestions}
               hostMessage={hostMessage}
               roundNumber={1}
-              handleClearQuestion={handleClearQuestion} 
+              handleClearQuestion={handleClearQuestion}
               handleRestartRound={handleRestartRound}
-              />
-              
+            />
+
           </div>
           <div className="flex-1 p-4">
             <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} />
@@ -295,8 +303,8 @@ const RoomPage: React.FC = () => {
                   What's your name? ☺️
                 </CardTitle>
               </CardHeader>
-              <Input type="text" id="username" name="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} 
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md" 
+              <Input type="text" id="username" name="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)}
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                 required />
               <Button type="submit" className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md">Submit</Button>
             </form>
