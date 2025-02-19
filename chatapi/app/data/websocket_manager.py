@@ -8,6 +8,7 @@ from redis.asyncio import Redis
 import json
 from fastapi import WebSocket
 import os
+from enum import Enum
 
 logger = logging.getLogger("chat")
 
@@ -49,6 +50,56 @@ REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 
 redis_client = Redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
+class Command(Enum):
+    CLEAR_QUESTIONS = "clear_questions"
+    GROUPING_QUESTIONS = "grouping_questions"
+    NEW_ROUND = "new_round"
+
+MOCK_MESSAGES = [
+    "How do I reset my password?",
+    "I forgot my password, how can I recover it?",
+    "What is the process to change my password?",
+    "Can you help me with my account recovery?",
+    "How do I update my profile information?",
+    "I need to change my email address on my account.",
+    "What are the store hours for the weekend?",
+    "Is the store open on holidays?",
+    "Can I return an item without a receipt?",
+    "What is the return policy for online purchases?",
+    "How do I track my order?",
+    "My order hasn't arrived yet, what should I do?",
+    "Can I change the shipping address for my order?",
+    "How do I apply for a job at your company?",
+    "Are there any job openings in the marketing department?",
+    "What benefits do you offer to employees?",
+    "How do I schedule an appointment?",
+    "Can I reschedule my appointment online?",
+    "What documents do I need to bring to my appointment?",
+    "How do I cancel my subscription?",
+    "What are the subscription plans available?",
+    "Can I upgrade my subscription plan?",
+    "How do I contact customer support?",
+    "Is there a live chat option for customer support?",
+    "What is the phone number for customer support?",
+    "How do I download the mobile app?",
+    "Is the mobile app available for both iOS and Android?",
+    "How do I report a bug in the mobile app?",
+    "Can I use the mobile app to make payments?",
+    "What payment methods are accepted?",
+    "How do I add a new payment method?",
+    "Can I set up automatic payments?",
+    "How do I delete my account?",
+    "What happens to my data if I delete my account?",
+    "Can I reactivate my account after deleting it?",
+    "How do I change my notification settings?",
+    "Can I turn off email notifications?",
+    "How do I enable push notifications?",
+    "What is the privacy policy of your company?",
+    "How do you handle customer data?",
+    "What security measures are in place to protect my information?"
+]
+
+
 class WebSocketManager:
 
     def __init__(self):
@@ -57,56 +108,13 @@ class WebSocketManager:
         self.user_id_to_room: Dict[str, str] = {}
         self.messages: Dict[str, List[Dict[str, str]]] = {}
         self.questions: Dict[str, List[Dict[str, str]]] = {}
-        MOCK_MESSAGES = [
-            "How do I reset my password?",
-            "I forgot my password, how can I recover it?",
-            "What is the process to change my password?",
-            "Can you help me with my account recovery?",
-            "How do I update my profile information?",
-            "I need to change my email address on my account.",
-            "What are the store hours for the weekend?",
-            "Is the store open on holidays?",
-            "Can I return an item without a receipt?",
-            "What is the return policy for online purchases?",
-            "How do I track my order?",
-            "My order hasn't arrived yet, what should I do?",
-            "Can I change the shipping address for my order?",
-            "How do I apply for a job at your company?",
-            "Are there any job openings in the marketing department?",
-            "What benefits do you offer to employees?",
-            "How do I schedule an appointment?",
-            "Can I reschedule my appointment online?",
-            "What documents do I need to bring to my appointment?",
-            "How do I cancel my subscription?",
-            "What are the subscription plans available?",
-            "Can I upgrade my subscription plan?",
-            "How do I contact customer support?",
-            "Is there a live chat option for customer support?",
-            "What is the phone number for customer support?",
-            "How do I download the mobile app?",
-            "Is the mobile app available for both iOS and Android?",
-            "How do I report a bug in the mobile app?",
-            "Can I use the mobile app to make payments?",
-            "What payment methods are accepted?",
-            "How do I add a new payment method?",
-            "Can I set up automatic payments?",
-            "How do I delete my account?",
-            "What happens to my data if I delete my account?",
-            "Can I reactivate my account after deleting it?",
-            "How do I change my notification settings?",
-            "Can I turn off email notifications?",
-            "How do I enable push notifications?",
-            "What is the privacy policy of your company?",
-            "How do you handle customer data?",
-            "What security measures are in place to protect my information?"
-        ]
 
         # Test data for development
         self.active_room['test room 10'] = []
-        self.messages['test room 10'] = [
-            {"username": gen_random_username(), "content": msg} for msg in MOCK_MESSAGES]
-
         self.questions['test room 10'] = []
+
+        self.messages['test room 10'] = [{"username": gen_random_username(), "content": msg} for msg in MOCK_MESSAGES]
+
 
         # end test setup
 
@@ -167,6 +175,9 @@ class WebSocketManager:
         logger.info(f"Sending group message from user_id {user_id}: {message}")
         room_id = self.user_id_to_room[user_id]
         username = self.user_id_to_conn[user_id].username
+        self.messages[room_id].append(
+            {"username": username, "content": message})
+
         await self._broadcast_redis(room_id, message, username)
 
     async def notify_new_member(self, user_id: str, room_id: str):
@@ -192,21 +203,33 @@ class WebSocketManager:
         for user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
             await user_conn.websocket.send_json(data)
-    
+
     async def _broadcast_grouped_questions(self, room_id: str, questions: object, username: str):
-        #TODO: check if username is HOST, only host allowed to do this
-        data = {'questions': questions, 'username': username, 'type': 'questions'}
-        logger.info(f"Broadcasting questions in room {room_id}, #questions = {len(questions)}, # participants ={len(self.active_room[room_id])}")
+        # TODO: check if username is HOST, only host allowed to do this
+        data = {'questions': questions,
+                'username': username, 'type': 'questions'}
+        logger.info(
+            f"Broadcasting questions in room {room_id}, #questions = {len(questions)}, # participants ={len(self.active_room[room_id])}")
         for user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
             await user_conn.websocket.send_json(data)
 
     async def _broadcast_upvote(self, room_id: str, questionId: object, username: str):
-        #TODO: check if username is HOST, only host allowed to do this
-        data = {'questionId': questionId, 'username': username, 'type': 'upvote'}
-        logger.info(f"Broadcasting upvate question {questionId} in room {room_id} from user: {username}")
+        # TODO: check if username is HOST, only host allowed to do this
+        data = {'questionId': questionId,
+                'username': username, 'type': 'upvote'}
+        logger.info(
+            f"Broadcasting upvate question {questionId} in room {room_id} from user: {username}")
         for user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
             await user_conn.websocket.send_json(data)
+
+    async def _broad_cast_command(self, room_id: str, command: Command):
+        data = {'command': command.value, 'type': 'command'}
+        logger.info(f"Broadcasting command {command.value} in room {room_id}")
+        for user_id in self.active_room[room_id]:
+            user_conn = self.user_id_to_conn[user_id]
+            await user_conn.websocket.send_json(data)
+
     def get_user_conn(self, user_id):
         return self.user_id_to_conn.get(user_id)

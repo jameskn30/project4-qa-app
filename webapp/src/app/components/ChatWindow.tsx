@@ -74,7 +74,6 @@ const ChatWindow = ({ messages, onSent, questionsLeft }: ChatWindowProps) => {
       <div className="top-0 flex justify-center w-full backdrop-blur-sm p-2 gap-4 text-center">
         <div className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md">{questionsLeft} questions left</div>
         <div className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md">3 upvotes left</div>
-        <div className="flex-1 bg-green-500 text-white py-2 px-4 rounded-md">3 downvotes left</div>
       </div>
       {
         (questionsLeft > 0) ?

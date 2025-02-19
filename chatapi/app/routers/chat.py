@@ -8,7 +8,7 @@ from redis.asyncio import Redis
 import json
 import os
 from supabase import create_client, Client
-from data.websocket_manager import WebSocketManager, gen_random_phrase  
+from data.websocket_manager import WebSocketManager, gen_random_phrase, Command
 
 from pipelines.message_rephrase import rephrase_messages, load_groq_llm, load_ollama_llm
 
@@ -225,9 +225,9 @@ async def group_messages(request: RoomRequest):
     if roomId not in websocket_manager.active_room:
         raise HTTPException(status_code=404, detail=f"Room {roomId} not found") 
 
-    
     messages = [msg['content'] for msg in websocket_manager.messages[roomId]]
 
+    await websocket_manager._broad_cast_command(roomId, Command.GROUPING_QUESTIONS)
 
     if env_type == 'prod':
         llm = load_groq_llm()
@@ -264,7 +264,7 @@ async def upvote(request: UpvoteRequest):
 
     raise HTTPException(status_code=404, detail=f"Question {question_id} not found in room {room_id}")
 
-@router.get("/clear_questions")
+@router.post("/clear_questions")
 async def clear_questions(request:RoomRequest):
     room_id = request.roomId
     logger.info(f"/clear_questions for room {room_id}")
@@ -274,12 +274,23 @@ async def clear_questions(request:RoomRequest):
 
     websocket_manager.questions[room_id] = []
 
-    raise HTTPException(status_code=404, detail=f"Question {question_id} not found in room {room_id}")
+    await websocket_manager._broad_cast_command(room_id, Command.CLEAR_QUESTIONS)
+
+    return {"message": "OK"}
 
 
-# Suggestions:
-# 1. Ensure `websocket.client.host` is unique for each user. If multiple users share the same host, it could cause issues.
-# 2. Consider adding error handling for cases where `websocket.client.host` is not found in `user_id_to_room`.
-# 3. Optimize the `leave_room` method to handle cases where the room is empty after a user leaves.
-# 4. Add more logging for debugging purposes, especially in error cases.
-# 5. Ensure that `user_id_to_conn` and `user_id_to_room` are properly cleaned up to avoid memory leaks.
+@router.post("/new_round")
+async def new_round(request: RoomRequest):
+    room_id = request.roomId
+    logger.info(f"/new_round for room {room_id}")
+
+    if room_id not in websocket_manager.active_room:
+        raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
+
+    # Reset questions and messages
+    websocket_manager.questions[room_id] = []
+    websocket_manager.messages[room_id] = []
+
+    await websocket_manager._broad_cast_command(room_id, Command.NEW_ROUND)
+
+    return {"message": "OK"}

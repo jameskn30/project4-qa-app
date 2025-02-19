@@ -66,3 +66,13 @@ export const upvoteMessage = async (roomId: string, questionId: string, username
         }),
     });
 }
+
+export const newRound = async (roomId: string) => {
+    return fetch(`/chatapi/new_round`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roomId: roomId }),
+    });
+}

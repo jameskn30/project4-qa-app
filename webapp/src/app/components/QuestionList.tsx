@@ -1,13 +1,12 @@
 import { FaAngleUp } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-
+import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan } from "react-icons/fa6";
 
 type QuestionItem = {
     uuid: string
     rephrase: string
     upvotes: number
-    downvotes: number
 }
 
 interface QuestionProps {
@@ -23,7 +22,7 @@ const Question = ({ question, order, handleUpvote }: QuestionProps) => {
             <span className="flex-1 mx-4 text-gray-700">{question.rephrase}</span>
             <button className="p-1 text-black rounded text-sm" onClick={() => handleUpvote(question.uuid)}>
                 <FaAngleUp className="bg-green-500 p-1 text-white" size={20} />
-                {question.upvotes - question.downvotes}
+                {question.upvotes}
             </button>
         </div>
     );
@@ -32,25 +31,32 @@ const Question = ({ question, order, handleUpvote }: QuestionProps) => {
 interface QuestionListProps {
     questions: QuestionItem[]
     loadingQuestions: boolean
+    hostMessage: string
     roundNumber: number
     handleGroupQuestions: () => void
     handleClearQuestion: () => void
-    handleUpvote: () => void
+    handleUpvote: (uuid: string) => void
+    handleRestartRound: () => void
 }
 
-const QuestionList = ({ questions, loadingQuestions, roundNumber, handleGroupQuestions, handleClearQuestion, handleUpvote }: QuestionListProps) => {
+const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, handleGroupQuestions, handleClearQuestion, handleUpvote, handleRestartRound }: QuestionListProps) => {
 
     return (
         <div className="p-4 overflow-y-auto h-full flex flex-col gap-2">
             <p className="text-lg text-center font-bold">Questions round {roundNumber}</p>
-            <Button onClick={handleGroupQuestions} className='bg-yellow-500 text-white hover:bg-yellow-700 font-bold'>Group questions</Button>
-            <Button onClick={handleClearQuestion} className='bg-red-500 text-white hover:bg-red-700 font-bold'>Clear questions</Button>
+            <Button onClick={handleGroupQuestions} className='bg-blue-500 text-white hover:bg-blue-700 font-bold'><FaRegComments /> Group questions</Button>
+            <Button onClick={handleClearQuestion} className='bg-yellow-500 text-white hover:bg-yellow-700 font-bold'><FaTrashCan /> Clear questions</Button>
+            <Button onClick={handleRestartRound} className='bg-red-500 text-white hover:bg-red-700 font-bold flex'> <FaArrowRotateRight /> Restart round</Button>
             <div className="flex flex-col gap-2 border-t-2 border-slate-100 mt-2 pt-4">
-                {loadingQuestions ? <Spinner /> : <>
-                    {questions.map((question, index) => (
-                        <Question key={index} order={index + 1} question={question} handleUpvote={handleUpvote}/>
-                    ))}
-                </>}
+                {hostMessage && hostMessage.length > 0 && <p className="flex w-full text-red-500"> {hostMessage}</p>}
+
+                {loadingQuestions ?
+                    <Spinner />
+                    : <>
+                        {questions.map((question, index) => (
+                            <Question key={index} order={index + 1} question={question} handleUpvote={handleUpvote} />
+                        ))}
+                    </>}
             </div>
         </div>
     );

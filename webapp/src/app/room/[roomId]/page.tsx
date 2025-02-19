@@ -4,7 +4,7 @@ import QuestionList from '@/app/components/QuestionList';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
-import { isRoomExists, syncRoom } from '@/utils/room';
+import { clearQuestions, isRoomExists, syncRoom } from '@/utils/room';
 import { useRouter, useParams, usePathname } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
@@ -15,12 +15,12 @@ import QuestionItem from '@/app/components/QuestionList';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages, upvoteMessage } from '@/utils/room';
+import { groupMessages, upvoteMessage, newRound } from '@/utils/room';
+import { clear } from 'console';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
   const params = useParams<{ roomId: string }>();
-  const pathname = usePathname();
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
   const [loading, setLoading] = useState(true);
   const [roomExists, setRoomExists] = useState(true);
@@ -34,7 +34,7 @@ const RoomPage: React.FC = () => {
   // const { Canvas } = useQRCode();
   const [questionsLeft, setQuestionsLeft] = useState(3)
   const [upvotesLeft, setUpvotesLeft] = useState(3)
-  const [downvotesLeft, setDownVotesLeft] = useState(3)
+  const [hostMessage, setHostMessage] = useState('')
 
   useEffect(() => {
     if (!username) {
@@ -77,6 +77,7 @@ const RoomPage: React.FC = () => {
       console.log('WebSocket message received:', event.data);
       const parsedData = JSON.parse(event.data);
       const type = parsedData.type;
+
       if (type === "message"){
         const content = parsedData.message;
         const username = parsedData.username;
@@ -91,7 +92,26 @@ const RoomPage: React.FC = () => {
           downvotes: question.downvotes
         }));
         setQuestions(newQuestions)
+        setLoadingQuestions(false)
+        setHostMessage("")
+      } 
+      else if (type == 'command') {
+        const command = parsedData.command;
+        if (command === 'clear_questions'){
+          clearQuestionsAction()
+          setHostMessage("Host cleared questions")
+        }
+        else if (command === "grouping_questions"){
+          setLoadingQuestions(true)
+          setHostMessage("Host grouping questions")
+        }
+        else if (command === "new_round"){
+          setHostMessage("Host started new round of questions")
+          setMessages([])
+          setQuestions([])
+        }
       }
+      
     };
 
     ws.onclose = () => {
@@ -126,10 +146,9 @@ const RoomPage: React.FC = () => {
         // Sync questions
         console.log('questions')
         console.log(data.questions);
-        setQuestions(data.questions.map((question: { rephrase: string, upvotes: number, downvotes: number }) => ({
+        setQuestions(data.questions.map((question: { rephrase: string, upvotes: number}) => ({
           rephrase: question.rephrase,
           upvotes: question.upvotes,
-          downvotes: question.downvotes
         })));
 
       }).catch(err => {
@@ -215,12 +234,16 @@ const RoomPage: React.FC = () => {
     }
   };
 
-  const handleClearQuestion = () => {
-    console.log('handleClearQuestion')
+  const clearQuestionsAction = () => {
     setLoadingQuestions(true);
     setQuestions([])
     //TODO: send clear messages in room to chatapi
     setLoadingQuestions(false);
+  }
+
+  const handleClearQuestion = () => {
+    console.log('handleClearQuestion')
+    clearQuestions(roomId!!)
   }
 
   const handleUpvote = (uuid: string) => {
@@ -231,21 +254,30 @@ const RoomPage: React.FC = () => {
     .finally(() => {})
   }
 
+  const handleRestartRound = () => {
+    console.log("handleRestartRound")
+    newRound(roomId!!)
+  }
+
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gray-50">
 
         <Navbar onLeave={onLeave} />
 
-        <div className="flex flex-1 overflow-hidden w-full lg:w-4/5 flex-col lg:flex-row bg-white shadow-lg rounded-lg">
+        <div className="flex flex-1 overflow-hidden w-full flex-col lg:flex-row bg-white shadow-lg rounded-lg">
           <div className="flex-1 overflow-y-auto border-r border-gray-300 p-4">
             <QuestionList
               questions={questions}
               handleUpvote={handleUpvote}
               handleGroupQuestions={handleGroupQuestions}
               loadingQuestions={loadingQuestions}
+              hostMessage={hostMessage}
               roundNumber={1}
-              handleClearQuestion={handleClearQuestion} />
+              handleClearQuestion={handleClearQuestion} 
+              handleRestartRound={handleRestartRound}
+              />
+              
           </div>
           <div className="flex-1 p-4">
             <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} />
