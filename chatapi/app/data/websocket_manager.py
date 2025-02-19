@@ -117,6 +117,9 @@ class WebSocketManager:
 
         # end test setup
     
+    def _check_if_user_is_host_of_room(self, room_id: str,user_id: str ) -> bool:
+        return self.room_to_host_id.get(room_id) == user_id
+    
     def get_room_by_host_id(self, host_id: str) -> str:
         print(self.room_to_host_id)
         for room_id, room_host_id in self.room_to_host_id.items():

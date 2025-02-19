@@ -8,6 +8,15 @@ export const isRoomExists = async (roomId: string) => {
     });
 }
 
+export const amIHost = async (roomId: string, userId: string) => {
+    const queryParams = new URLSearchParams({
+        roomId: roomId,
+        userId: userId
+    }).toString();
+    
+    return fetch(`/chatapi/am_i_host?${queryParams}`);
+}
+
 export const createRoom = async (roomId: string, userId: string) => {
     const response = await fetch('/chatapi/create_room', {
         method: 'POST',

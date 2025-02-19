@@ -329,3 +329,17 @@ async def close_room(request: RoomRequest):
     logger.info(f"Closed room {room_id} and deleted all related data, and broadcasted to all users")
 
     return {"message": "OK"}
+
+
+@router.get("/am_i_host")
+async def am_i_host(roomId: str, userId: str):
+
+    logger.info(f"/am_i_host for room {roomId} and user {userId}")
+
+    if roomId not in websocket_manager.active_room:
+        raise HTTPException(status_code=404, detail=f"Room {roomId} not found")
+    
+    if websocket_manager._check_if_user_is_host_of_room(roomId, userId ):
+        return {"message": "OK"}
+    else:
+        raise HTTPException(status_code=400, detail=f"Not host of this room")

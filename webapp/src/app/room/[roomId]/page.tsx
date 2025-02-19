@@ -14,9 +14,10 @@ import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages, upvoteMessage, newRound, closeRoom } from '@/utils/room';
+import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost } from '@/utils/room';
 import { QuestionItem } from '@/app/components/QuestionList'
 import { MdReportGmailerrorred } from "react-icons/md";
+import { createClient } from '@/utils/supabase/component'
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -36,6 +37,18 @@ const RoomPage: React.FC = () => {
   const [hostMessage, setHostMessage] = useState('')
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
+
+  const [isHost, setIsHost] = useState(false)
+
+  //TODO: duplicated with the logic in dashboard, use redux
+  type UserData = {
+    username: string,
+    userId: string,
+    email: string,
+  }
+  const [userData, setUserData] = useState<UserData | null>(null)
+
+  const supabase = createClient()
 
   useEffect(() => {
     if (!username) {
@@ -65,6 +78,21 @@ const RoomPage: React.FC = () => {
     };
 
     checkRoomExists();
+
+    const getUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log(user)
+      const userData: UserData = {
+        userId: user!!.id,
+        username: user?.user_metadata.full_name,
+        email: user?.user_metadata.email,
+      }
+
+      setUserData(userData)
+    }
+
+    getUserData()
+
   }, [roomId]);
 
   const connectWebSocket = useCallback(async () => {
@@ -161,6 +189,21 @@ const RoomPage: React.FC = () => {
     if (!loading && username && roomExists && !showDialog) {
       const cleanup = connectWebSocket();
       console.log('calling sync room')
+
+      if (userData) {
+        amIHost(roomId!!, userData.userId)
+          .then(res => {
+            if (res.ok) {
+              console.log("host")
+              setIsHost(true)
+            } else {
+              console.log("not host")
+            }
+          })
+          .catch(err => {
+            console.error(err)
+          }).finally(() => { })
+      }
 
       syncRoom(roomId!!).then(res => res.json()).then(data => {
         setMessages(data.messages.map((message: { username: string, content: string }) => ({
@@ -330,6 +373,9 @@ const RoomPage: React.FC = () => {
       <div className="flex flex-col h-screen items-center bg-gray-50">
 
         <Navbar onLeave={onLeave} />
+        {
+          isHost && <p>Host</p>
+        }
 
         <div className="flex flex-1 overflow-hidden w-full flex-col lg:flex-row bg-white shadow-lg rounded-lg">
           <div className="flex-1 overflow-y-auto border-r border-gray-300 p-4">
