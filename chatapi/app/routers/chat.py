@@ -40,6 +40,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEy)
 # Type
 class RoomRequest(BaseModel):
     roomId: str
+    userId: Optional[str] = None
     username: Optional[str] = None
     questionId: Optional[str] = None
 
@@ -85,6 +86,8 @@ async def random_room_id():
 async def create_room(req: RoomRequest):
     logger.info(f"/create_room")
     room_id = req.roomId
+    userId = req.userId
+
     if not room_id:
         raise HTTPException(status_code=400, detail="Room ID is required")
 
@@ -93,10 +96,10 @@ async def create_room(req: RoomRequest):
         logger.error(detail)
         raise HTTPException(status_code=400, detail=detail)
 
-    websocket_manager.active_room[room_id] = []
+    websocket_manager._create_new_room(room_id, userId)
 
-    logger.info(f"deleted room id = {room_id}")
-    return {"message": f"Room {room_id} created"}
+    logger.info(f"Created room id = {room_id}, host id = {userId}")
+    return {"message": 'OK'}
 
 @router.delete("/delete_room")
 async def delete_room(req: RoomRequest):
@@ -142,6 +145,14 @@ async def sync_room(room_id: str):
     questions = websocket_manager.questions[room_id]
     return {"messages": messages, 'questions': questions}
 
+@router.get("/get_active_room/{user_id}")
+async def get_active_room(user_id: str):
+    logger.info(f"/get_active_room for user {user_id}")
+    roomId = websocket_manager.get_room_by_host_id(user_id)
+    if roomId:
+        return {"roomId": roomId}
+    
+    raise HTTPException(status_code=404, detail=f"No active rooms")
 
 # SUPABASE
 
@@ -155,7 +166,6 @@ async def check_room_in_supabase(room_id: str):
     else:
         raise HTTPException(status_code=404, detail=f"Room {room_id} not found in Supabase")
 
-
 # WEBSOCKET 
 
 @router.websocket("/join/{room_id}/{username}")
@@ -168,6 +178,8 @@ async def join_room(websocket: WebSocket, room_id: str, username: str):
         await websocket.close(code=1000, reason=msg)
 
     user_id = None
+    
+    #check if this username is host of 
 
     try:
         user_id = await websocket_manager.join_room(room_id, websocket, username=username)

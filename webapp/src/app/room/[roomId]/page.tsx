@@ -45,12 +45,23 @@ const RoomPage: React.FC = () => {
 
   useEffect(() => {
     const checkRoomExists = async () => {
-      if (!roomId || !(await isRoomExists(roomId))) {
-        console.log('room does not exist')
-        setRoomExists(false);
-        return;
+      if (roomId !== null) {
+        isRoomExists(roomId)
+          .then(res => {
+            if (res.ok) {
+              setRoomExists(true);
+            } else {
+              setRoomExists(false);
+            }
+          }
+          )
+          .catch(err => {
+            setRoomExists(false);
+          }).finally(() => {
+
+            setLoading(false);
+          })
       }
-      setLoading(false);
     };
 
     checkRoomExists();
@@ -371,7 +382,7 @@ const RoomPage: React.FC = () => {
             <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm text-center">
               <CardHeader>
                 <CardTitle className='flex gap-2 justify-center text-xl'>
-                  <MdReportGmailerrorred/>
+                  <MdReportGmailerrorred />
                   Confirm Close Room
                 </CardTitle>
               </CardHeader>

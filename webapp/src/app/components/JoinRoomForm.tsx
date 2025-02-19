@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/ui/spinner';
+import { isRoomExists } from '@/utils/room';
 
 const JoinRoomForm = () => {
     const router = useRouter();
@@ -25,30 +26,48 @@ const JoinRoomForm = () => {
 
         setJoiningLoader(true);
 
-        try {
-            const response = await fetch('/chatapi/room_exists', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ roomId: roomCode }),
-            });
-
-            if (response.ok) {
+        isRoomExists(roomCode)
+        .then(res => {
+            if (res.ok){
                 router.push(`/room/${roomCode}`);
             } else {
-                toast.error('Room does not exist');
+                const msg = `Room ${roomCode} does not exist`
+                toast.error(msg);
+                console.error(msg)
             }
-        } catch (e) {
-            toast.error('Unexpected error');
-        } finally {
-            setJoiningLoader(false);
+        })
+        .catch((error) => {
+            toast.error(`Internal error`);
+            console.error(error)
         }
+        ).finally(() => {
+            setJoiningLoader(false);
+        })
+
+        // try {
+        //     // const response = await fetch('/chatapi/room_exists', {
+        //     //     method: 'POST',
+        //     //     headers: {
+        //     //         'Content-Type': 'application/json',
+        //     //     },
+        //     //     body: JSON.stringify({ roomId: roomCode }),
+        //     // });
+
+        //     // if (response.ok) {
+        //     //     router.push(`/room/${roomCode}`);
+        //     // } else {
+        //     //     toast.error('Room does not exist');
+        //     // }
+        // } catch (e) {
+        //     toast.error('Unexpected error');
+        // } finally {
+        //     setJoiningLoader(false);
+        // }
     };
 
     return (
-        <div className="flex justify-center items-center h-full">
-            <Card className="shadow-lg rounded-lg bg-white p-6">
+        <div className="flex justify-center ">
+            <Card className="shadow-lg bg-white p-6 w-[350px] h-[350px] ">
                 <CardContent>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <h1 className="text-3xl font-bold mb-6">Join new room</h1>
@@ -59,7 +78,7 @@ const JoinRoomForm = () => {
                             id="roomCode"
                             placeholder="Room Code"
                         />
-                        <Button type="submit" variant="primary" disabled={joiningLoader} className="bg-blue-500 text-white hover:bg-blue-700 ">
+                        <Button type="submit" disabled={joiningLoader} className="bg-blue-500 text-white hover:bg-blue-700">
                             {joiningLoader ? <Spinner /> : 'Join Room'}
                         </Button>
                     </form>

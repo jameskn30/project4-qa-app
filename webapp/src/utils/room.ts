@@ -1,25 +1,23 @@
 export const isRoomExists = async (roomId: string) => {
-    const response = await fetch('/chatapi/room_exists', {
+    return fetch('/chatapi/room_exists', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ roomId: roomId }),
     });
-
-    if (response.ok){
-        return true
-    }
-    return false
 }
 
-export const createRoom = async (roomId: string) => {
+export const createRoom = async (roomId: string, userId: string) => {
     const response = await fetch('/chatapi/create_room', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ roomId: roomId }),
+        body: JSON.stringify({ 
+            roomId: roomId, 
+            userId: userId
+        }),
     });
 
     if (response.ok) {
@@ -30,6 +28,10 @@ export const createRoom = async (roomId: string) => {
 
 export const syncRoom = async (roomId: string) => {
     return fetch(`/chatapi/sync_room/${roomId}`);
+}
+
+export const getActiveRoomsByUserId = async (userId: string) => {
+    return fetch(`/chatapi/get_active_room/${userId}`);
 }
 
 export const groupMessages = async (roomId: string) => {

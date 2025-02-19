@@ -1,13 +1,12 @@
 'use client'
 import React, { useState, useCallback, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
 import { useQRCode } from 'next-qrcode';
 import { FaRandom } from "react-icons/fa";
 import { Toaster, toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import _ from 'lodash';
 import { useRouter } from 'next/navigation';
-import { createRoom } from '@/utils/room';
+import { createRoom, getActiveRoomsByUserId } from '@/utils/room';
 import {
     Tabs,
     TabsContent,
@@ -27,9 +26,11 @@ import Loading from './loading'
 import { signout } from '@/app/utils/auth';
 import { Button } from '@/components/ui/button';
 import JoinRoomForm from '../components/JoinRoomForm';
+import { Card } from '@/components/ui/card';
 
 type UserData = {
     username: string,
+    userId: string,
     email: string,
 }
 
@@ -84,17 +85,42 @@ const NewRoomPage = () => {
 
         const getUserData = async () => {
             const { data: { user } } = await supabase.auth.getUser()
+            console.log(user)
             const userData: UserData = {
+                userId: user!!.id,
                 username: user?.user_metadata.full_name,
                 email: user?.user_metadata.email,
             }
 
             setUserData(userData)
         }
-
         getUserData()
 
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setIsLoggedIn(!!session);
+            setAuthLoading(false);
+        };
+
+        checkUser();
+        console.log('isLoggedIn ' + isLoggedIn)
+
     }, [supabase])
+
+    useEffect(() => {
+        const getActiveRoom = () => {
+            if (userData !== null) {
+                console.log('fetching active rooms')
+                getActiveRoomsByUserId(userData.userId)
+                    .then(res => res.json())
+                    .then(data => console.log(data))
+                    .catch(err => console.error(err))
+                    .finally(() => { })
+            }
+        }
+
+        getActiveRoom()
+    }, [userData])
 
 
     const handleSignOut = async () => {
@@ -127,8 +153,8 @@ const NewRoomPage = () => {
         if (roomId === null) return;
         try {
             // const roomExists = await isRoomExists(roomId);
-            if (roomId !== '') {
-                const res = await createRoom(roomId);
+            if (roomId !== '' && userData !== null) {
+                const res = await createRoom(roomId as string, userData?.userId as string);
                 if (res) {
                     router.push(`/room/${roomId}`);
                 } else {
@@ -140,21 +166,6 @@ const NewRoomPage = () => {
             toast.error('Error while creating room');
         }
     }, 1000), [roomId]);
-
-    useEffect(() => {
-
-        const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setIsLoggedIn(!!session);
-            setAuthLoading(false);
-        };
-
-        checkUser();
-
-        console.log('isLoggedIn ' + isLoggedIn)
-
-    }, [supabase])
-
 
     if (authLoading) {
         return <Loading />
@@ -177,8 +188,8 @@ const NewRoomPage = () => {
                     <TabsContent value="account">
                         <JoinRoomForm />
                     </TabsContent>
-                    <TabsContent value="password">
-                        <div className="bg-white bg-opacity-80 p-2 rounded-lg gap-4 flex flex-col justify-center shadow-lg text-center border-2 border-slate-100 w-[350px] h-[350px]">
+                    <TabsContent value="password" id="password-tab">
+                        <Card className="bg-white p-2 gap-4 flex flex-col justify-center shadow-lg text-center w-[350px] h-[350px]">
                             {fetchingRandomRoomId && <Spinner />}
                             {!fetchingRandomRoomId && (
                                 <>
@@ -203,16 +214,12 @@ const NewRoomPage = () => {
                                             }}
                                         />
                                     </div>
-                                    <Button
-                                        variant={'ghost'}
-                                        onClick={handleStartRoom}
-                                        className="bg-white text-blue-500 py-2 px-4 rounded hover:bg-blue-700 border-none"
-                                    >
+                                    <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 mx-10" onClick={handleStartRoom}>
                                         Start room
                                     </Button>
                                 </>
                             )}
-                        </div>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>

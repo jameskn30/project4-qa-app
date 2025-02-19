@@ -109,15 +109,27 @@ class WebSocketManager:
         self.user_id_to_room: Dict[str, str] = {}
         self.messages: Dict[str, List[Dict[str, str]]] = {}
         self.questions: Dict[str, List[Dict[str, str]]] = {}
+        self.room_to_host_id:Dict[str, str] = {}
 
         # Test data for development
-        self.active_room['test room 10'] = []
-        self.questions['test room 10'] = []
-
+        self._create_new_room('test room 10', '1')
         self.messages['test room 10'] = [{"username": gen_random_username(), "content": msg} for msg in MOCK_MESSAGES]
 
-
         # end test setup
+    
+    def get_room_by_host_id(self, host_id: str) -> str:
+        print(self.room_to_host_id)
+        for room_id, room_host_id in self.room_to_host_id.items():
+            if room_host_id == host_id:
+                return room_id
+        return None
+    
+    def _create_new_room(self, room_id: str, user_id: str, questions = [], messages = []):
+        self.active_room[room_id] = []
+        self.room_to_host_id[room_id] = user_id
+        self.questions[room_id] = questions
+        self.messages[room_id] = messages
+
 
     def _is_username_unique(self, room_id: str, username: str) -> bool:
         for user_id in self.active_room[room_id]:
