@@ -41,9 +41,9 @@ const Navbar = ({ onLeave }: NavbarProps) => {
           </ButtonLink>
         </div>
 
-        <div className="hidden lg:flex gap-2 border border-slate-300 py-2 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
-          <span className="bg-white rounded-lg p-2">
-            Room {roomId}
+        <div className="hidden lg:flex gap-2 border border-slate-300 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
+          <span className="bg-white rounded-lg p-2 font-bold">
+            Room: {roomId}
           </span>
           <ButtonLink href="#" onClick={onLeave}>
             Leave
@@ -75,8 +75,9 @@ const Navbar = ({ onLeave }: NavbarProps) => {
             <PopoverContent className="w-48 p-2">
               <div className="flex flex-col gap-2">
                 <span className="bg-white rounded-lg p-2">
-                  Room {roomId}
+                  Room: {roomId}
                 </span>
+                <div className="mx-4 border border-slate-100"></div>
                 <ButtonLink href="#" onClick={onLeave}>
                   Leave
                 </ButtonLink>

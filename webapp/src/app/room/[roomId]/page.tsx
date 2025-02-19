@@ -8,7 +8,7 @@ import { clearQuestions, isRoomExists, syncRoom } from '@/utils/room';
 import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
-import { toast } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import { generateRandomUsername } from '@/utils/common';
 import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
@@ -83,7 +83,6 @@ const RoomPage: React.FC = () => {
 
     const getUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      console.log(user)
       const userData: UserData = {
         userId: user!!.id,
         username: user?.user_metadata.full_name,
@@ -98,12 +97,11 @@ const RoomPage: React.FC = () => {
   }, [roomId]);
 
   const connectWebSocket = useCallback(async () => {
-    if (username === null) {
-      toast.error('Internal error');
-      return;
+    if (!username) {
+        toast.error('Internal error');
+        return;
     }
 
-    console.log('Connecting to WebSocket...');
     const response = await fetch(`/api/chat?roomId=${roomId}&username=${username}`);
     const data = await response.json();
     const ws = new WebSocket(data.websocketUrl);
@@ -111,96 +109,88 @@ const RoomPage: React.FC = () => {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('WebSocket connection established');
-      toast.success("Joined room");
+        toast.success("Joined room");
     };
 
     ws.onmessage = (event) => {
-      console.log('WebSocket message received:', event.data);
-      const parsedData = JSON.parse(event.data);
-      const type = parsedData.type;
+        const parsedData = JSON.parse(event.data);
+        const type = parsedData.type;
 
-      if (type === "message") {
-        const content = parsedData.message;
-        const username = parsedData.username;
-        const message: Message = { username, content, flag: '🇺🇸' };
-        setMessages((prevMessages) => [...prevMessages, message]);
-      }
-      else if (type === "questions") {
-        const newQuestions = parsedData.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
-          uuid: question.uuid,
-          rephrase: question.rephrase,
-          upvotes: question.upvotes,
-          downvotes: question.downvotes
-        }));
-        setQuestions(newQuestions)
-        setLoadingQuestions(false)
-        setHostMessage("")
-      }
-      else if (type === 'upvote') {
-        const questionId = parsedData.questionId;
-        setQuestions((prevQuestions) =>
-          prevQuestions.map((question) =>
-            question.uuid === questionId
-              ? { ...question, upvotes: question.upvotes + 1 }
-              : question
-          )
-        );
-      }
-      else if (type === 'command') {
-        const command = parsedData.command;
-        if (command === 'clear_questions') {
-          clearQuestionsAction()
-          setHostMessage("Host cleared questions")
+        if (type === "message") {
+            const content = parsedData.message;
+            const username = parsedData.username;
+            const message: Message = { username, content, flag: '🇺🇸' };
+            setMessages((prevMessages) => [...prevMessages, message]);
         }
-        else if (command === "grouping_questions") {
-          setLoadingQuestions(true)
-          setHostMessage("Host grouping questions")
+        else if (type === "questions") {
+            const newQuestions = parsedData.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
+                uuid: question.uuid,
+                rephrase: question.rephrase,
+                upvotes: question.upvotes,
+                downvotes: question.downvotes
+            }));
+            setQuestions(newQuestions)
+            setLoadingQuestions(false)
+            setHostMessage("")
         }
-        else if (command === "new_round") {
-          setHostMessage("Host started new round of questions")
-          setMessages([])
-          setQuestions([])
-          setQuestionsLeft(3)
-          setUpvotesLeft(3)
+        else if (type === 'upvote') {
+            const questionId = parsedData.questionId;
+            setQuestions((prevQuestions) =>
+                prevQuestions.map((question) =>
+                    question.uuid === questionId
+                        ? { ...question, upvotes: question.upvotes + 1 }
+                        : question
+                )
+            );
         }
-        else if (command === "close_room") {
-          setRoomClosed(true);
-          setTimeout(() => {
-            onLeave()
-          }, 3000);
+        else if (type === 'command') {
+            const command = parsedData.command;
+            if (command === 'clear_questions') {
+                clearQuestionsAction()
+                setHostMessage("Host cleared questions")
+            }
+            else if (command === "grouping_questions") {
+                setLoadingQuestions(true)
+                setHostMessage("Host grouping questions")
+            }
+            else if (command === "new_round") {
+                setHostMessage("Host started new round of questions")
+                setMessages([])
+                setQuestions([])
+                setQuestionsLeft(3)
+                setUpvotesLeft(3)
+            }
+            else if (command === "close_room") {
+                setRoomClosed(true);
+                setTimeout(() => {
+                    onLeave()
+                }, 3000);
+            }
         }
-      }
     };
 
     ws.onclose = () => {
-      console.log('WebSocket connection closed');
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast.error("Error while connecting to room");
+        console.error('WebSocket error:', error);
+        toast.error("Error while connecting to room");
     };
 
     return () => {
-      ws.close();
+        ws.close();
     };
-  }, [roomId, username]);
+}, [roomId, username]);
 
   useEffect(() => {
     if (!loading && username && roomExists && !showDialog) {
       const cleanup = connectWebSocket();
-      console.log('calling sync room')
 
       if (userData) {
-        // amIHost(roomId!!, userData.userId)
-        //Test
         amIHost(roomId!!, '1')
           .then(res => {
             if (res.ok) {
               setIsHost(true)
-            } else {
-              console.log("not host")
             }
           })
           .catch(err => {
@@ -227,7 +217,6 @@ const RoomPage: React.FC = () => {
       });
 
       return () => {
-        console.log('cleaned up ')
         cleanup.then((close) => close && close());
       };
     }
@@ -249,7 +238,6 @@ const RoomPage: React.FC = () => {
     setQuestionsLeft(questionsLeft - 1)
     try {
       if (wsRef.current) {
-        console.log('Sending message:', content);
         wsRef.current.send(content);
         setQuestionsLeft(questionsLeft - 1)
       }
@@ -287,7 +275,6 @@ const RoomPage: React.FC = () => {
     try {
       const response = await groupMessages(roomId!!);
       if (response.ok) {
-        // setQuestions
         toast.success('Grouped questions');
       } else {
         toast.error('Failed to group questions');
@@ -303,12 +290,10 @@ const RoomPage: React.FC = () => {
   const clearQuestionsAction = () => {
     setLoadingQuestions(true);
     setQuestions([])
-    //TODO: send clear messages in room to chatapi
     setLoadingQuestions(false);
   }
 
   const handleClearQuestion = () => {
-    console.log('handleClearQuestion')
     clearQuestions(roomId!!)
   }
 
@@ -318,18 +303,15 @@ const RoomPage: React.FC = () => {
       return
     }
     setUpvotesLeft(upvotesLeft - 1)
-    console.log(`handleUpvote for ${uuid}`)
     upvoteMessage(roomId!!, uuid, username)
       .then(res => res.json())
       .catch(err => {
-        console.log(err)
         toast.error('An error occured, try restarting')
       })
       .finally(() => { })
   }
 
   const handleRestartRound = () => {
-    console.log("handleRestartRound")
     newRound(roomId!!)
       .then(res => res.json())
       .then(data => { })
@@ -347,12 +329,9 @@ const RoomPage: React.FC = () => {
     closeRoom(roomId!!)
       .then(res => res.json())
       .then(data => {
-        console.log(data)
-        console.log('Leaving room');
         onLeave()
       })
       .catch(err => {
-        console.error(err)
         toast.error("Error while closing room")
       })
       .finally(() => {
@@ -364,16 +343,15 @@ const RoomPage: React.FC = () => {
     wsRef.current?.close();
 
     router.push("/").then(() => {
-      console.log('Navigated to home page');
     }).catch((error: any) => {
       console.error('Error navigating to home page:', error);
     });
   }
 
-
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gray-50">
+        <Toaster expand={true} position='top-center' richColors />
 
         <Navbar onLeave={onLeave} />
         {
@@ -436,7 +414,7 @@ const RoomPage: React.FC = () => {
               )
             }
           </div>
-          <div className="lg:flex flex-col bg-white shadow-lg rounded-lg hidden">
+          <div className="lg:flex flex-col bg-white shadow-lg rounded-lg hidden m-3">
             <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
           </div>
         </div>

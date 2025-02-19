@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MessageInput from '@/app/components/MessageInput'
 import { Toaster, toast } from 'sonner';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -32,10 +32,6 @@ const MessageListItem = ({ username, content, flag }: Message) => {
           </div>
         </div>
       </PopoverTrigger>
-      {/* <PopoverContent className="p-2 w-auto">
-        <button className="rounded-md p-1 hover:bg-gray-200">☝️</button>
-        <button className="rounded-md p-1 hover:bg-gray-200">👎️️</button>
-      </PopoverContent> */}
     </Popover>
   );
 };
@@ -52,12 +48,10 @@ const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: Cha
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   return (
@@ -70,7 +64,6 @@ const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: Cha
             <MessageListItem key={index} username={msg.username} content={msg.content} flag={msg.flag} />
           ))
         }
-
         <div ref={messagesEndRef} />
       </div>
     </div>
