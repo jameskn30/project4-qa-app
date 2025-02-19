@@ -90,7 +90,6 @@ const RoomPage: React.FC = () => {
           upvotes: question.upvotes,
           downvotes: question.downvotes
         }));
-        console.log(newQuestions)
         setQuestions(newQuestions)
       }
     };
@@ -127,8 +126,8 @@ const RoomPage: React.FC = () => {
         // Sync questions
         console.log('questions')
         console.log(data.questions);
-        setQuestions(data.questions.map((question: { content: string, upvotes: number, downvotes: number }) => ({
-          content: question.content,
+        setQuestions(data.questions.map((question: { rephrase: string, upvotes: number, downvotes: number }) => ({
+          rephrase: question.rephrase,
           upvotes: question.upvotes,
           downvotes: question.downvotes
         })));
@@ -203,15 +202,7 @@ const RoomPage: React.FC = () => {
     try {
       const response = await groupMessages(roomId!!);
       if (response.ok) {
-        const data = await response.json();
-        console.log('grouped questions :', data.questions);
         // setQuestions
-
-        setQuestions(data.questions.map((question: {rephrase: string, upvotes: number, downvotes: number}) => ({
-          rephrase: question.rephrase,
-          upvotes: question.upvotes,
-          downvotes: question.downvotes
-        })));
         toast.success('Grouped questions');
       } else {
         toast.error('Failed to group questions');

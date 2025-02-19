@@ -264,6 +264,19 @@ async def upvote(request: UpvoteRequest):
 
     raise HTTPException(status_code=404, detail=f"Question {question_id} not found in room {room_id}")
 
+@router.get("/clear_questions")
+async def clear_questions(request:RoomRequest):
+    room_id = request.roomId
+    logger.info(f"/clear_questions for room {room_id}")
+
+    if room_id not in websocket_manager.active_room:
+        raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
+
+    websocket_manager.questions[room_id] = []
+
+    raise HTTPException(status_code=404, detail=f"Question {question_id} not found in room {room_id}")
+
+
 # Suggestions:
 # 1. Ensure `websocket.client.host` is unique for each user. If multiple users share the same host, it could cause issues.
 # 2. Consider adding error handling for cases where `websocket.client.host` is not found in `user_id_to_room`.
