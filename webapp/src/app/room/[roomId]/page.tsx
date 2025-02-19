@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { groupMessages, upvoteMessage, newRound, closeRoom } from '@/utils/room';
 import { QuestionItem } from '@/app/components/QuestionList'
+import { MdReportGmailerrorred } from "react-icons/md";
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -349,7 +350,7 @@ const RoomPage: React.FC = () => {
               <Input type="text" id="username" name="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                 required />
-              <Button type="submit" className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md">Submit</Button>
+              <Button type="submit" variant="default" className="mt-4 w-full bg-blue-500 hover:bg-blue-700 text-white py-2 rounded-md">Submit</Button>
             </form>
           </Card>
         )}
@@ -369,7 +370,8 @@ const RoomPage: React.FC = () => {
           <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm p-4">
             <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm text-center">
               <CardHeader>
-                <CardTitle>
+                <CardTitle className='flex gap-2 justify-center text-xl'>
+                  <MdReportGmailerrorred/>
                   Confirm Close Room
                 </CardTitle>
               </CardHeader>
