@@ -259,7 +259,7 @@ async def upvote(request: UpvoteRequest):
     for question in questions:
         if question['uuid'] == question_id:
             question['upvotes'] += 1
-            await websocket_manager._broadcast_upvote(room_id, f"{username} upvoted a question", "system")
+            await websocket_manager._broadcast_upvote(room_id, question_id)
             return {"message": "OK"}
 
     raise HTTPException(status_code=404, detail=f"Question {question_id} not found in room {room_id}")

@@ -40,6 +40,7 @@ interface QuestionListProps {
 }
 
 const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, handleGroupQuestions, handleClearQuestion, handleUpvote, handleRestartRound }: QuestionListProps) => {
+    const sortedQuestions = [...questions].sort((a, b) => b.upvotes - a.upvotes);
 
     return (
         <div className="p-4 overflow-y-auto h-full flex flex-col gap-2">
@@ -53,7 +54,7 @@ const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, h
                 {loadingQuestions ?
                     <Spinner />
                     : <>
-                        {questions.map((question, index) => (
+                        {sortedQuestions.map((question, index) => (
                             <Question key={index} order={index + 1} question={question} handleUpvote={handleUpvote} />
                         ))}
                     </>}

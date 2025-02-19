@@ -95,7 +95,17 @@ const RoomPage: React.FC = () => {
         setLoadingQuestions(false)
         setHostMessage("")
       } 
-      else if (type == 'command') {
+      else if (type === 'upvote'){
+        const questionId = parsedData.questionId;
+        setQuestions((prevQuestions) =>
+          prevQuestions.map((question) =>
+            question.uuid === questionId
+              ? { ...question, upvotes: question.upvotes + 1 }
+              : question
+          )
+        );
+      }
+      else if (type === 'command') {
         const command = parsedData.command;
         if (command === 'clear_questions'){
           clearQuestionsAction()
@@ -131,21 +141,15 @@ const RoomPage: React.FC = () => {
   useEffect(() => {
     if (!loading && username && roomExists && !showDialog) {
       const cleanup = connectWebSocket();
-
       console.log('calling sync room')
-      syncRoom(roomId!!).then(res => res.json()).then(data => {
-        console.log('sync room')
 
-        // Sync messages
+      syncRoom(roomId!!).then(res => res.json()).then(data => {
         setMessages(data.messages.map((message: { username: string, content: string }) => ({
           username: message.username,
           content: message.content,
           flag: '🇺🇸'
         })));
 
-        // Sync questions
-        console.log('questions')
-        console.log(data.questions);
         setQuestions(data.questions.map((question: { rephrase: string, upvotes: number}) => ({
           rephrase: question.rephrase,
           upvotes: question.upvotes,
@@ -188,7 +192,7 @@ const RoomPage: React.FC = () => {
     wsRef.current?.close();
     router.push("/").then(() => {
       console.log('Navigated to home page');
-    }).catch((error) => {
+    }).catch((error:any) => {
       console.error('Error navigating to home page:', error);
     });
   };

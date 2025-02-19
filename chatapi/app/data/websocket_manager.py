@@ -214,12 +214,12 @@ class WebSocketManager:
             user_conn = self.user_id_to_conn[user_id]
             await user_conn.websocket.send_json(data)
 
-    async def _broadcast_upvote(self, room_id: str, questionId: object, username: str):
+    async def _broadcast_upvote(self, room_id: str, questionId: string):
         # TODO: check if username is HOST, only host allowed to do this
-        data = {'questionId': questionId,
-                'username': username, 'type': 'upvote'}
-        logger.info(
-            f"Broadcasting upvate question {questionId} in room {room_id} from user: {username}")
+        data = {'questionId': questionId,'type': 'upvote'}
+
+        logger.info(f"Broadcasting upvate question {questionId} in room {room_id}")
+
         for user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
             await user_conn.websocket.send_json(data)
