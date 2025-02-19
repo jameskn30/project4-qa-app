@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import clsx from 'clsx'
 import { useParams } from 'next/navigation'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { FaBars } from 'react-icons/fa'
+import { Button } from '@/components/ui/button'
 
 interface ButtonLinkProp extends React.LinkHTMLAttributes<HTMLLinkElement> {
   children: React.ReactNode | null
@@ -28,8 +31,8 @@ const Navbar = ({ onLeave }: NavbarProps) => {
 
   return (
     <div className="sticky z-10 bg-transparent w-full">
-      <nav className="flex justify-between items-center px-5 py-1">
-        <div className="flex space-x-4 cl border border-slate-300 p-1 bg-white rounded-xl shadow-md hover:shadow-lg items-center">
+      <nav className="flex flex-wrap justify-between items-center px-5 py-1">
+        <div className="flex space-x-4 border border-slate-300 p-1 bg-white rounded-xl shadow-md hover:shadow-lg items-center">
           <ButtonLink href="/">
             <div className="flex items-center gap-2">
               <p className="text-sm">LOGO</p>
@@ -38,22 +41,17 @@ const Navbar = ({ onLeave }: NavbarProps) => {
           </ButtonLink>
         </div>
 
-        <ul className="flex gap-2 cl border border-slate-300 py-2 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
-          <li>
-            <span className="bg-white rounded-lg p-2">
-              Room {roomId}
-            </span>
-          </li>
+        <div className="hidden lg:flex gap-2 border border-slate-300 py-2 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
+          <span className="bg-white rounded-lg p-2">
+            Room {roomId}
+          </span>
+          <ButtonLink href="#" onClick={onLeave}>
+            Leave
+          </ButtonLink>
+        </div>
 
-          <li>
-            <ButtonLink href="#" onClick={onLeave}>
-              Leave
-            </ButtonLink>
-          </li>
-        </ul>
-
-        <div className='flex gap-3'>
-          <ul className="flex space-x-4 cl border border-slate-300 py-2 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
+        <div className="hidden lg:flex gap-3">
+          <ul className="flex space-x-4 border border-slate-300 py-2 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
             <li>
               <ButtonLink href="#section2">
                 Login
@@ -65,6 +63,32 @@ const Navbar = ({ onLeave }: NavbarProps) => {
               </ButtonLink>
             </li>
           </ul>
+        </div>
+
+        <div className="lg:hidden">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button className="p-2">
+                <FaBars />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2">
+              <div className="flex flex-col gap-2">
+                <span className="bg-white rounded-lg p-2">
+                  Room {roomId}
+                </span>
+                <ButtonLink href="#" onClick={onLeave}>
+                  Leave
+                </ButtonLink>
+                <ButtonLink href="#section2">
+                  Login
+                </ButtonLink>
+                <ButtonLink href="#section3" className="bg-gradient-to-r from-purple-600 via-purpl-700 to-red-600 text-white">
+                  Sign Up
+                </ButtonLink>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </nav>
     </div>

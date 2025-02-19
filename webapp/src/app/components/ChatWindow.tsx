@@ -45,9 +45,10 @@ interface ChatWindowProps {
   onSent: (message: string) => void
   questionsLeft: number
   upvoteLeft: number
+  isHost: boolean
 }
 
-const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft }: ChatWindowProps) => {
+const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: ChatWindowProps) => {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -60,9 +61,9 @@ const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft }: ChatWindowP
   }, [messages]);
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto bg-white relative">
+    <div className="flex flex-col h-full overflow-y-auto bg-white relative mb-12 ">
       <Toaster expand={true} position='top-center' richColors />
-      <div className={`flex-1 overflow-y-auto flex flex-col pt-5`}>
+      <div className={`flex-1 overflow-y-auto flex flex-col pt-5 border border-slate-200`}>
         {
           messages &&
           messages.map((msg, index) => (
@@ -72,17 +73,6 @@ const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft }: ChatWindowP
 
         <div ref={messagesEndRef} />
       </div>
-      <div className="top-0 flex justify-center w-full backdrop-blur-sm p-2 gap-4 text-center">
-        <div className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md">{questionsLeft} questions left</div>
-        <div className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md">{upvoteLeft} upvotes left</div>
-      </div>
-      {
-        (questionsLeft > 0) ?
-          <MessageInput onSent={onSent} /> :
-          <div className="bottom-0 w-full bg-white shadow-lg p-2">
-            <p className="italic text-red-500">Everyone only allowed to ask 3 questions, wait until host restart Q&A round </p>
-          </div>
-      }
     </div>
   );
 };

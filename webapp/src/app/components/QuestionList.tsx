@@ -1,7 +1,5 @@
 import { FaAngleUp } from "react-icons/fa6";
-import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan } from "react-icons/fa6";
 
 export type QuestionItem = {
     uuid: string
@@ -46,10 +44,10 @@ const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, h
     return (
         <div className="p-4 overflow-y-auto h-full flex flex-col gap-2">
             <p className="text-lg text-center font-bold">Questions round {roundNumber}</p>
-            <Button onClick={handleGroupQuestions} className='bg-blue-500 text-white hover:bg-blue-700 font-bold'><FaRegComments /> Group questions</Button>
+            {/* <Button onClick={handleGroupQuestions} className='bg-blue-500 text-white hover:bg-blue-700 font-bold'><FaRegComments /> Group questions</Button>
             <Button onClick={handleClearQuestion} className='bg-yellow-500 text-white hover:bg-yellow-700 font-bold'><FaTrashCan /> Clear questions</Button>
             <Button onClick={handleRestartRound} className='bg-red-500 text-white hover:bg-red-700 font-bold flex'> <FaArrowRotateRight /> Restart round</Button>
-            <Button onClick={handleCloseRoom} className='bg-red-500 text-white hover:bg-red-700 font-bold flex'> Test button Close room</Button>
+            <Button onClick={handleCloseRoom} className='bg-red-500 text-white hover:bg-red-700 font-bold flex'> Test button Close room</Button> */}
             <div className="flex flex-col gap-2 border-t-2 border-slate-100 mt-2 pt-4">
                 {hostMessage && hostMessage.length > 0 && <p className="flex w-full text-red-500"> {hostMessage}</p>}
 
