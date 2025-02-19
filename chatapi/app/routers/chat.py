@@ -294,3 +294,26 @@ async def new_round(request: RoomRequest):
     await websocket_manager._broad_cast_command(room_id, Command.NEW_ROUND)
 
     return {"message": "OK"}
+
+@router.post("/close_room")
+async def close_room(request: RoomRequest):
+    room_id = request.roomId
+
+    logger.info(f"Broadcasting to users that room is closed")
+    await websocket_manager._broad_cast_command(room_id, Command.CLOSE_ROOM)
+
+    if room_id not in websocket_manager.active_room:
+        raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
+
+    # Disconnect all users in the room
+    for user_id in websocket_manager.active_room[room_id]:
+        await websocket_manager.leave_room(room_id, user_id)
+
+    # Delete everything related to roomId
+    del websocket_manager.active_room[room_id]
+    del websocket_manager.messages[room_id]
+    del websocket_manager.questions[room_id]
+
+    logger.info(f"Closed room {room_id} and deleted all related data, and broadcasted to all users")
+
+    return {"message": "OK"}

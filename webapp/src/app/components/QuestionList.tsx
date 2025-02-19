@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan } from "react-icons/fa6";
 
-type QuestionItem = {
+export type QuestionItem = {
     uuid: string
     rephrase: string
     upvotes: number
@@ -37,9 +37,10 @@ interface QuestionListProps {
     handleClearQuestion: () => void
     handleUpvote: (uuid: string) => void
     handleRestartRound: () => void
+    handleCloseRoom: () => void
 }
 
-const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, handleGroupQuestions, handleClearQuestion, handleUpvote, handleRestartRound }: QuestionListProps) => {
+const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, handleGroupQuestions, handleClearQuestion, handleUpvote, handleRestartRound, handleCloseRoom }: QuestionListProps) => {
     const sortedQuestions = [...questions].sort((a, b) => b.upvotes - a.upvotes);
 
     return (
@@ -48,6 +49,7 @@ const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, h
             <Button onClick={handleGroupQuestions} className='bg-blue-500 text-white hover:bg-blue-700 font-bold'><FaRegComments /> Group questions</Button>
             <Button onClick={handleClearQuestion} className='bg-yellow-500 text-white hover:bg-yellow-700 font-bold'><FaTrashCan /> Clear questions</Button>
             <Button onClick={handleRestartRound} className='bg-red-500 text-white hover:bg-red-700 font-bold flex'> <FaArrowRotateRight /> Restart round</Button>
+            <Button onClick={handleCloseRoom} className='bg-red-500 text-white hover:bg-red-700 font-bold flex'> Test button Close room</Button>
             <div className="flex flex-col gap-2 border-t-2 border-slate-100 mt-2 pt-4">
                 {hostMessage && hostMessage.length > 0 && <p className="flex w-full text-red-500"> {hostMessage}</p>}
 

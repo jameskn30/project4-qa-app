@@ -54,6 +54,7 @@ class Command(Enum):
     CLEAR_QUESTIONS = "clear_questions"
     GROUPING_QUESTIONS = "grouping_questions"
     NEW_ROUND = "new_round"
+    CLOSE_ROOM = "close_room"
 
 MOCK_MESSAGES = [
     "How do I reset my password?",

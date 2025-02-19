@@ -14,7 +14,8 @@ import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages, upvoteMessage, newRound } from '@/utils/room';
+import { groupMessages, upvoteMessage, newRound, closeRoom } from '@/utils/room';
+import { QuestionItem } from '@/app/components/QuestionList'
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -29,10 +30,11 @@ const RoomPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
-  // const { Canvas } = useQRCode();
   const [questionsLeft, setQuestionsLeft] = useState(3)
   const [upvotesLeft, setUpvotesLeft] = useState(3)
   const [hostMessage, setHostMessage] = useState('')
+  const [roomClosed, setRoomClosed] = useState(false);
+  const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
 
   useEffect(() => {
     if (!username) {
@@ -117,9 +119,16 @@ const RoomPage: React.FC = () => {
           setHostMessage("Host started new round of questions")
           setMessages([])
           setQuestions([])
+          setQuestionsLeft(3)
+          setUpvotesLeft(3)
+        }
+        else if (command === "close_room") {
+          setRoomClosed(true);
+          setTimeout(() => {
+            onLeave()
+          }, 3000);
         }
       }
-
     };
 
     ws.onclose = () => {
@@ -191,15 +200,6 @@ const RoomPage: React.FC = () => {
     }
   };
 
-  const onLeave = () => {
-    console.log('Leaving room');
-    wsRef.current?.close();
-    router.push("/").then(() => {
-      console.log('Navigated to home page');
-    }).catch((error: any) => {
-      console.error('Error navigating to home page:', error);
-    });
-  };
 
   const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -281,6 +281,38 @@ const RoomPage: React.FC = () => {
       .finally(() => { })
   }
 
+  const handleCloseRoom = () => {
+    setShowCloseRoomDialog(true);
+  }
+
+  const confirmCloseRoom = () => {
+    closeRoom(roomId!!)
+      .then(res => res.json())
+      .then(data => {
+        console.log(data)
+        console.log('Leaving room');
+        onLeave()
+      })
+      .catch(err => {
+        console.error(err)
+        toast.error("Error while closing room")
+      })
+      .finally(() => {
+        setShowCloseRoomDialog(false);
+      })
+  }
+
+  const onLeave = () => {
+    wsRef.current?.close();
+
+    router.push("/").then(() => {
+      console.log('Navigated to home page');
+    }).catch((error: any) => {
+      console.error('Error navigating to home page:', error);
+    });
+  }
+
+
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gray-50">
@@ -298,11 +330,12 @@ const RoomPage: React.FC = () => {
               roundNumber={1}
               handleClearQuestion={handleClearQuestion}
               handleRestartRound={handleRestartRound}
+              handleCloseRoom={handleCloseRoom}
             />
 
           </div>
           <div className="flex-1 p-4">
-            <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft}/>
+            <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} />
           </div>
         </div>
         {showDialog && (
@@ -318,6 +351,35 @@ const RoomPage: React.FC = () => {
                 required />
               <Button type="submit" className="mt-4 w-full bg-blue-500 text-white py-2 rounded-md">Submit</Button>
             </form>
+          </Card>
+        )}
+        {roomClosed && (
+          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm p-4">
+            <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm text-center">
+              <CardHeader>
+                <CardTitle>
+                  Room Closed
+                </CardTitle>
+              </CardHeader>
+              <p className="mt-4">The room has been closed and is no longer accessible. You will be redirected to the homepage shortly.</p>
+            </div>
+          </Card>
+        )}
+        {showCloseRoomDialog && (
+          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm p-4">
+            <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm text-center">
+              <CardHeader>
+                <CardTitle>
+                  Confirm Close Room
+                </CardTitle>
+              </CardHeader>
+              <p className="mt-4">Are you sure you want to close the room?</p>
+              <p className="mt-4">This action can't be undone</p>
+              <div className="mt-4 flex justify-center gap-4">
+                <Button variant={"destructive"} onClick={confirmCloseRoom} >Yes, Close Room</Button>
+                <Button variant="secondary" onClick={() => setShowCloseRoomDialog(false)}>Cancel</Button>
+              </div>
+            </div>
           </Card>
         )}
       </div>

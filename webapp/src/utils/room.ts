@@ -76,3 +76,14 @@ export const newRound = async (roomId: string) => {
         body: JSON.stringify({ roomId: roomId }),
     });
 }
+
+
+export const closeRoom = async (roomId: string) => {
+    return fetch(`/chatapi/close_room`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roomId: roomId }),
+    });
+}

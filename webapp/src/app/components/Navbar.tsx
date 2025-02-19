@@ -26,10 +26,6 @@ const Navbar = ({ onLeave }: NavbarProps) => {
 
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null
 
-  const handleOnLeave = () => {
-    onLeave()
-  }
-
   return (
     <div className="sticky z-10 bg-transparent w-full">
       <nav className="flex justify-between items-center px-5 py-1">
@@ -50,7 +46,7 @@ const Navbar = ({ onLeave }: NavbarProps) => {
           </li>
 
           <li>
-            <ButtonLink href="#" onClick={handleOnLeave}>
+            <ButtonLink href="#" onClick={onLeave}>
               Leave
             </ButtonLink>
           </li>
