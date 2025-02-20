@@ -2,11 +2,13 @@ import { revalidatePath } from "next/cache";
 
 export default async function EditFormPage() {
 
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // Mock sleep for 3 seconds
+
     async function handleSubmit(formData: FormData) {
         'use server'
+        await new Promise((resolve) => setTimeout(resolve, 3000)); // Mock sleep for 3 seconds
         console.log('Form data submitted on server:', formData);
         console.log('watigin for 3 seconds')
-        await new Promise((resolve) => setTimeout(resolve, 3000)); // Mock sleep for 3 seconds
         revalidatePath('/experiment/editForm');
     }
 
