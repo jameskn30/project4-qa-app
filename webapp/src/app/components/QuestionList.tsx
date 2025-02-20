@@ -31,8 +31,8 @@ const Question = ({ question, order, isHost, handleUpvote }: QuestionProps) => {
                 <span className="flex-1 mx-4 text-gray-700">{question.rephrase}</span>
 
             </div>
-            <button className="p-1 text-black rounded-md text-sm items-center flex flex-col border border-slate-100" onClick={() => handleUpvote(question.uuid)}>
-                <FaAngleUp className="bg-green-500 p-1 text-white w-full rounded-md" size={20} />
+            <button className="p-1 text-black rounded-md text-sm justify-between items-center flex flex-col border border-slate-100" onClick={() => handleUpvote(question.uuid)}>
+                <FaAngleUp className="bg-green-500 p-1 text-white w-auto rounded-md" size={20} />
                 <p>{question.upvotes}</p>
                 <p>Upvote</p>
             </button>

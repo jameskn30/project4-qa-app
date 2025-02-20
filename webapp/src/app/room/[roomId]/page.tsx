@@ -406,7 +406,7 @@ const RoomPage: React.FC = () => {
                   <div className="flex flex-col gap-2 w-full lg:w-3/4 justify-center">
                     <div className="top-0 flex justify-center w-full gap-4 text-center">
                       <div className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md">{questionsLeft} questions left</div>
-                      <div className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md">{upvotesLeft} upvotes left</div>
+                      <div className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md">{upvotesLeft} upvotes left</div>
                     </div>
                     <MessageInput onSent={onSent} />
 
