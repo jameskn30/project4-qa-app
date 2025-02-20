@@ -1,4 +1,4 @@
-import { FaAngleUp } from "react-icons/fa6";
+import { FaCircleUp } from "react-icons/fa6";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 
@@ -31,9 +31,13 @@ const Question = ({ question, order, isHost, handleUpvote }: QuestionProps) => {
                 <span className="flex-1 mx-4 text-gray-700">{question.rephrase}</span>
 
             </div>
-            <button className="p-1 text-black rounded-md text-sm justify-between items-center flex flex-col border border-slate-100" onClick={() => handleUpvote(question.uuid)}>
-                <FaAngleUp className="bg-green-500 p-1 text-white w-auto rounded-md" size={20} />
-                <p>{question.upvotes}</p>
+            <button className="p-1 text-black rounded-md text-sm justify-center items-center flex flex-col hover:bg-slate-200"
+                onClick={() => handleUpvote(question.uuid)}>
+                <div className='flex items-center gap-2'>
+                    <FaCircleUp className="text-green-700 w-auto rounded-full" size={25} />
+                    <p>{question.upvotes}</p>
+                </div>
+
                 <p>Upvote</p>
             </button>
         </div>

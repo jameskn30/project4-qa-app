@@ -42,7 +42,7 @@ const RoomPage: React.FC = () => {
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [isHost, setIsHost] = useState(false)
 
-  //TODO: duplicated with the logic in dashboard, use redux
+  //TODO: duplicated with the logic in dashboard, use state management
   type UserData = {
     username: string,
     userId: string,
