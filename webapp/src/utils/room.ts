@@ -1,3 +1,6 @@
+'use server'
+
+
 export const isRoomExists = async (roomId: string) => {
     return fetch('/chatapi/room_exists', {
         method: 'POST',

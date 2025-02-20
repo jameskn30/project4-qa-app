@@ -5,7 +5,7 @@ import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
 import { clearQuestions, isRoomExists, syncRoom } from '@/utils/room';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
 import { toast, Toaster } from 'sonner';
@@ -17,7 +17,8 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost } from '@/utils/room';
 import { QuestionItem } from '@/app/components/QuestionList'
 import { MdReportGmailerrorred } from "react-icons/md";
-import { createClient } from '@/utils/supabase/component'
+// import { createClient } from '@/utils/supabase/component'
+import { getUserData } from '@/utils/supabase/userData';
 import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaAngleDown, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import MessageInput from '@/app/components/MessageInput';
@@ -41,6 +42,7 @@ const RoomPage: React.FC = () => {
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [isHost, setIsHost] = useState(false)
+  const currPath = usePathname()
 
   //TODO: duplicated with the logic in dashboard, use state management
   type UserData = {
@@ -50,7 +52,7 @@ const RoomPage: React.FC = () => {
   }
   const [userData, setUserData] = useState<UserData | null>(null)
 
-  const supabase = createClient()
+  // const supabase = createClient()
 
   useEffect(() => {
     if (!username) {
@@ -81,18 +83,22 @@ const RoomPage: React.FC = () => {
 
     checkRoomExists();
 
-    const getUserData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      const userData: UserData = {
-        userId: user!!.id,
-        username: user?.user_metadata.full_name,
-        email: user?.user_metadata.email,
-      }
+    // const getUserData = async () => {
+    //   const { data: { user } } = await supabase.auth.getUser()
+    //   const userData: UserData = {
+    //     userId: user!!.id,
+    //     username: user?.user_metadata.full_name,
+    //     email: user?.user_metadata.email,
+    //   }
 
-      setUserData(userData)
+    //   setUserData(userData)
+    // }
+
+    if(currPath){
+      const userData = getUserData(currPath)
+      console.log('userData')
+      console.log(userData)
     }
-
-    getUserData()
 
   }, [roomId]);
 
