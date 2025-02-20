@@ -104,6 +104,7 @@ const RoomPage: React.FC = () => {
 
     const response = await fetch(`/api/chat?roomId=${roomId}&username=${username}`);
     const data = await response.json();
+    console.log('URL = ' + data.websocketUrl)
     const ws = new WebSocket(data.websocketUrl);
 
     wsRef.current = ws;
@@ -382,7 +383,7 @@ const RoomPage: React.FC = () => {
         }
 
         <div className="flex gap-2 lg:mt-4 h-50 w-full bg-slate-100 overflow-y-auto lg:px-10 ">
-          <div className="flex flex-1 flex-col bg-white shadow-lg rounded-md border border-slate-200">
+          <div className="flex flex-1 flex-col bg-white shadow-lg rounded-md border border-slate-200 w-2/3 min-h-[500px]">
             <div className="flex-1 overflow-y-auto p-4 ">
               <QuestionList
                 questions={questions}
@@ -391,6 +392,7 @@ const RoomPage: React.FC = () => {
                 loadingQuestions={loadingQuestions}
                 hostMessage={hostMessage}
                 roundNumber={1}
+                isHost={isHost}
                 handleClearQuestion={handleClearQuestion}
                 handleRestartRound={handleRestartRound}
                 handleCloseRoom={handleCloseRoom}
@@ -398,7 +400,7 @@ const RoomPage: React.FC = () => {
             </div>
             {
               isHost === false && (
-                <div className="w-full pb-10 px-5 flex flex-col justify-center items-center " id='chat-container'>
+                <div id='chat-container' className="w-full flex flex-col justify-center items-center border border-slate-100  p-5 pb-10 ">
                   <Button variant="outline" className="lg:hidden flex-shrink mb-4 text-gray-500 flex justify-center items-center gap-4"> <FaAngleUp /> more chat</Button>
 
                   <div className="flex flex-col gap-2 w-full lg:w-3/4 justify-center">
@@ -414,7 +416,7 @@ const RoomPage: React.FC = () => {
               )
             }
           </div>
-          <div className="lg:flex flex-col bg-white shadow-lg rounded-lg hidden m-3">
+          <div className="lg:flex flex-col bg-white shadow-lg rounded-lg hidden m-2 w-1/3">
             <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
           </div>
         </div>

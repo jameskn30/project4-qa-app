@@ -67,6 +67,7 @@ def list_members(room_id: str):
         return [websocket_manager.user_id_to_conn[user_id].username for user_id in websocket_manager.active_room[room_id]]
     return []
 
+
 @router.post("/room_exists")
 async def if_room_exists(req: RoomRequest):
     room_id = req.roomId

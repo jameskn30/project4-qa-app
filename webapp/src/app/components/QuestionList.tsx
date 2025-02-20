@@ -1,5 +1,6 @@
 import { FaAngleUp } from "react-icons/fa6";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 export type QuestionItem = {
     uuid: string
@@ -10,17 +11,30 @@ export type QuestionItem = {
 interface QuestionProps {
     order: number
     question: QuestionItem
+    isHost: boolean
     handleUpvote: (uuid: string) => void
 }
 
-const Question = ({ question, order, handleUpvote }: QuestionProps) => {
+const Question = ({ question, order, isHost, handleUpvote }: QuestionProps) => {
     return (
-        <div className="flex items-center justify-between p-2 bg-green-100 rounded-lg shadow mb-4 border border-green-300">
-            <span className="text-lg font-bold text-green-700">{order}</span>
-            <span className="flex-1 mx-4 text-gray-700">{question.rephrase}</span>
-            <button className="p-1 text-black rounded text-sm" onClick={() => handleUpvote(question.uuid)}>
-                <FaAngleUp className="bg-green-500 p-1 text-white" size={20} />
-                {question.upvotes}
+        <div className="flex p-2 gap-2">
+            {
+                isHost && (
+                    <div className="flex flex-col justify-center gap-2">
+                        <Button variant="destructive">Remove</Button>
+                    </div>
+                )
+            }
+
+            <div className="rounded-lg shadow-lg border bg-yellow-300 flex-1 justify-center items-center flex p-3">
+                <span className="text-lg font-bold text-slate-700">{order}</span>
+                <span className="flex-1 mx-4 text-gray-700">{question.rephrase}</span>
+
+            </div>
+            <button className="p-1 text-black rounded-md text-sm items-center flex flex-col border border-slate-100" onClick={() => handleUpvote(question.uuid)}>
+                <FaAngleUp className="bg-green-500 p-1 text-white w-full rounded-md" size={20} />
+                <p>{question.upvotes}</p>
+                <p>Upvote</p>
             </button>
         </div>
     );
@@ -31,6 +45,7 @@ interface QuestionListProps {
     loadingQuestions: boolean
     hostMessage: string
     roundNumber: number
+    isHost: boolean
     handleGroupQuestions: () => void
     handleClearQuestion: () => void
     handleUpvote: (uuid: string) => void
@@ -38,7 +53,7 @@ interface QuestionListProps {
     handleCloseRoom: () => void
 }
 
-const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, handleGroupQuestions, handleClearQuestion, handleUpvote, handleRestartRound, handleCloseRoom }: QuestionListProps) => {
+const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, isHost, handleGroupQuestions, handleClearQuestion, handleUpvote, handleRestartRound, handleCloseRoom }: QuestionListProps) => {
     const sortedQuestions = [...questions].sort((a, b) => b.upvotes - a.upvotes);
 
     return (
@@ -55,7 +70,7 @@ const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, h
                     <Spinner />
                     : <>
                         {sortedQuestions.map((question, index) => (
-                            <Question key={index} order={index + 1} question={question} handleUpvote={handleUpvote} />
+                            <Question key={index} order={index + 1} question={question} handleUpvote={handleUpvote} isHost={isHost} />
                         ))}
                     </>}
             </div>
