@@ -45,49 +45,7 @@ const RoomPage: React.FC = () => {
 
   const [userData, setUserData] = useState<UserData | null>(null)
 
-  useEffect(() => {
-    if (!username) {
-      setUsername(generateRandomUsername());
-    }
-  }, [username]);
-
-  useEffect(() => {
-
-    const checkRoomExists = async () => {
-      if (roomId !== null) {
-        try {
-          const exists = await isRoomExists(roomId)
-
-          if (exists) {
-            if (exists) {
-              setRoomExists(true);
-            } else {
-              console.log()
-              setRoomExists(false);
-            }
-            setLoading(false)
-          }
-
-        } catch (err) {
-          console.error(err)
-          setRoomExists(false);
-          setLoading(false)
-        }
-      };
-    }
-
-    checkRoomExists();
-
-    const getUserData = async () => {
-      const user = await _getUserData()
-      console.log(user)
-      setUserData(user)
-    }
-
-    getUserData()
-
-  }, [roomId]);
-
+  //WEBSOKET
   const connectWebSocket = useCallback(async () => {
     if (!username) {
       toast.error('Internal error');
@@ -175,7 +133,59 @@ const RoomPage: React.FC = () => {
     };
   }, [roomId, username]);
 
+  //USE EFFECT
+
+  // useEffect(() => {
+  //   if (!username) {
+  //     setUsername(generateRandomUsername());
+  //   }
+  // }, [username]);
+
   useEffect(() => {
+
+    const checkRoomExists = async () => {
+      if (roomId !== null) {
+        try {
+          const exists = await isRoomExists(roomId)
+
+          if (exists) {
+            if (exists) {
+              setRoomExists(true);
+            } else {
+              console.log()
+              setRoomExists(false);
+            }
+            setLoading(false)
+          }
+
+        } catch (err) {
+          console.error(err)
+          setRoomExists(false);
+          setLoading(false)
+        }
+      };
+    }
+
+    checkRoomExists();
+
+    const getUserData = async () => {
+      const user = await _getUserData()
+      setUserData(user)
+      console.log('user data')
+      console.log(user)
+      if (user) {
+        setUsername(user.username)
+        setShowDialog(false)
+      }
+    }
+
+    getUserData()
+
+  }, [roomId]);
+
+
+  useEffect(() => {
+    console.log('setting up username and websocket')
     if (!loading && username && roomExists && !showDialog) {
       const cleanup = connectWebSocket();
 
@@ -237,7 +247,6 @@ const RoomPage: React.FC = () => {
       toast.error("Internal error");
     }
   };
-
 
   const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

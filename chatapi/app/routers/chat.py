@@ -323,9 +323,11 @@ async def close_room(request: RoomRequest):
         await websocket_manager.leave_room(room_id, user_id)
 
     # Delete everything related to roomId
-    del websocket_manager.active_room[room_id]
-    del websocket_manager.messages[room_id]
-    del websocket_manager.questions[room_id]
+    # del websocket_manager.active_room[room_id]
+    # del websocket_manager.messages[room_id]
+    # del websocket_manager.questions[room_id]
+
+    websocket_manager._close_room(room_id)
 
     logger.info(f"Closed room {room_id} and deleted all related data, and broadcasted to all users")
 

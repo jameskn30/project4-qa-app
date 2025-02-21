@@ -32,8 +32,14 @@ const _getUserData = async () => {
 export const getActiveRooms = async () => {
     const user = await _getUserData()
     const userId = user.id
-    const res = await fetch(`${CHATAPI_ENDPOINT}/${userId}`);
-    return res.json()
+    console.log(userId)
+    const res = await fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
+
+    if (!res.ok) {
+        return null
+    } else {
+        return res.json()
+    }
 }
 
 export const createRoom = async (roomId: string) => {
@@ -70,9 +76,11 @@ export const fetchRoomId = async () => {
 
 export const amIHost = async (roomId: string) => {
     const user = await _getUserData()
+    let userId = user.id
     //TODO: remove this after testing
-    // const userId = user.id
-    const userId = '1'
+    if (roomId === 'test room 10'){
+        userId = '1'
+    }
 
     const queryParams = new URLSearchParams({
         roomId: roomId,
@@ -88,9 +96,9 @@ export const syncRoom = async (roomId: string) => {
     return res.json()
 }
 
-export const getActiveRoomsByUserId = async (userId: string) => {
-    return fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
-}
+// export const getActiveRoomsByUserId = async (userId: string) => {
+//     return fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
+// }
 
 export const groupMessages = async (roomId: string) => {
 

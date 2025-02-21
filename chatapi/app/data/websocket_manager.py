@@ -132,6 +132,12 @@ class WebSocketManager:
         self.room_to_host_id[room_id] = user_id
         self.questions[room_id] = questions
         self.messages[room_id] = messages
+    
+    def _close_room(self, room_id: str):
+        del self.active_room[room_id]
+        del self.room_to_host_id[room_id]
+        del self.questions[room_id]
+        del self.messages[room_id]
 
 
     def _is_username_unique(self, room_id: str, username: str) -> bool:

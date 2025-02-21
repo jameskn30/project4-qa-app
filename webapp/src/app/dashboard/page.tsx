@@ -11,9 +11,9 @@ import {
     createRoom as _createRoom,
     fetchRoomId as _fetchRoomId
 } from '@/utils/room.v2'
-import { 
-    getUserData as _getUserData, 
-    UserData 
+import {
+    getUserData as _getUserData,
+    UserData
 } from '@/utils/supabase/auth'
 import {
     Tabs,
@@ -77,6 +77,8 @@ const NewRoomPage = () => {
 
     const [userData, setUserData] = useState<UserData | null>(null)
 
+    const [activeRoom, setActiveRoom] = useState<boolean>(false)
+
     const { Canvas } = useQRCode();
 
     const URL = 'http://localhost:3000/room';
@@ -96,9 +98,11 @@ const NewRoomPage = () => {
         console.log('isLoggedIn ' + isLoggedIn)
 
         const getActiveRooms = async () => {
-            const res = await _getActiveRooms()
-            if (res) {
-                console.log(res)
+            const data = await _getActiveRooms()
+            if (data) {
+                console.log(data)
+                setActiveRoom(true)
+                setRoomId(data.roomId)
             } else {
                 console.log('no active rooms')
             }
@@ -164,24 +168,36 @@ const NewRoomPage = () => {
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="account">Join Room</TabsTrigger>
                         <TabsTrigger value="password" onClick={() => {
-                            if (roomId === null) {
+                            if (roomId === null && !activeRoom) {
                                 handleFetchRandomId();
                             }
-                        }}>New Room</TabsTrigger>
+
+                        }}>
+                            {
+                                activeRoom ? `1 Ongoing Room` : `Create Room`
+                            }
+                        </TabsTrigger>
                     </TabsList>
                     <TabsContent value="account">
                         <JoinRoomForm />
                     </TabsContent>
                     <TabsContent value="password" id="password-tab">
-                        <Card className="bg-white p-2 gap-4 flex flex-col justify-center shadow-lg text-center w-[350px] h-[350px]">
+                        <Card className="bg-white p-2 gap-4 flex flex-col justify-center shadow-lg text-center w-[350px] h-auto py-5">
                             {fetchingRandomRoomId && <Spinner />}
                             {!fetchingRandomRoomId && (
                                 <>
                                     <div className="flex gap-3 justify-center">
                                         <p className="text-4xl flex-1 text-center">{roomId}</p>
-                                        <Button variant={'ghost'} className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none" onClick={handleFetchRandomId}>
-                                            <FaRandom />
-                                        </Button>
+                                        {
+                                            !activeRoom && (
+                                                <Button
+                                                    variant={'ghost'}
+                                                    className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none"
+                                                    onClick={handleFetchRandomId}>
+                                                    <FaRandom />
+                                                </Button>
+                                            )
+                                        }
                                     </div>
                                     <div className='flex justify-center'>
                                         <Canvas
@@ -198,9 +214,27 @@ const NewRoomPage = () => {
                                             }}
                                         />
                                     </div>
-                                    <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 mx-10" onClick={handleStartRoom}>
-                                        Start room
-                                    </Button>
+                                    {
+                                        activeRoom ? (
+                                            <div className='flex gap-2 flex-col'>
+                                                <Button className="bg-blue-500 text-white hover:bg-blue-700 mx-10"
+                                                    onClick={() => router.push(`/room/${roomId}`)}>
+                                                    Join room
+                                                </Button>
+                                                <Button variant={"destructive"}
+                                                    className="mx-10"
+                                                    onClick={() => console.log('remove room')}>
+                                                    Remove room
+                                                </Button>
+                                            </div>
+
+                                        ) : (
+                                            <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 mx-10"
+                                                onClick={handleStartRoom}>
+                                                Start room
+                                            </Button>
+                                        )
+                                    }
                                 </>
                             )}
                         </Card>
