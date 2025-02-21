@@ -350,9 +350,9 @@ const RoomPage: React.FC = () => {
       <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-purple-200">
         <Toaster expand={true} position='top-center' richColors />
         <Navbar onLeave={onLeave} />
-        <div className="flex flex-1 gap-1 w-full lg:px-10 overflow-hidden">
-          <div className="flex flex-1 flex-col w-2/3 min-h-[500px] overflow-hidden">
-            <div className="flex-1 overflow-y-auto py-2">
+        <div className="flex flex-1 gap-1 w-full lg:px-5 mb-5  h-1/2">
+          <div className="flex flex-1 flex-col w-2/3">
+            <div className="flex-1 py-2 h-full overflow-y-auto">
               <QuestionList
                 questions={questions}
                 handleUpvote={handleUpvote}
@@ -381,47 +381,52 @@ const RoomPage: React.FC = () => {
               )
             }
           </div>
-          <div className="lg:flex flex-col m-2 hidden w-1/3 gap-3 h-full">
-            <div className="flex-1 h-1/3">
-              {
-                isHost && (
-                  <Card className="flex flex-col overflow-y-auto relative rounded-2xl p-1 bg-white h-full pb-10">
-                    <CardHeader>
-                      <CardTitle>
-                        You are host
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className='grid grid-cols-2 w-full gap-3'>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><MessagesSquare /> Live Q&A</Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-48 p-2 backdrop-blur-sm">
-                            <Button onClick={handleGroupQuestions} className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaRegComments /> Group questions</Button>
-                            <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear questions</Button>
-                            <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart round</Button>
-                            <Button onClick={handleCloseRoom} className='justify-between w-full bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaExclamation /> Close room</Button>
-                          </PopoverContent>
-                        </Popover>
-                        {/* Poll button */}
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button className='text-center w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><ChartColumnBig /> Start polls</Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-48 p-2 backdrop-blur-sm">
-                            <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaSquarePollVertical /> Create polls</Button>
-                          </PopoverContent>
-                        </Popover>
-                        <Button className='text-center w-full mb-2 bg-green-700 text-white hover:bg-yellow-700 font-bold flex'><ScanQrCode /> Show room QR</Button>
-                        <Button variant="destructive" className='text-center w-full mb-2 font-bold flex'><Trash /> Close room</Button>
-                      </CardDescription>
-                    </CardContent>
-                  </Card>
-                )
-              }
-            </div>
-            <div className={`flex-1 ${isHost ? 'h-2/3' : 'h-full'}`} id='chat-container'>
+          <div className="lg:flex flex-col m-2 hidden w-1/3 h-full gap-3">
+            {
+              isHost && (
+
+                <div className="h-auto">
+                  {
+                    <Card className="flex flex-col overflow-y-auto relative rounded-2xl p-1 bg-white h-full pb-10">
+                      <CardHeader>
+                        <CardTitle>
+                          You are host
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <CardDescription className='grid grid-cols-2 w-full gap-3'>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><MessagesSquare /> Live Q&A</Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-48 p-2 backdrop-blur-sm">
+                              <Button onClick={handleGroupQuestions} className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaRegComments /> Group questions</Button>
+                              <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear questions</Button>
+                              <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart round</Button>
+                              <Button onClick={handleCloseRoom} className='justify-between w-full bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaExclamation /> Close room</Button>
+                            </PopoverContent>
+                          </Popover>
+                          {/* Poll button */}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button className='text-center w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><ChartColumnBig /> Start polls</Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-48 p-2 backdrop-blur-sm">
+                              <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaSquarePollVertical /> Create polls</Button>
+                            </PopoverContent>
+                          </Popover>
+                          <Button className='text-center w-full mb-2 bg-green-700 text-white hover:bg-yellow-700 font-bold flex'><ScanQrCode /> Show room QR</Button>
+                          <Button variant="destructive" className='text-center w-full mb-2 font-bold flex'><Trash /> Close room</Button>
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  }
+                </div>
+              )
+            }
+
+            {/* <div className={`flex-1 ${isHost ? 'h-2/3' : 'h-full pb-5'}  mb-5`} id='chat-container'> */}
+            <div className={`flex-grow mb-5 h-1/2`} id='chat-container'>
               <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { ArrowUpCircle, Check } from "lucide-react";
+import { ArrowUpCircle, Trash } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import {Card} from '@/components/ui/card'
@@ -22,7 +22,7 @@ const Question = ({ question, order, isHost, handleUpvote }: QuestionProps) => {
             {
                 isHost && (
                     <div className="flex flex-col justify-center gap-2">
-                        <Button className="bg-green-700 hover:bg-green-500 hover:text-black text-white"><Check/>Answered</Button>
+                        <Button variant={"destructive"}><Trash/>Remove</Button>
                     </div>
                 )
             }
