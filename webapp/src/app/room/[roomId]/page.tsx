@@ -14,7 +14,7 @@ import { generateRandomUsername } from '@/utils/common';
 import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost, clearQuestions, syncRoom } from '@/utils/room.v2';
 
 import { QuestionItem } from '@/app/components/QuestionList'
@@ -22,6 +22,7 @@ import { MdReportGmailerrorred } from "react-icons/md";
 import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaAngleDown, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import MessageInput from '@/app/components/MessageInput';
+import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash } from 'lucide-react';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -200,23 +201,23 @@ const RoomPage: React.FC = () => {
       }
 
       syncRoom(roomId!!)
-      .then(data => {
-        setMessages(data.messages.map((message: { username: string, content: string }) => ({
-          username: message.username,
-          content: message.content,
-          flag: '🇺🇸'
-        })));
+        .then(data => {
+          setMessages(data.messages.map((message: { username: string, content: string }) => ({
+            username: message.username,
+            content: message.content,
+            flag: '🇺🇸'
+          })));
 
-        setQuestions(data.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
-          uuid: question.uuid,
-          rephrase: question.rephrase,
-          upvotes: question.upvotes,
-        })));
+          setQuestions(data.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
+            uuid: question.uuid,
+            rephrase: question.rephrase,
+            upvotes: question.upvotes,
+          })));
 
-      }).catch(err => {
-        toast.error(err);
-        console.error(err)
-      });
+        }).catch(err => {
+          toast.error(err);
+          console.error(err)
+        });
 
       return () => {
         cleanup.then((close) => close && close());
@@ -301,7 +302,7 @@ const RoomPage: React.FC = () => {
     }
     setUpvotesLeft(upvotesLeft - 1)
     upvoteMessage(roomId!!, uuid)
-      .then(data => {console.log(data)})
+      .then(data => { console.log(data) })
       .catch(err => {
         toast.error('An error occured, try restarting')
       })
@@ -351,36 +352,10 @@ const RoomPage: React.FC = () => {
         <Toaster expand={true} position='top-center' richColors />
 
         <Navbar onLeave={onLeave} />
-        {
-          isHost &&
-          <div id="button-container" className="flex gap-4 justify-center items-center">
-            <p>You're the host</p>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button className='justify-between bg-blue-500 text-white hover:bg-blue-700 font-bold flex gap-2'>  <FaAngleDown /> Live Q&A</Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48 p-2">
-                <Button onClick={handleGroupQuestions} className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaRegComments /> Group questions</Button>
-                <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear questions</Button>
-                <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart round</Button>
-                <Button onClick={handleCloseRoom} className='justify-between w-full bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaExclamation /> Close room</Button>
-              </PopoverContent>
-            </Popover>
-            {/* Poll button */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button className='bg-blue-500 text-white hover:bg-blue-700 font-bold flex gap-2'>  <FaAngleDown /> Live Polling</Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48 p-2">
-                <Button className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaSquarePollVertical /> Create polls</Button>
-              </PopoverContent>
-            </Popover>
-          </div>
-        }
 
-        <div className="flex gap-2 lg:mt-4 h-50 w-full bg-slate-100 overflow-y-auto lg:px-10 ">
-          <div className="flex flex-1 flex-col bg-white shadow-lg rounded-md border border-slate-200 w-2/3 min-h-[500px]">
-            <div className="flex-1 overflow-y-auto p-4 ">
+        <div className="flex gap-1 h-50 w-full bg-slate-100 h-full lg:px-10 ">
+          <div className="flex flex-1 flex-col w-2/3 min-h-[500px]">
+            <div className="flex-1 overflow-y-auto py-2">
               <QuestionList
                 questions={questions}
                 handleUpvote={handleUpvote}
@@ -396,7 +371,7 @@ const RoomPage: React.FC = () => {
             </div>
             {
               isHost === false && (
-                <div id='chat-container' className="w-full flex flex-col justify-center items-center border border-slate-100  p-5 pb-10 ">
+                <Card id='chat-container' className="w-full flex flex-col justify-center items-center p-5 pb-10 rounded-xl">
                   <Button variant="outline" className="lg:hidden flex-shrink mb-4 text-gray-500 flex justify-center items-center gap-4"> <FaAngleUp /> more chat</Button>
 
                   <div className="flex flex-col gap-2 w-full lg:w-3/4 justify-center">
@@ -407,13 +382,57 @@ const RoomPage: React.FC = () => {
                     <MessageInput onSent={onSent} />
 
                   </div>
-                </div>
+                </Card>
 
               )
             }
           </div>
-          <div className="lg:flex flex-col bg-white shadow-lg rounded-lg hidden m-2 w-1/3">
-            <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
+          <div className="lg:flex flex-col m-2 hidden w-1/3 gap-3 h-full">
+            <div className="flex-1 h-1/3">
+              {
+                isHost && (
+                  <Card className="flex flex-col overflow-y-auto relative rounded-2xl p-1 bg-white h-full pb-10">
+                    <CardHeader>
+                      <CardTitle>
+                        You are  host
+                      </CardTitle>
+
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className='grid grid-cols-2 w-full gap-3' >
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><MessagesSquare /> Live Q&A</Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2 backdrop-blur-sm">
+                            <Button onClick={handleGroupQuestions} className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaRegComments /> Group questions</Button>
+                            <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear questions</Button>
+                            <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart round</Button>
+                            <Button onClick={handleCloseRoom} className='justify-between w-full bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaExclamation /> Close room</Button>
+                          </PopoverContent>
+                        </Popover>
+                        {/* Poll button */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button className='text-center w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><ChartColumnBig /> Start polls</Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2 backdrop-blur-sm">
+                            <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaSquarePollVertical /> Create polls</Button>
+                          </PopoverContent>
+                        </Popover>
+                        <Button className='text-center w-full mb-2 bg-green-700 text-white hover:bg-yellow-700 font-bold flex'><ScanQrCode /> Show room QR</Button>
+                        <Button variant="destructive" className='text-center w-full mb-2 font-bold flex'><Trash /> Close room</Button>
+                      </CardDescription>
+                    </CardContent>
+
+                  </Card>
+                )
+              }
+            </div>
+
+            <div className={`h-${isHost ? '2/3': 'full'}`} id='chat-container'>
+              <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
+            </div>
           </div>
         </div>
 

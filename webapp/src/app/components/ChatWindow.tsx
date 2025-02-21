@@ -2,7 +2,10 @@
 import {useEffect, useRef } from 'react';
 import { Toaster } from 'sonner';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import {MessageCircleMore, User} from 'lucide-react'
 import _ from 'lodash'
+import { Card } from '@/components/ui/card';
 
 export type Message = {
   username: string;
@@ -50,9 +53,13 @@ const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: Cha
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto bg-white relative mb-12 ">
+    <Card className="flex flex-col h-full overflow-y-auto bg-white relative rounded-2xl p-2">
       <Toaster expand={true} position='top-center' richColors />
-      <div className={`flex-1 overflow-y-auto flex flex-col pt-5 border border-slate-200`}>
+      <div className="w-full justify-center gap-2 flex items-center">
+        <Button variant="outline" className="flex-1"><MessageCircleMore/> Chat</Button>
+        <Button variant="outline" className="flex-1"><User/> Participants (36)</Button>
+      </div>
+      <div className={`flex-1 overflow-y-auto flex flex-col pt-5 `}>
         {
           messages &&
           messages.map((msg, index) => (
@@ -61,7 +68,7 @@ const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: Cha
         }
         <div ref={messagesEndRef} />
       </div>
-    </div>
+    </Card>
   );
 };
 

@@ -95,7 +95,6 @@ const NewRoomPage = () => {
     const [activeRoom, setActiveRoom] = useState<boolean>(false)
 
 
-
     useEffect(() => {
 
         const getUserData = async () => {
@@ -107,8 +106,6 @@ const NewRoomPage = () => {
         }
 
         getUserData()
-
-        console.log('isLoggedIn ' + isLoggedIn)
 
         const getActiveRooms = async () => {
             const data = await _getActiveRooms()
@@ -289,83 +286,6 @@ const NewRoomPage = () => {
                 </div>
 
             </div>
-
-            {/* <Tabs defaultValue="account" className="w-[350px] flex justify-center flex-col items-center">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="account">Join Room</TabsTrigger>
-                        <TabsTrigger value="password" onClick={() => {
-                            if (roomId === null && !activeRoom) {
-                                handleFetchRandomId();
-                            }
-
-                        }}>
-                            {
-                                activeRoom ? `1 Ongoing Room` : `Create Room`
-                            }
-                        </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="account">
-                        <JoinRoomForm />
-                    </TabsContent>
-                    <TabsContent value="password" id="password-tab">
-                        <Card className="bg-white p-2 gap-4 flex flex-col justify-center shadow-lg text-center w-[350px] h-auto py-5">
-                            {fetchingRandomRoomId && <Spinner />}
-                            {!fetchingRandomRoomId && (
-                                <>
-                                    <div className="flex gap-3 justify-center">
-                                        <p className="text-4xl flex-1 text-center">{roomId}</p>
-                                        {
-                                            !activeRoom && (
-                                                <Button
-                                                    variant={'ghost'}
-                                                    className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none"
-                                                    onClick={handleFetchRandomId}>
-                                                    <FaRandom />
-                                                </Button>
-                                            )
-                                        }
-                                    </div>
-                                    <div className='flex justify-center'>
-                                        <Canvas
-                                            text={`${URL}/${encodeURIComponent(roomId!!)}`}
-                                            options={{
-                                                errorCorrectionLevel: 'M',
-                                                margin: 3,
-                                                scale: 4,
-                                                width: 200,
-                                                color: {
-                                                    dark: '#000000', // Black
-                                                    light: '#FFFFFF', // White
-                                                },
-                                            }}
-                                        />
-                                    </div>
-                                    {
-                                        activeRoom ? (
-                                            <div className='flex gap-2 flex-col'>
-                                                <Button className="bg-blue-500 text-white hover:bg-blue-700 mx-10"
-                                                    onClick={() => router.push(`/room/${roomId}`)}>
-                                                    Join room
-                                                </Button>
-                                                <Button variant={"destructive"}
-                                                    className="mx-10"
-                                                    onClick={() => console.log('remove room')}>
-                                                    Remove room
-                                                </Button>
-                                            </div>
-
-                                        ) : (
-                                            <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 mx-10"
-                                                onClick={handleStartRoom}>
-                                                Start room
-                                            </Button>
-                                        )
-                                    }
-                                </>
-                            )}
-                        </Card>
-                    </TabsContent>
-                </Tabs> */}
         </div>
     );
 };

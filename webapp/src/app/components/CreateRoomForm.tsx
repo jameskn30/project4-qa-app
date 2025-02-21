@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { FaRandom } from 'react-icons/fa';
+import { Shuffle } from 'lucide-react';
 import { useQRCode } from 'next-qrcode';
 import { useRouter } from 'next/navigation'
 import { fetchRoomId } from '@/utils/room.v2'
@@ -71,7 +71,7 @@ const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
                                     variant={'ghost'}
                                     className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none"
                                     onClick={handleFetchRandomId}>
-                                    <FaRandom />
+                                    <Shuffle/>
                                 </Button>
                             )
                         }
