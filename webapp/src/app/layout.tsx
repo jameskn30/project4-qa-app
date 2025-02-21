@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Question & Answer",
-  description: "Smart Question & Answer app",
+  title: "Donask. Speaker AI Assistant",
+  description: "Donask. Speaker AI Assistant",
 };
 
 export default function RootLayout({
@@ -28,8 +28,8 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="A QA app enable livestreamers and instructors to answer the most relevant questions by followers or students" />
         <meta name="keywords" content="question, answer, livestream, education, utility, saas, ai" />
-        <meta name="author" content="Your Name" />
-        <title>BoltQA</title>
+        <meta name="author" content="James Nguyen" />
+        <title>Donask</title>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

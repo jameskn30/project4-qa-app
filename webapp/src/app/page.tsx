@@ -26,12 +26,12 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
                 <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer"/>
                 <p>Donask</p>
             </div> */}
-            <div className="flex p-1 gap-3 bg-white shadow-xl rounded-2xl border border-slate-200">
-                <Button variant={'ghost'} as="a" href="https://jameskn30.github.io/portfolio/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none" target="_blank">About me</Button>
+            {/* <div className="flex p-1 gap-3 bg-white shadow-xl rounded-2xl border border-slate-200">
                 <Button variant={'ghost'} onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Wait list</Button>
-            </div>
+            </div> */}
 
-            <div className="flex p-1 space-2 bg-white shadow-xl rounded-2xl border border-slate-200 gap-3">
+            <div className="flex p-1 space-2  gap-3 justify-end w-full ">
+                <Button variant={'ghost'} as="a" href="https://jameskn30.github.io/portfolio/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none" target="_blank">About me</Button>
                 {
                     isLoadingAuth ? (
                         <Spinner />

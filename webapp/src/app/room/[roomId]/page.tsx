@@ -421,7 +421,7 @@ const RoomPage: React.FC = () => {
                 )
               }
             </div>
-            <div className={`h-${isHost ? '2/3' : 'full'}`} id='chat-container'>
+            <div className={`flex-1 ${isHost ? 'h-2/3' : 'h-full'}`} id='chat-container'>
               <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
             </div>
           </div>
