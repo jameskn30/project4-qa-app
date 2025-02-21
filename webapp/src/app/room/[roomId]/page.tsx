@@ -4,7 +4,6 @@ import QuestionList from '@/app/components/QuestionList';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
-// import { clearQuestions, syncRoom } from '@/utils/room';
 import { isRoomExists } from '@/utils/room.v2';
 import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth'
 import { useRouter, useParams } from 'next/navigation';
@@ -16,7 +15,6 @@ import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-// import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost } from '@/utils/room';
 import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost, clearQuestions, syncRoom } from '@/utils/room.v2';
 
 import { QuestionItem } from '@/app/components/QuestionList'

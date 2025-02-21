@@ -6,8 +6,15 @@ import { Toaster, toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import _ from 'lodash';
 import { useRouter } from 'next/navigation';
-
-import {getActiveRooms as _getActiveRooms, createRoom as _createRoom, fetchRoomId as _fetchRoomId } from '@/utils/room.v2'
+import {
+    getActiveRooms as _getActiveRooms,
+    createRoom as _createRoom,
+    fetchRoomId as _fetchRoomId
+} from '@/utils/room.v2'
+import { 
+    getUserData as _getUserData, 
+    UserData 
+} from '@/utils/supabase/auth'
 import {
     Tabs,
     TabsContent,
@@ -22,13 +29,11 @@ import {
     MenubarSeparator,
     MenubarTrigger,
 } from "@/components/ui/menubar"
-import { createClient } from '@/utils/supabase/component'
 import Loading from './loading'
 import { signout } from '@/utils/supabase/auth';
 import { Button } from '@/components/ui/button';
 import JoinRoomForm from '../components/JoinRoomForm';
 import { Card } from '@/components/ui/card';
-import { getUserData as _getUserData, UserData} from '@/utils/supabase/auth'
 
 const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData | null, handleSignOut: () => void, isLoggingOut: boolean }) => {
 
@@ -67,7 +72,6 @@ const NewRoomPage = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
 
-    const supabase = createClient()
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
 
@@ -77,29 +81,23 @@ const NewRoomPage = () => {
 
     const URL = 'http://localhost:3000/room';
 
-
     useEffect(() => {
 
         const getUserData = async () => {
             const user = await _getUserData()
             console.log(user)
             setUserData(user)
+            setIsLoggedIn(!!user)
+            setAuthLoading(false)
         }
 
         getUserData()
 
-        const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setIsLoggedIn(!!session);
-            setAuthLoading(false);
-        };
-
-        checkUser();
         console.log('isLoggedIn ' + isLoggedIn)
 
         const getActiveRooms = async () => {
             const res = await _getActiveRooms()
-            if(res){
+            if (res) {
                 console.log(res)
             } else {
                 console.log('no active rooms')
@@ -108,7 +106,7 @@ const NewRoomPage = () => {
 
         getActiveRooms()
 
-    }, [supabase])
+    }, [])
 
 
     const handleSignOut = async () => {

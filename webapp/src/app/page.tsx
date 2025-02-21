@@ -2,16 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
-import { createClient } from '@/utils/supabase/component'
 import { Spinner } from '@/components/ui/spinner';
-import { useRouter } from 'next/navigation';
 import SignupForm from './components/SignupForm';
 import LoginForm from './components/LoginForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button"
 import Link from 'next/link';
 import JoinRoomForm from './components/JoinRoomForm';
-import { signout } from "@/utils/supabase/auth";
+import { getUserData as _getUserData, signout } from '@/utils/supabase/auth'
 
 const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void }) => {
     const scrollToWaitlist = () => {
@@ -79,20 +77,21 @@ const Footer = () => {
 const WelcomePage = () => {
     const [activeTab, setActiveTab] = useState("signup");
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const supabase = createClient()
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
-    const router = useRouter()
 
     useEffect(() => {
-        const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setIsLoggedIn(!!session);
+        const getUserData = async () => {
+            // const { data: { session } } = await supabase.auth.getSession();
+            const user = await _getUserData()
+            console.log(user)
+            setIsLoggedIn(!!user);
             setAuthLoading(false);
         };
 
-        checkUser();
-    }, [supabase]);
+        // checkUser();
+        getUserData()
+    }, []);
 
     const handleSignOut = async () => {
         const { success, error } = await signout();
@@ -146,7 +145,7 @@ const WelcomePage = () => {
                                     {isLoggingIn && <Spinner />}
                                 </TabsContent>
                                 <TabsContent value="signup">
-                                    <SignupForm/>
+                                    <SignupForm />
                                 </TabsContent>
                             </Tabs>
                         </section>
@@ -158,21 +157,21 @@ const WelcomePage = () => {
             <div className='w-full h-96 bg-blue-300 flex flex-col justify-center items-center'>
                 <h2 className="text-4xl font-bold mb-4">Pricing</h2>
                 <p className="text-lg text-center max-w-2xl">Choose the plan that fits your needs. We offer flexible pricing options for individuals and organizations.</p>
-                <Button variant="primary" className="mt-4">View Pricing</Button>
+                <Button className="mt-4">View Pricing</Button>
             </div>
 
             {/* Customer testimony section */}
             <div className='w-full h-96 bg-green-300 flex flex-col justify-center items-center'>
                 <h2 className="text-4xl font-bold mb-4">Customer Testimonials</h2>
                 <p className="text-lg text-center max-w-2xl">Hear from our satisfied customers about how Bolt.qa has transformed their events and meetings.</p>
-                <Button variant="primary" className="mt-4">Read Testimonials</Button>
+                <Button className="mt-4">Read Testimonials</Button>
             </div>
 
             {/* Brief about me section */}
             <div className='w-full h-96 bg-yellow-300 flex flex-col justify-center items-center'>
                 <h2 className="text-4xl font-bold mb-4">About Me</h2>
                 <p className="text-lg text-center max-w-2xl">Learn more about the creator of Bolt.qa and the journey behind building this platform.</p>
-                <Button variant="primary" className="mt-4">About Me</Button>
+                <Button className="mt-4">About Me</Button>
             </div>
 
             {
