@@ -6,7 +6,9 @@ import { Toaster, toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import _ from 'lodash';
 import { useRouter } from 'next/navigation';
-import { createRoom, getActiveRoomsByUserId } from '@/utils/room';
+// import { createRoom } from '@/utils/room';
+
+import {getActiveRooms as _getActiveRooms, createRoom as _createRoom} from '@/utils/room.v2'
 import {
     Tabs,
     TabsContent,
@@ -23,16 +25,17 @@ import {
 } from "@/components/ui/menubar"
 import { createClient } from '@/utils/supabase/component'
 import Loading from './loading'
-import { signout } from '@/app/utils/auth';
+import { signout } from '@/utils/supabase/auth';
 import { Button } from '@/components/ui/button';
 import JoinRoomForm from '../components/JoinRoomForm';
 import { Card } from '@/components/ui/card';
+import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth'
 
-type UserData = {
-    username: string,
-    userId: string,
-    email: string,
-}
+// type UserData = {
+//     username: string,
+//     // userId: string,
+//     email: string,
+// }
 
 const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData | null, handleSignOut: () => void, isLoggingOut: boolean }) => {
 
@@ -81,19 +84,15 @@ const NewRoomPage = () => {
 
     const URL = 'http://localhost:3000/room';
 
+
     useEffect(() => {
 
         const getUserData = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
+            const user = await _getUserData()
             console.log(user)
-            const userData: UserData = {
-                userId: user!!.id,
-                username: user?.user_metadata.full_name,
-                email: user?.user_metadata.email,
-            }
-
-            setUserData(userData)
+            setUserData(user)
         }
+
         getUserData()
 
         const checkUser = async () => {
@@ -105,22 +104,18 @@ const NewRoomPage = () => {
         checkUser();
         console.log('isLoggedIn ' + isLoggedIn)
 
-    }, [supabase])
-
-    useEffect(() => {
-        const getActiveRoom = () => {
-            if (userData !== null) {
-                console.log('fetching active rooms')
-                getActiveRoomsByUserId(userData.userId)
-                    .then(res => res.json())
-                    .then(data => console.log(data))
-                    .catch(err => console.error(err))
-                    .finally(() => { })
+        const getActiveRooms = async () => {
+            const res = await _getActiveRooms()
+            if(res){
+                console.log(res)
+            } else {
+                console.log('no active rooms')
             }
         }
 
-        getActiveRoom()
-    }, [userData])
+        getActiveRooms()
+
+    }, [supabase])
 
 
     const handleSignOut = async () => {
@@ -154,7 +149,7 @@ const NewRoomPage = () => {
         try {
             // const roomExists = await isRoomExists(roomId);
             if (roomId !== '' && userData !== null) {
-                const res = await createRoom(roomId as string, userData?.userId as string);
+                const res = await _createRoom(roomId as string);
                 if (res) {
                     router.push(`/room/${roomId}`);
                 } else {
