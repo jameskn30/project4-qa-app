@@ -1,8 +1,6 @@
 'use client'
-import React, { useState, useCallback, useEffect } from 'react';
-import { useQRCode } from 'next-qrcode';
-import { FaRandom } from "react-icons/fa";
-import { Toaster, toast } from 'sonner';
+import React, { useState, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import _ from 'lodash';
 import { useRouter } from 'next/navigation';
@@ -15,12 +13,17 @@ import {
     getUserData as _getUserData,
     UserData
 } from '@/utils/supabase/auth'
+import { FaCirclePlus } from "react-icons/fa6";
+
 import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs";
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+
 import {
     Menubar,
     MenubarContent,
@@ -33,14 +36,16 @@ import Loading from './loading'
 import { signout } from '@/utils/supabase/auth';
 import { Button } from '@/components/ui/button';
 import JoinRoomForm from '../components/JoinRoomForm';
-import { Card } from '@/components/ui/card';
+import Image from 'next/image';
+import CreateRoomForm from '../components/CreateRoomForm';
 
 const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData | null, handleSignOut: () => void, isLoggingOut: boolean }) => {
 
     return (
         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
-            <div className="flex p-1 space-2 bg-white shadow-xl rounded-2xl border border-slate-200">
-                <Button variant={'ghost'} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">⚡ Bolt.qa</Button>
+            <div className="flex p-1 space-2  rounded-2xl items-center">
+                <Image src="/logo.png" alt="Logo" width={70} height={30} className="mx-2" />
+                <p className="text-2xl font-bold">Donask</p>
             </div>
             <div className='flex gap-2 p-3'>
                 <Menubar>
@@ -68,8 +73,8 @@ const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData 
 
 const NewRoomPage = () => {
     const [roomId, setRoomId] = useState(null);
-    const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const router = useRouter();
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -79,9 +84,7 @@ const NewRoomPage = () => {
 
     const [activeRoom, setActiveRoom] = useState<boolean>(false)
 
-    const { Canvas } = useQRCode();
 
-    const URL = 'http://localhost:3000/room';
 
     useEffect(() => {
 
@@ -120,51 +123,145 @@ const NewRoomPage = () => {
         router.push('/');
     };
 
-    const fetchRoomId = useCallback(_.debounce(async () => {
-        try {
-            console.log('fetched room id ');
-            const data = await _fetchRoomId()
-            setRoomId(data.roomId);
-        } catch (error) {
-            console.error('Error fetching room ID:', error);
-        } finally {
-            setFetchingRandomRoomId(false);
-        }
-    }, 1000), []);
-
-    const handleFetchRandomId = () => {
-        setFetchingRandomRoomId(true);
-        fetchRoomId();
-    };
-
-    const handleStartRoom = useCallback(_.debounce(async () => {
-        console.log(`handleStartRoom`)
-        if (roomId === null) return;
-        try {
-            if (roomId !== '' && userData !== null) {
-                const res = await _createRoom(roomId as string);
-                if (res) {
-                    router.push(`/room/${roomId}`);
-                } else {
-                    toast.error('Error while creating room');
-                }
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Error while creating room');
-        }
-    }, 1000), [roomId]);
+    const onCloseCreateRoom = () => {
+        setIsDialogOpen(false)
+    }
 
     if (authLoading) {
         return <Loading />
     }
 
     return (
-        <div className="flex items-center flex-col h-screen bg-gradient-to-r from-white to-purple-200 gap-3">
+        <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-purple-200 gap-3 overflow-y-auto h-auto py-10">
             <NavBar handleSignOut={handleSignOut} userdata={userData} isLoggingOut={isLoggingOut} />
             <Toaster expand={true} position='top-center' richColors />
-            <div className="w-full h-full flex justify-center items-center">
-                <Tabs defaultValue="account" className="w-[350px] flex justify-center flex-col items-center">
+            <div className="grid grid-cols-4 gap-5 ">
+                <div>
+                    <JoinRoomForm />
+                </div>
+                <div className='w-[250px] h-[250px]'>
+                    <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
+                        <CardHeader className='text-2xl'>
+                            <CardTitle>Lazy Fox 64</CardTitle>
+                            <CardDescription>On going room</CardDescription>
+                        </CardHeader>
+                        <CardContent className='flex-1 flex flex-col justify-center'>
+                            <p>Icon: number</p>
+                            <p>Polls: 3</p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className='w-[250px] h-[250px]'>
+
+                    <Card
+                        onClick={() => setIsDialogOpen(true)}
+                        className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
+                        <CardHeader className='text-2xl'>
+                            <CardTitle>Create room </CardTitle>
+                        </CardHeader>
+                        <CardContent className='flex-1 flex flex-col justify-center items-center'>
+                            <FaCirclePlus size={60} />
+                        </CardContent>
+                    </Card>
+                    {
+                        isDialogOpen && (
+                            <Card 
+                            className="w-full h-full absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-md p-4"
+                                >
+                                <div className='w-[350px] h-[350]px'>
+                                    <CreateRoomForm onClose={onCloseCreateRoom} />
+                                </div>
+
+                            </Card>
+
+                        )
+
+                    }
+
+
+                </div>
+            </div>
+            <div className='flex justify-center items-center w-1/2'>
+                <p className="w-auto text-lg font-bold mx-4">Past rooms</p>
+            </div>
+            <div className="grid grid-cols-4 gap-5 ">
+                <div>
+                    <Card className='w-[250px] h-[250px]'>
+                        <CardHeader>
+                            <CardTitle>Card Title</CardTitle>
+                            <CardDescription>Card Description</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p>Card Content</p>
+                        </CardContent>
+                        <CardFooter>
+                            <p>Card Footer</p>
+                        </CardFooter>
+                    </Card>
+                </div>
+                <div>
+                    <Card className='w-[250px] h-[250px]'>
+                        <CardHeader>
+                            <CardTitle>Card Title</CardTitle>
+                            <CardDescription>Card Description</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p>Card Content</p>
+                        </CardContent>
+                        <CardFooter>
+                            <p>Card Footer</p>
+                        </CardFooter>
+                    </Card>
+                </div>
+
+                <div>
+                    <Card className='w-[250px] h-[250px]'>
+                        <CardHeader>
+                            <CardTitle>Card Title</CardTitle>
+                            <CardDescription>Card Description</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p>Card Content</p>
+                        </CardContent>
+                        <CardFooter>
+                            <p>Card Footer</p>
+                        </CardFooter>
+                    </Card>
+                </div>
+                <div>
+                    <Card className='w-[250px] h-[250px]'>
+                        <CardHeader>
+                            <CardTitle>Card Title</CardTitle>
+                            <CardDescription>Card Description</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p>Card Content</p>
+                        </CardContent>
+                        <CardFooter>
+                            <p>Card Footer</p>
+                        </CardFooter>
+                    </Card>
+                </div>
+
+                <div>
+                    <Card className='w-[250px] h-[250px]'>
+                        <CardHeader>
+                            <CardTitle>Card Title</CardTitle>
+                            <CardDescription>Card Description</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p>Card Content</p>
+                        </CardContent>
+                        <CardFooter>
+                            <p>Card Footer</p>
+                        </CardFooter>
+                    </Card>
+                </div>
+
+            </div>
+
+            {/* <Tabs defaultValue="account" className="w-[350px] flex justify-center flex-col items-center">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="account">Join Room</TabsTrigger>
                         <TabsTrigger value="password" onClick={() => {
@@ -239,8 +336,7 @@ const NewRoomPage = () => {
                             )}
                         </Card>
                     </TabsContent>
-                </Tabs>
-            </div>
+                </Tabs> */}
         </div>
     );
 };

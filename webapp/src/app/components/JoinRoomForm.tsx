@@ -44,25 +44,23 @@ const JoinRoomForm = () => {
     };
 
     return (
-        <div className="flex justify-center ">
-            <Card className="shadow-lg bg-white p-6 w-[350px] h-[350px] ">
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                        <h1 className="text-3xl font-bold mb-6">Join new room</h1>
-                        <Label htmlFor="roomCode" className="text-lg font-medium">Enter Room Code:</Label>
-                        <Input
-                            type="text"
-                            name="roomCode"
-                            id="roomCode"
-                            placeholder="Room Code"
-                        />
-                        <Button type="submit" disabled={joiningLoader} className="bg-blue-500 text-white hover:bg-blue-700">
-                            {joiningLoader ? <Spinner /> : 'Join Room'}
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
-        </div>
+        <Card className="shadow-lg bg-white w-full h-full p-3 flex justify-center items-center">
+            <CardContent>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-bold mb-6">Join new room</h1>
+                    <Label htmlFor="roomCode" className="text-lg font-medium">Enter Room Code:</Label>
+                    <Input
+                        type="text"
+                        name="roomCode"
+                        id="roomCode"
+                        placeholder="Room Code"
+                    />
+                    <Button type="submit" disabled={joiningLoader} className="bg-blue-500 text-white hover:bg-blue-700">
+                        {joiningLoader ? <Spinner /> : 'Join Room'}
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
     );
 };
 
