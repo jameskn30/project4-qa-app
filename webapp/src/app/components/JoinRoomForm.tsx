@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/ui/spinner';
-import { isRoomExists } from '@/utils/room';
+import { isRoomExists } from '@/utils/room.v2';
 
 const JoinRoomForm = () => {
     const router = useRouter();
@@ -16,7 +16,7 @@ const JoinRoomForm = () => {
         e.preventDefault();
         const formData = new FormData(e.target as HTMLFormElement);
         const roomCode = formData.get('roomCode') as string;
-        
+
         console.log('roomCode ' + roomCode)
 
         if (roomCode.trim() === '') {
@@ -26,43 +26,21 @@ const JoinRoomForm = () => {
 
         setJoiningLoader(true);
 
-        isRoomExists(roomCode)
-        .then(res => {
-            if (res.ok){
+        try {
+            const res = await isRoomExists(roomCode)
+            if (res) {
+                console.log('room exists')
                 router.push(`/room/${roomCode}`);
             } else {
                 const msg = `Room ${roomCode} does not exist`
                 toast.error(msg);
                 console.error(msg)
             }
-        })
-        .catch((error) => {
-            toast.error(`Internal error`);
-            console.error(error)
-        }
-        ).finally(() => {
+        } catch (err) {
+            console.error(err)
+        } finally {
             setJoiningLoader(false);
-        })
-
-        // try {
-        //     // const response = await fetch('/chatapi/room_exists', {
-        //     //     method: 'POST',
-        //     //     headers: {
-        //     //         'Content-Type': 'application/json',
-        //     //     },
-        //     //     body: JSON.stringify({ roomId: roomCode }),
-        //     // });
-
-        //     // if (response.ok) {
-        //     //     router.push(`/room/${roomCode}`);
-        //     // } else {
-        //     //     toast.error('Room does not exist');
-        //     // }
-        // } catch (e) {
-        //     toast.error('Unexpected error');
-        // } finally {
-        //     setJoiningLoader(false);
-        // }
+        }
     };
 
     return (

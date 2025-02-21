@@ -1,4 +1,3 @@
-'use server'
 
 
 export const isRoomExists = async (roomId: string) => {
@@ -10,7 +9,6 @@ export const isRoomExists = async (roomId: string) => {
         body: JSON.stringify({ roomId: roomId }),
     });
 }
-
 export const amIHost = async (roomId: string, userId: string) => {
     const queryParams = new URLSearchParams({
         roomId: roomId,

@@ -1,4 +1,4 @@
-import { getUserData } from '@/utils/supabase/userData';
+import { getUserData } from '@/utils/supabase/auth';
 import EditFormPage from './editform/page';
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';

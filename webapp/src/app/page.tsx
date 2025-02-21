@@ -4,7 +4,6 @@ import { Toaster, toast } from 'sonner';
 import { FaLinkedin, FaGithub, FaXTwitter, FaInstagram } from "react-icons/fa6";
 import { createClient } from '@/utils/supabase/component'
 import { Spinner } from '@/components/ui/spinner';
-import { login, signout, signup } from '@/app/utils/auth';
 import { useRouter } from 'next/navigation';
 import SignupForm from './components/SignupForm';
 import LoginForm from './components/LoginForm';
@@ -12,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button"
 import Link from 'next/link';
 import JoinRoomForm from './components/JoinRoomForm';
+import { signout } from "@/utils/supabase/auth";
 
 const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void }) => {
     const scrollToWaitlist = () => {
@@ -92,22 +92,7 @@ const WelcomePage = () => {
         };
 
         checkUser();
-
-
     }, [supabase]);
-
-    const handleLogin = async (formData: FormData) => {
-        setIsLoggingIn(true);
-        const { success, error } = await login(formData);
-        setIsLoggingIn(false);
-        if (success) {
-            setIsLoggedIn(true);
-            router.push('/dashboard')
-        }
-        else if (error) {
-            toast.error(error.message)
-        }
-    };
 
     const handleSignOut = async () => {
         const { success, error } = await signout();
@@ -118,19 +103,6 @@ const WelcomePage = () => {
             toast.error(error.message)
         }
     };
-
-    const handleSignup = async (formData: FormData) => {
-
-        const { success, error } = await signup(formData);
-
-        if (success) {
-            setIsLoggedIn(true);
-            toast.success(`Verification email sent to ${formData.get("email") as string}`)
-        }
-        else if (error) {
-            toast.error(error.message)
-        }
-    }
 
     return (
         <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
@@ -153,17 +125,33 @@ const WelcomePage = () => {
                 </div>
 
                 <div className="flex-1 justify-center items-center">
-                    <JoinRoomForm/>
+                    <JoinRoomForm />
                 </div>
 
 
             </div>
 
             {/* Quick demo sections */}
-            <div className='w-full h-96 bg-slate-300 flex flex-col justify-center items-center'>
-                <h2 className="text-4xl font-bold mb-4">Quick Demo</h2>
-                <p className="text-lg text-center max-w-2xl">See how Bolt.qa can help you manage your audience questions efficiently. Watch our quick demo to get started.</p>
-                <Button variant="primary" className="mt-4">Watch Demo</Button>
+            <div className='w-full py-5  6bg-slate-300'>
+                {!isLoggedIn && (
+                    <div className="flex items-center" id="waitlist-container mt-10">
+                        <section id="waitlist" className="w-full flex justify-center">
+                            <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-[350px] h-[500px]">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="login">Login</TabsTrigger>
+                                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="login">
+                                    <LoginForm />
+                                    {isLoggingIn && <Spinner />}
+                                </TabsContent>
+                                <TabsContent value="signup">
+                                    <SignupForm/>
+                                </TabsContent>
+                            </Tabs>
+                        </section>
+                    </div>
+                )}
             </div>
 
             {/* Pricing section */}

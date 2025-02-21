@@ -3,14 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { signup } from "@/utils/supabase/auth";
 
-const SignupForm = ({handleSignUp} : {handleSignUp: (formData: FormData) => void}) => {
+// const SignupForm = ({handleSignUp} : {handleSignUp: (formData: FormData) => void}) => {
+const SignupForm = () => {
     const [email, setEmail] = useState("jameskn_test@yopmail.com");
     const [password, setPassword] = useState("test123");
     const [fullName, setFullName] = useState("James Nguyen");
 
     const handleGoogleSignIn = () => {
         toast.success("Test sign in with Google 👏")
+    }
+    const onSignup = async (formData: FormData) => {
+
+        const email = formData.get('email') as string;
+
+        const res = await signup(formData)
+
+        if (res.success) {
+            toast.success(`Sent verification email to ${email}`)
+        } else {
+            toast.error('Sign up failed')
+        }
     }
 
     return (
@@ -20,7 +34,7 @@ const SignupForm = ({handleSignUp} : {handleSignUp: (formData: FormData) => void
                 <p className="text-slate-500 text-sm">free 10 PRO sessions, 250 people per session</p>
             </CardHeader>
             <CardContent>
-                <form className="space-y-4">
+                <form className="space-y-4" action={onSignup}>
                     <div>
                         <label htmlFor="fullname" className="block text-sm font-medium text-gray-700">Full name</label>
                         <Input value={fullName} onChange={(e)=>setFullName(e.target.value)} name="fullname" id="fullname" type="text" className="mt-1 block w-full rounded-md shadow-sm" />
@@ -33,7 +47,7 @@ const SignupForm = ({handleSignUp} : {handleSignUp: (formData: FormData) => void
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
                         <Input value={password} onChange={(e) => setPassword(e.target.value)} name="password" id="password" type="password" className="mt-1 block w-full rounded-md shadow-sm" />
                     </div>
-                    <Button formAction={handleSignUp} type='submit' className="w-full mt-4 bg-blue-500 hover:bg-blue-800 text-white rounded-md shadow-md">Sign up</Button>
+                    <Button type='submit' className="w-full mt-4 bg-blue-500 hover:bg-blue-800 text-white rounded-md shadow-md">Sign up</Button>
                 </form>
                 <div className="flex items-center my-4">
                     <hr className="flex-grow border-t border-gray-300" />

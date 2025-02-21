@@ -18,7 +18,7 @@ import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost } from '@/ut
 import { QuestionItem } from '@/app/components/QuestionList'
 import { MdReportGmailerrorred } from "react-icons/md";
 // import { createClient } from '@/utils/supabase/component'
-import { getUserData } from '@/utils/supabase/userData';
+import { getUserData } from '@/utils/supabase/auth';
 import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaAngleDown, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import MessageInput from '@/app/components/MessageInput';
