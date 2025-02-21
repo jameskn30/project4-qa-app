@@ -1,13 +1,8 @@
 'use client'
-import { useState, useEffect, useRef } from 'react';
-import MessageInput from '@/app/components/MessageInput'
-import { Toaster, toast } from 'sonner';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { useRoomContext } from '@/app/room/[roomId]/RoomContext'
-import { useRouter, useParams } from 'next/navigation';
-import { Input } from '@/components/ui/input'
+import {useEffect, useRef } from 'react';
+import { Toaster } from 'sonner';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import _ from 'lodash'
-import { generateRandomUsername } from '@/utils/common';
 
 export type Message = {
   username: string;

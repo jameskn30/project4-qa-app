@@ -84,7 +84,8 @@ export const amIHost = async (roomId: string) => {
 }
 
 export const syncRoom = async (roomId: string) => {
-    return fetch(`${CHATAPI_ENDPOINT}/sync_room/${roomId}`);
+    const res = await fetch(`${CHATAPI_ENDPOINT}/sync_room/${roomId}`);
+    return res.json()
 }
 
 export const getActiveRoomsByUserId = async (userId: string) => {
@@ -105,17 +106,19 @@ export const groupMessages = async (roomId: string) => {
 }
 
 export const clearQuestions = async (roomId: string) => {
-    return fetch(`${CHATAPI_ENDPOINT}/clear_questions`, {
+    const res = await fetch(`${CHATAPI_ENDPOINT}/clear_questions`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ roomId: roomId }),
     });
+
+    return res.json()
 }
 
-export const upvoteMessage = async (roomId: string, questionId: string, username: string) => {
-    return fetch(`${CHATAPI_ENDPOINT}/upvote`, {
+export const upvoteMessage = async (roomId: string, questionId: string) => {
+    const res = await fetch(`${CHATAPI_ENDPOINT}/upvote`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -123,27 +126,32 @@ export const upvoteMessage = async (roomId: string, questionId: string, username
         body: JSON.stringify({
             roomId: roomId,
             questionId: questionId,
-            username: username
+            username: ''
         }),
     });
+
+    return res.json()
 }
 
 export const newRound = async (roomId: string) => {
-    return fetch(`${CHATAPI_ENDPOINT}/new_round`, {
+    const res = await fetch(`${CHATAPI_ENDPOINT}/new_round`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ roomId: roomId }),
     });
+
+    return res.json()
 }
 
 export const closeRoom = async (roomId: string) => {
-    return fetch(`${CHATAPI_ENDPOINT}/close_room`, {
+    const res = await fetch(`${CHATAPI_ENDPOINT}/close_room`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ roomId: roomId }),
     });
+    return res.json()
 }
