@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import Link from 'next/link';
 import JoinRoomForm from './components/JoinRoomForm';
 import { getUserData as _getUserData, signout } from '@/utils/supabase/auth'
+import Image from 'next/image';
 
 const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedIn: boolean, isLoadingAuth: boolean, onSignOut: () => void }) => {
     const scrollToWaitlist = () => {
@@ -21,9 +22,10 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
 
     return (
         <nav className="sticky top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
-            <div className="flex p-1 space-2 bg-white  shadow-xl rounded-2xl border border-slate-200">
-                <Button variant={'ghost'} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">⚡ Bolt.qa</Button>
-            </div>
+            {/* <div className="flex p-1 space-2 bg-white  shadow-xl rounded-2xl border border-slate-200">
+                <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer"/>
+                <p>Donask</p>
+            </div> */}
             <div className="flex p-1 gap-3 bg-white shadow-xl rounded-2xl border border-slate-200">
                 <Button variant={'ghost'} as="a" href="https://jameskn30.github.io/portfolio/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none" target="_blank">About me</Button>
                 <Button variant={'ghost'} onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Wait list</Button>
@@ -108,10 +110,14 @@ const WelcomePage = () => {
             <LandingPageNavbar isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={handleSignOut} />
             <Toaster expand={true} position='top-center' richColors />
 
-            <div className={`flex flex-col lg:flex-row min-h-full w-auto px-4 lg:px-20 py-10 ${isLoggedIn ? 'justify-center' : ''}`}>
-                <div className="flex flex-1 mb-10 lg:mb-0" id="intro-container">
-                    <div className="flex flex-col gap-10 font-mono text-center lg:text-left">
-                        <p className="text-6xl lg:text-8xl font-bold text-center w-full">Bolt.qa</p>
+            <div className={`flex flex-col lg:flex-row h-auto w-auto px-4 lg:px-20 py-10 ${isLoggedIn ? 'justify-center' : ''}`}>
+                <div id="intro-container" className="flex flex-1 mb-10 lg:mb-0">
+                    <div className="flex flex-col font-mono text-center lg:text-left gap-5">
+                        {/* <p className="text-6xl lg:text-8xl font-bold text-center w-full">Bolt.qa</p> */}
+                        <div className="flex space-2 items-center">
+                            <Image src="/logo.png" alt="Logo" width={150} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer" />
+                            <p className='text-6xl font-bold'>Donask</p>
+                        </div>
 
                         <p className="text-3xl lg:text-4xl font-bold max-w-[600px] mx-auto lg:mx-0">
                             <span className="inline-block -rotate-3 bg-yellow-300">Group </span> your audience questions so you can answer the <span className="inline-block -rotate-2 bg-green-300">most relevant </span> <span className="bg-yellow-300 inline-block transform rotate-3"> quickly</span>
@@ -123,8 +129,10 @@ const WelcomePage = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 justify-center items-center">
-                    <JoinRoomForm />
+                <div className="flex w-1/3 justify-center items-center">
+                    <div className=" w-[300px] h-[300px]">
+                        <JoinRoomForm />
+                    </div>
                 </div>
 
 

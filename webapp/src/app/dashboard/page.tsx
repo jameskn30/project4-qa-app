@@ -41,14 +41,21 @@ import CreateRoomForm from '../components/CreateRoomForm';
 import { ChartColumnBig } from 'lucide-react'
 
 
-const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData | null, handleSignOut: () => void, isLoggingOut: boolean }) => {
+interface NavBarProps {
+    userdata: UserData | null
+    handleSignOut: () => void
+    goToHomepage: () => void
+    isLoggingOut: boolean
+}
+
+const NavBar = ({ userdata, handleSignOut, isLoggingOut, goToHomepage }: NavBarProps) => {
 
     return (
         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
             <div className="flex p-1 space-2  rounded-2xl items-center gap-2">
-                <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125" />
+                <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer" onClick={goToHomepage} />
                 <p className="text-2xl font-bold bg-yellow-300 rotate-2">Donask!</p>
-                <p className="text-sm"> provide the best Q&A sessions to your audience </p>
+                <p className="text-sm"> Give the best Q&A experience to your audience </p>
             </div>
             <div className='flex gap-2 p-3'>
                 <Menubar>
@@ -130,13 +137,23 @@ const NewRoomPage = () => {
         setIsDialogOpen(false)
     }
 
+    const goToHomepage = () => {
+        router.push('/')
+    }
+
+
     if (authLoading) {
         return <Loading />
     }
 
     return (
         <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-purple-200 gap-3 overflow-y-auto h-auto py-10">
-            <NavBar handleSignOut={handleSignOut} userdata={userData} isLoggingOut={isLoggingOut} />
+            <NavBar 
+                handleSignOut={handleSignOut} 
+                userdata={userData} 
+                isLoggingOut={isLoggingOut} 
+                goToHomepage={goToHomepage}
+                />
             <Toaster expand={true} position='top-center' richColors />
             <div className="grid grid-cols-4 gap-5 ">
                 <div>
