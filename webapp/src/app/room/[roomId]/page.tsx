@@ -7,7 +7,7 @@ import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
 import { clearQuestions, syncRoom } from '@/utils/room';
 import { isRoomExists } from '@/utils/room.v2';
 import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth'
-import { useRouter, useParams, usePathname } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
 import { toast, Toaster } from 'sonner';
@@ -16,11 +16,11 @@ import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost } from '@/utils/room';
+// import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost } from '@/utils/room';
+import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost } from '@/utils/room.v2';
+
 import { QuestionItem } from '@/app/components/QuestionList'
 import { MdReportGmailerrorred } from "react-icons/md";
-// import { createClient } from '@/utils/supabase/component'
-// import { getUserData } from '@/utils/supabase/auth';
 import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaAngleDown, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import MessageInput from '@/app/components/MessageInput';
@@ -44,17 +44,8 @@ const RoomPage: React.FC = () => {
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [isHost, setIsHost] = useState(false)
-  const currPath = usePathname()
 
-  //TODO: duplicated with the logic in dashboard, use state management
-  // type UserData = {
-  //   username: string,
-  //   userId: string,
-  //   email: string,
-  // }
   const [userData, setUserData] = useState<UserData | null>(null)
-
-  // const supabase = createClient()
 
   useEffect(() => {
     if (!username) {
@@ -150,7 +141,7 @@ const RoomPage: React.FC = () => {
       else if (type === 'command') {
         const command = parsedData.command;
         if (command === 'clear_questions') {
-          clearQuestionsAction()
+          clearQuestionsCommand()
           setHostMessage("Host cleared questions")
         }
         else if (command === "grouping_questions") {
@@ -191,11 +182,9 @@ const RoomPage: React.FC = () => {
       const cleanup = connectWebSocket();
 
       if (userData) {
-        amIHost(roomId!!, '1')
-          .then(res => {
-            if (res.ok) {
-              setIsHost(true)
-            }
+        amIHost(roomId!!)
+          .then(isTrue => {
+            setIsHost(isTrue)
           })
           .catch(err => {
             console.error(err)
@@ -279,12 +268,8 @@ const RoomPage: React.FC = () => {
   const handleGroupQuestions = async () => {
     setLoadingQuestions(true);
     try {
-      const response = await groupMessages(roomId!!);
-      if (response.ok) {
-        toast.success('Grouped questions');
-      } else {
-        toast.error('Failed to group questions');
-      }
+      await groupMessages(roomId!!);
+      toast.success('Grouped questions');
     } catch (error) {
       toast.error('Error grouping questions');
       console.error(error);
@@ -293,7 +278,7 @@ const RoomPage: React.FC = () => {
     }
   };
 
-  const clearQuestionsAction = () => {
+  const clearQuestionsCommand = () => {
     setLoadingQuestions(true);
     setQuestions([])
     setLoadingQuestions(false);

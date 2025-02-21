@@ -6,9 +6,8 @@ import { Toaster, toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import _ from 'lodash';
 import { useRouter } from 'next/navigation';
-// import { createRoom } from '@/utils/room';
 
-import {getActiveRooms as _getActiveRooms, createRoom as _createRoom} from '@/utils/room.v2'
+import {getActiveRooms as _getActiveRooms, createRoom as _createRoom, fetchRoomId as _fetchRoomId } from '@/utils/room.v2'
 import {
     Tabs,
     TabsContent,
@@ -29,7 +28,7 @@ import { signout } from '@/utils/supabase/auth';
 import { Button } from '@/components/ui/button';
 import JoinRoomForm from '../components/JoinRoomForm';
 import { Card } from '@/components/ui/card';
-import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth'
+import { getUserData as _getUserData, UserData} from '@/utils/supabase/auth'
 
 const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData | null, handleSignOut: () => void, isLoggingOut: boolean }) => {
 
@@ -122,8 +121,7 @@ const NewRoomPage = () => {
     const fetchRoomId = useCallback(_.debounce(async () => {
         try {
             console.log('fetched room id ');
-            const response = await fetch('/chatapi/get_random_room_id');
-            const data = await response.json();
+            const data = await _fetchRoomId()
             setRoomId(data.roomId);
         } catch (error) {
             console.error('Error fetching room ID:', error);
