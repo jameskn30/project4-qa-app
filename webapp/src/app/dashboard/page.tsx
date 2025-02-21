@@ -38,14 +38,17 @@ import { Button } from '@/components/ui/button';
 import JoinRoomForm from '../components/JoinRoomForm';
 import Image from 'next/image';
 import CreateRoomForm from '../components/CreateRoomForm';
+import { ChartColumnBig } from 'lucide-react'
+
 
 const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData | null, handleSignOut: () => void, isLoggingOut: boolean }) => {
 
     return (
         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
-            <div className="flex p-1 space-2  rounded-2xl items-center">
-                <Image src="/logo.png" alt="Logo" width={70} height={30} className="mx-2" />
-                <p className="text-2xl font-bold">Donask</p>
+            <div className="flex p-1 space-2  rounded-2xl items-center gap-2">
+                <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125" />
+                <p className="text-2xl font-bold bg-yellow-300 rotate-2">Donask!</p>
+                <p className="text-sm"> provide the best Q&A sessions to your audience </p>
             </div>
             <div className='flex gap-2 p-3'>
                 <Menubar>
@@ -153,7 +156,6 @@ const NewRoomPage = () => {
                 </div>
 
                 <div className='w-[250px] h-[250px]'>
-
                     <Card
                         onClick={() => setIsDialogOpen(true)}
                         className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
@@ -166,9 +168,9 @@ const NewRoomPage = () => {
                     </Card>
                     {
                         isDialogOpen && (
-                            <Card 
-                            className="w-full h-full absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-md p-4"
-                                >
+                            <Card
+                                className="w-full h-full absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-md p-4"
+                            >
                                 <div className='w-[350px] h-[350]px'>
                                     <CreateRoomForm onClose={onCloseCreateRoom} />
                                 </div>
@@ -176,10 +178,20 @@ const NewRoomPage = () => {
                             </Card>
 
                         )
-
                     }
-
-
+                </div>
+                <div className='w-[250px] h-[250px]'>
+                    <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
+                        <CardHeader className='text-2xl flex'>
+                            <CardTitle className='flex gap-2'>
+                                Add polls
+                                <ChartColumnBig />
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className='flex-1 flex flex-col justify-center'>
+                            <p>You have 3 preset polls</p>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
             <div className='flex justify-center items-center w-1/2'>
