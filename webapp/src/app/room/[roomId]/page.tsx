@@ -4,7 +4,9 @@ import QuestionList from '@/app/components/QuestionList';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
 import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
-import { clearQuestions, isRoomExists, syncRoom } from '@/utils/room';
+import { clearQuestions, syncRoom } from '@/utils/room';
+import { isRoomExists } from '@/utils/room.v2';
+import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth'
 import { useRouter, useParams, usePathname } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
@@ -18,7 +20,7 @@ import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost } from '@/ut
 import { QuestionItem } from '@/app/components/QuestionList'
 import { MdReportGmailerrorred } from "react-icons/md";
 // import { createClient } from '@/utils/supabase/component'
-import { getUserData } from '@/utils/supabase/auth';
+// import { getUserData } from '@/utils/supabase/auth';
 import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaAngleDown, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import MessageInput from '@/app/components/MessageInput';
@@ -45,11 +47,11 @@ const RoomPage: React.FC = () => {
   const currPath = usePathname()
 
   //TODO: duplicated with the logic in dashboard, use state management
-  type UserData = {
-    username: string,
-    userId: string,
-    email: string,
-  }
+  // type UserData = {
+  //   username: string,
+  //   userId: string,
+  //   email: string,
+  // }
   const [userData, setUserData] = useState<UserData | null>(null)
 
   // const supabase = createClient()
@@ -61,51 +63,46 @@ const RoomPage: React.FC = () => {
   }, [username]);
 
   useEffect(() => {
+
     const checkRoomExists = async () => {
       if (roomId !== null) {
-        isRoomExists(roomId)
-          .then(res => {
-            if (res.ok) {
+        try {
+          const exists = await isRoomExists(roomId)
+
+          if (exists) {
+            if (exists) {
               setRoomExists(true);
             } else {
+              console.log()
               setRoomExists(false);
             }
+            setLoading(false)
           }
-          )
-          .catch(err => {
-            setRoomExists(false);
-          }).finally(() => {
 
-            setLoading(false);
-          })
-      }
-    };
+        } catch (err) {
+          console.error(err)
+          setRoomExists(false);
+          setLoading(false)
+        }
+      };
+    }
 
     checkRoomExists();
 
-    // const getUserData = async () => {
-    //   const { data: { user } } = await supabase.auth.getUser()
-    //   const userData: UserData = {
-    //     userId: user!!.id,
-    //     username: user?.user_metadata.full_name,
-    //     email: user?.user_metadata.email,
-    //   }
-
-    //   setUserData(userData)
-    // }
-
-    if(currPath){
-      const userData = getUserData(currPath)
-      console.log('userData')
-      console.log(userData)
+    const getUserData = async () => {
+      const user = await _getUserData()
+      console.log(user)
+      setUserData(user)
     }
+
+    getUserData()
 
   }, [roomId]);
 
   const connectWebSocket = useCallback(async () => {
     if (!username) {
-        toast.error('Internal error');
-        return;
+      toast.error('Internal error');
+      return;
     }
 
     const response = await fetch(`/api/chat?roomId=${roomId}&username=${username}`);
@@ -116,78 +113,78 @@ const RoomPage: React.FC = () => {
     wsRef.current = ws;
 
     ws.onopen = () => {
-        toast.success("Joined room");
+      toast.success("Joined room");
     };
 
     ws.onmessage = (event) => {
-        const parsedData = JSON.parse(event.data);
-        const type = parsedData.type;
+      const parsedData = JSON.parse(event.data);
+      const type = parsedData.type;
 
-        if (type === "message") {
-            const content = parsedData.message;
-            const username = parsedData.username;
-            const message: Message = { username, content, flag: '🇺🇸' };
-            setMessages((prevMessages) => [...prevMessages, message]);
+      if (type === "message") {
+        const content = parsedData.message;
+        const username = parsedData.username;
+        const message: Message = { username, content, flag: '🇺🇸' };
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
+      else if (type === "questions") {
+        const newQuestions = parsedData.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
+          uuid: question.uuid,
+          rephrase: question.rephrase,
+          upvotes: question.upvotes,
+          downvotes: question.downvotes
+        }));
+        setQuestions(newQuestions)
+        setLoadingQuestions(false)
+        setHostMessage("")
+      }
+      else if (type === 'upvote') {
+        const questionId = parsedData.questionId;
+        setQuestions((prevQuestions) =>
+          prevQuestions.map((question) =>
+            question.uuid === questionId
+              ? { ...question, upvotes: question.upvotes + 1 }
+              : question
+          )
+        );
+      }
+      else if (type === 'command') {
+        const command = parsedData.command;
+        if (command === 'clear_questions') {
+          clearQuestionsAction()
+          setHostMessage("Host cleared questions")
         }
-        else if (type === "questions") {
-            const newQuestions = parsedData.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
-                uuid: question.uuid,
-                rephrase: question.rephrase,
-                upvotes: question.upvotes,
-                downvotes: question.downvotes
-            }));
-            setQuestions(newQuestions)
-            setLoadingQuestions(false)
-            setHostMessage("")
+        else if (command === "grouping_questions") {
+          setLoadingQuestions(true)
+          setHostMessage("Host grouping questions")
         }
-        else if (type === 'upvote') {
-            const questionId = parsedData.questionId;
-            setQuestions((prevQuestions) =>
-                prevQuestions.map((question) =>
-                    question.uuid === questionId
-                        ? { ...question, upvotes: question.upvotes + 1 }
-                        : question
-                )
-            );
+        else if (command === "new_round") {
+          setHostMessage("Host started new round of questions")
+          setMessages([])
+          setQuestions([])
+          setQuestionsLeft(3)
+          setUpvotesLeft(3)
         }
-        else if (type === 'command') {
-            const command = parsedData.command;
-            if (command === 'clear_questions') {
-                clearQuestionsAction()
-                setHostMessage("Host cleared questions")
-            }
-            else if (command === "grouping_questions") {
-                setLoadingQuestions(true)
-                setHostMessage("Host grouping questions")
-            }
-            else if (command === "new_round") {
-                setHostMessage("Host started new round of questions")
-                setMessages([])
-                setQuestions([])
-                setQuestionsLeft(3)
-                setUpvotesLeft(3)
-            }
-            else if (command === "close_room") {
-                setRoomClosed(true);
-                setTimeout(() => {
-                    onLeave()
-                }, 3000);
-            }
+        else if (command === "close_room") {
+          setRoomClosed(true);
+          setTimeout(() => {
+            onLeave()
+          }, 3000);
         }
+      }
     };
 
     ws.onclose = () => {
     };
 
     ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        toast.error("Error while connecting to room");
+      console.error('WebSocket error:', error);
+      toast.error("Error while connecting to room");
     };
 
     return () => {
-        ws.close();
+      ws.close();
     };
-}, [roomId, username]);
+  }, [roomId, username]);
 
   useEffect(() => {
     if (!loading && username && roomExists && !showDialog) {
@@ -205,7 +202,9 @@ const RoomPage: React.FC = () => {
           }).finally(() => { })
       }
 
-      syncRoom(roomId!!).then(res => res.json()).then(data => {
+      syncRoom(roomId!!)
+      .then(res => res.json())
+      .then(data => {
         setMessages(data.messages.map((message: { username: string, content: string }) => ({
           username: message.username,
           content: message.content,

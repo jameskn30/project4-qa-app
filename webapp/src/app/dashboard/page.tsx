@@ -31,12 +31,6 @@ import JoinRoomForm from '../components/JoinRoomForm';
 import { Card } from '@/components/ui/card';
 import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth'
 
-// type UserData = {
-//     username: string,
-//     // userId: string,
-//     email: string,
-// }
-
 const NavBar = ({ userdata, handleSignOut, isLoggingOut }: { userdata: UserData | null, handleSignOut: () => void, isLoggingOut: boolean }) => {
 
     return (
@@ -147,7 +141,6 @@ const NewRoomPage = () => {
         console.log(`handleStartRoom`)
         if (roomId === null) return;
         try {
-            // const roomExists = await isRoomExists(roomId);
             if (roomId !== '' && userData !== null) {
                 const res = await _createRoom(roomId as string);
                 if (res) {

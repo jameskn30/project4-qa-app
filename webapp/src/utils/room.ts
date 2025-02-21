@@ -1,14 +1,14 @@
 
 
-export const isRoomExists = async (roomId: string) => {
-    return fetch('/chatapi/room_exists', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ roomId: roomId }),
-    });
-}
+// export const isRoomExists = async (roomId: string) => {
+//     return fetch('/chatapi/room_exists', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ roomId: roomId }),
+//     });
+// }
 export const amIHost = async (roomId: string, userId: string) => {
     const queryParams = new URLSearchParams({
         roomId: roomId,
@@ -18,23 +18,23 @@ export const amIHost = async (roomId: string, userId: string) => {
     return fetch(`/chatapi/am_i_host?${queryParams}`);
 }
 
-export const createRoom = async (roomId: string, userId: string) => {
-    const response = await fetch('/chatapi/create_room', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-            roomId: roomId, 
-            userId: userId
-        }),
-    });
+// export const createRoom = async (roomId: string, userId: string) => {
+//     const response = await fetch('/chatapi/create_room', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ 
+//             roomId: roomId, 
+//             userId: userId
+//         }),
+//     });
 
-    if (response.ok) {
-        return true;
-    }
-    return false
-}
+//     if (response.ok) {
+//         return true;
+//     }
+//     return false
+// }
 
 export const syncRoom = async (roomId: string) => {
     return fetch(`/chatapi/sync_room/${roomId}`);
