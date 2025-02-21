@@ -1,24 +1,11 @@
 'use client'
 
-import Link from 'next/link'
-import clsx from 'clsx'
 import { useParams } from 'next/navigation'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { FaBars } from 'react-icons/fa'
 import { Button } from '@/components/ui/button'
-
-interface ButtonLinkProp extends React.LinkHTMLAttributes<HTMLLinkElement> {
-  children: React.ReactNode | null
-  href: string
-}
-
-const ButtonLink = ({ children, href, className, ...props }: ButtonLinkProp) => {
-  return (
-    <Link href={href} className={clsx('bg-white hover:bg-slate-200 rounded-lg p-2', className)} {...props}>
-      {children}
-    </Link>
-  )
-}
+import Image from 'next/image'
+import { DoorOpen } from 'lucide-react';
 
 interface NavbarProps {
   onLeave: () => void
@@ -30,37 +17,32 @@ const Navbar = ({ onLeave }: NavbarProps) => {
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null
 
   return (
-    <div className="sticky z-10 bg-transparent w-full">
+    <div className="sticky z-10 bg-transparent w-full backdrop-blur-sm">
       <nav className="flex flex-wrap justify-between items-center px-5 py-1">
-        <div className="flex space-x-4 border border-slate-300 p-1 bg-white rounded-xl shadow-md hover:shadow-lg items-center">
-          <ButtonLink href="/">
-            <div className="flex items-center gap-2">
-              <p className="text-sm">LOGO</p>
-              <p className="max-w-40 text-sm">app description</p>
-            </div>
-          </ButtonLink>
-        </div>
 
-        <div className="hidden lg:flex gap-2 border border-slate-300 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
-          <span className="bg-white rounded-lg p-2 font-bold">
-            Room: {roomId}
-          </span>
-          <ButtonLink href="#" onClick={onLeave}>
-            Leave
-          </ButtonLink>
+        <div className="flex p-1 space-2 items-center gap-2">
+          <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer" />
+          <p className="text-2xl font-bold bg-yellow-300 rotate-2">Donask!</p>
+          <p className="text-sm hidden lg:block"> Give the best Q&A experience to your audience </p>
         </div>
 
         <div className="hidden lg:flex gap-3">
-          <ul className="flex space-x-4 border border-slate-300 py-2 px-1 bg-white rounded-xl shadow-md hover:shadow-lg">
+          <ul className="flex space-x-4 ">
             <li>
-              <ButtonLink href="#section2">
-                Login
-              </ButtonLink>
+              <Button onClick={onLeave} variant="outline">
+                <DoorOpen />
+                Leave room
+              </Button>
             </li>
             <li>
-              <ButtonLink href="#section3" className="bg-gradient-to-r from-purple-600 via-purpl-700 to-red-600 text-white">
+              <Button variant="outline" >
+                Login
+              </Button>
+            </li>
+            <li>
+              <Button variant="outline" className="bg-gradient-to-r from-purple-600 via-purpl-700 to-red-600 text-white hover:bg-gradient-to-r hover:from-green-400 hover:via-blue-500 hover:to-purple-600 hover:text-white">
                 Sign Up
-              </ButtonLink>
+              </Button>
             </li>
           </ul>
         </div>
@@ -78,15 +60,15 @@ const Navbar = ({ onLeave }: NavbarProps) => {
                   Room: {roomId}
                 </span>
                 <div className="mx-4 border border-slate-100"></div>
-                <ButtonLink href="#" onClick={onLeave}>
-                  Leave
-                </ButtonLink>
-                <ButtonLink href="#section2">
+                <Button >
                   Login
-                </ButtonLink>
-                <ButtonLink href="#section3" className="bg-gradient-to-r from-purple-600 via-purpl-700 to-red-600 text-white">
+                </Button>
+                <Button className="bg-gradient-to-r from-purple-600 via-purpl-700 to-red-600 text-white hover:bg-gradient-to-r hover:from-green-400 hover:via-blue-500 hover:to-purple-600">
                   Sign Up
-                </ButtonLink>
+                </Button>
+                <Button onClick={onLeave}>
+                  Leave
+                </Button>
               </div>
             </PopoverContent>
           </Popover>

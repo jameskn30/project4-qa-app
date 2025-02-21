@@ -64,16 +64,16 @@ const QuestionList = ({ questions, loadingQuestions, roundNumber, hostMessage, i
     return (
         <Card className="p-4 flex flex-col gap-2 rounded-2xl h-full">
             <p className="text-lg text-center font-bold">Live question round {roundNumber}</p>
-            <div className="flex overflow-y-auto h-auto flex-col gap-2 ">
-                {hostMessage && hostMessage.length > 0 && <p className="flex w-full text-red-500"> {hostMessage}</p>}
+            <div className="flex overflow-y-auto h-full flex-col gap-2">
 
                 {loadingQuestions ?
-                    <Spinner />
+                    <Spinner size={'large'}/>
                     : <>
                         {sortedQuestions.map((question, index) => (
                             <Question key={index} order={index + 1} question={question} handleUpvote={handleUpvote} isHost={isHost} />
                         ))}
                     </>}
+                {hostMessage && hostMessage.length > 0 && <p className="flex w-full text-center text-md">{hostMessage}</p>}
             </div>
         </Card>
     );

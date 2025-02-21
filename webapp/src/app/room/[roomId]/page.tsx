@@ -10,7 +10,6 @@ import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
 import ErrorPage from './error';
 import { toast, Toaster } from 'sonner';
-import { generateRandomUsername } from '@/utils/common';
 import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -348,13 +347,11 @@ const RoomPage: React.FC = () => {
 
   return (
     <RoomProvider>
-      <div className="flex flex-col h-screen items-center bg-gray-50">
+      <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-purple-200">
         <Toaster expand={true} position='top-center' richColors />
-
         <Navbar onLeave={onLeave} />
-
-        <div className="flex gap-1 h-50 w-full bg-slate-100 h-full lg:px-10 ">
-          <div className="flex flex-1 flex-col w-2/3 min-h-[500px]">
+        <div className="flex flex-1 gap-1 w-full lg:px-10 overflow-hidden">
+          <div className="flex flex-1 flex-col w-2/3 min-h-[500px] overflow-hidden">
             <div className="flex-1 overflow-y-auto py-2">
               <QuestionList
                 questions={questions}
@@ -373,17 +370,14 @@ const RoomPage: React.FC = () => {
               isHost === false && (
                 <Card id='chat-container' className="w-full flex flex-col justify-center items-center p-5 pb-10 rounded-xl">
                   <Button variant="outline" className="lg:hidden flex-shrink mb-4 text-gray-500 flex justify-center items-center gap-4"> <FaAngleUp /> more chat</Button>
-
                   <div className="flex flex-col gap-2 w-full lg:w-3/4 justify-center">
                     <div className="top-0 flex justify-center w-full gap-4 text-center">
                       <div className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md">{questionsLeft} questions left</div>
                       <div className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md">{upvotesLeft} upvotes left</div>
                     </div>
                     <MessageInput onSent={onSent} />
-
                   </div>
                 </Card>
-
               )
             }
           </div>
@@ -394,12 +388,11 @@ const RoomPage: React.FC = () => {
                   <Card className="flex flex-col overflow-y-auto relative rounded-2xl p-1 bg-white h-full pb-10">
                     <CardHeader>
                       <CardTitle>
-                        You are  host
+                        You are host
                       </CardTitle>
-
                     </CardHeader>
                     <CardContent>
-                      <CardDescription className='grid grid-cols-2 w-full gap-3' >
+                      <CardDescription className='grid grid-cols-2 w-full gap-3'>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><MessagesSquare /> Live Q&A</Button>
@@ -424,18 +417,15 @@ const RoomPage: React.FC = () => {
                         <Button variant="destructive" className='text-center w-full mb-2 font-bold flex'><Trash /> Close room</Button>
                       </CardDescription>
                     </CardContent>
-
                   </Card>
                 )
               }
             </div>
-
-            <div className={`h-${isHost ? '2/3': 'full'}`} id='chat-container'>
+            <div className={`h-${isHost ? '2/3' : 'full'}`} id='chat-container'>
               <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
             </div>
           </div>
         </div>
-
         {showDialog && (
           <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm p-4">
             <form onSubmit={handleUsernameSubmit} className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm">
