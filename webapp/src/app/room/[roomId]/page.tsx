@@ -42,8 +42,11 @@ const RoomPage: React.FC = () => {
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [isHost, setIsHost] = useState(false)
+  const [showMessageInput, setShowMessageInput] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null)
+
+  const messageInputRef = useRef<HTMLDivElement>(null);
 
   //WEBSOKET
   const connectWebSocket = useCallback(async () => {
@@ -183,7 +186,6 @@ const RoomPage: React.FC = () => {
 
   }, [roomId]);
 
-
   useEffect(() => {
     console.log('setting up username and websocket')
     if (!loading && username && roomExists && !showDialog) {
@@ -224,6 +226,7 @@ const RoomPage: React.FC = () => {
     }
   }, [connectWebSocket, loading, username, roomExists, showDialog]);
 
+
   if (!roomExists) {
     return <ErrorPage />;
   }
@@ -240,12 +243,17 @@ const RoomPage: React.FC = () => {
     setQuestionsLeft(questionsLeft - 1)
     try {
       if (wsRef.current) {
+        console.log('sending')
         wsRef.current.send(content);
         setQuestionsLeft(questionsLeft - 1)
       }
     } catch (error) {
       toast.error("Internal error");
+    } finally{
+      setShowMessageInput(false)
     }
+
+
   };
 
   const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -345,12 +353,16 @@ const RoomPage: React.FC = () => {
     });
   }
 
+  const handleQuestionButtonClick = () => {
+    setShowMessageInput(true);
+  };
+
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-purple-200">
         <Toaster expand={true} position='top-center' richColors />
         <Navbar onLeave={onLeave} />
-        <div className="flex flex-1 gap-1 w-full lg:px-5 mb-5  h-1/2">
+        <div className="flex flex-1 gap-1 w-full lg:px-5 mb-3  h-1/2">
           <div className="flex flex-1 flex-col w-2/3">
             <div className="flex-1 py-2 h-full overflow-y-auto">
               <QuestionList
@@ -366,20 +378,6 @@ const RoomPage: React.FC = () => {
                 handleCloseRoom={handleCloseRoom}
               />
             </div>
-            {
-              isHost === false && (
-                <Card id='chat-container' className="w-full flex flex-col justify-center items-center p-5 pb-10 rounded-xl">
-                  <Button variant="outline" className="lg:hidden flex-shrink mb-4 text-gray-500 flex justify-center items-center gap-4"> <FaAngleUp /> more chat</Button>
-                  <div className="flex flex-col gap-2 w-full lg:w-3/4 justify-center">
-                    <div className="top-0 flex justify-center w-full gap-4 text-center">
-                      <div className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md">{questionsLeft} questions left</div>
-                      <div className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md">{upvotesLeft} upvotes left</div>
-                    </div>
-                    <MessageInput onSent={onSent} />
-                  </div>
-                </Card>
-              )
-            }
           </div>
           <div className="lg:flex flex-col m-2 hidden w-1/3 h-full gap-3">
             {
@@ -426,9 +424,22 @@ const RoomPage: React.FC = () => {
             }
 
             {/* <div className={`flex-1 ${isHost ? 'h-2/3' : 'h-full pb-5'}  mb-5`} id='chat-container'> */}
-            <div className={`flex-grow mb-5 h-1/2`} id='chat-container'>
+            <div className='flex-grow h-1/2' id='chat-container'>
               <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
             </div>
+            {
+              !isHost && (
+                <Card id='chat-container' className="w-full flex flex-col justify-center items-center mb-5 p-2 rounded-xl">
+                  <Button variant="outline" className="lg:hidden flex-shrinktext-gray-500 flex justify-between items-center gap-3"> <FaAngleUp /> more chat</Button>
+                  <div className="flex flex-col gap-2 w-full justify-center">
+                    <div className="top-0 flex justify-center w-full gap-4 text-center">
+                      <Button id='question-button' onClick={handleQuestionButtonClick} className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-700">{questionsLeft} questions left</Button>
+                      <Button className="flex-1 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700">{upvotesLeft} upvotes left</Button>
+                    </div>
+                  </div>
+                </Card>
+              )
+            }
           </div>
         </div>
         {showDialog && (
@@ -474,6 +485,19 @@ const RoomPage: React.FC = () => {
                 <Button variant="secondary" onClick={() => setShowCloseRoomDialog(false)}>Cancel</Button>
               </div>
             </div>
+          </Card>
+        )}
+        {showMessageInput && (
+          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-50 backdrop-blur-sm p-4">
+            <CardContent>
+              <CardDescription>
+                <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm">
+                  <p className="text-xl font-bold text-black">Ask a question</p>
+                  <MessageInput onSent={onSent} />
+                  <Button variant="secondary" onClick={() => setShowMessageInput(false)} className="mt-4 w-full">Close</Button>
+                </div>
+              </CardDescription>
+            </CardContent>
           </Card>
         )}
       </div>
