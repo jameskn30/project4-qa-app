@@ -144,7 +144,7 @@ const NewRoomPage = () => {
     }
 
     return (
-        <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-purple-200 gap-3 overflow-y-auto h-auto py-10">
+        <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-blue-200 gap-3 overflow-y-auto h-auto py-10">
             <NavBar 
                 handleSignOut={handleSignOut} 
                 userdata={userData} 

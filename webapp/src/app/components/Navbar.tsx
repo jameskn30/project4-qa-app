@@ -5,7 +5,9 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { FaBars } from 'react-icons/fa'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { DoorOpen } from 'lucide-react';
+import { DoorOpen, LayoutDashboard, Router } from 'lucide-react';
+import {useRouter } from 'next/navigation'
+
 
 interface NavbarProps {
   onLeave: () => void
@@ -15,6 +17,7 @@ const Navbar = ({ onLeave }: NavbarProps) => {
   const params = useParams<{ roomId: string }>()
 
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null
+  const router = useRouter()
 
   return (
     <div className="sticky z-10 bg-transparent w-full backdrop-blur-sm">
@@ -28,6 +31,12 @@ const Navbar = ({ onLeave }: NavbarProps) => {
 
         <div className="hidden lg:flex gap-3">
           <ul className="flex space-x-4 ">
+            <li>
+              <Button variant="outline" onClick={() => router.push('/dashboard')}>
+                <LayoutDashboard />
+                Dashboard
+              </Button>
+            </li>
             <li>
               <Button onClick={onLeave} variant="outline">
                 <DoorOpen />

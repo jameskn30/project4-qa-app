@@ -12,7 +12,6 @@ from enum import Enum
 
 logger = logging.getLogger("chat")
 
-
 def gen_random_user_id():
     return str(uuid4())
 
@@ -50,11 +49,13 @@ REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 
 redis_client = Redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
+
 class Command(Enum):
     CLEAR_QUESTIONS = "clear_questions"
     GROUPING_QUESTIONS = "grouping_questions"
     NEW_ROUND = "new_round"
     CLOSE_ROOM = "close_room"
+
 
 MOCK_MESSAGES = [
     "How do I reset my password?",
@@ -109,36 +110,38 @@ class WebSocketManager:
         self.user_id_to_room: Dict[str, str] = {}
         self.messages: Dict[str, List[Dict[str, str]]] = {}
         self.questions: Dict[str, List[Dict[str, str]]] = {}
-        self.room_to_host_id:Dict[str, str] = {}
+        self.room_to_host_id: Dict[str, str] = {}
 
         # Test data for development
         self._create_new_room('test room 10', '1')
-        self.messages['test room 10'] = [{"username": gen_random_username(), "content": msg} for msg in MOCK_MESSAGES]
+        self.messages['test room 10'] = [
+            {"username": gen_random_username(),
+             "content": msg
+             } for msg in MOCK_MESSAGES]
 
         # end test setup
-    
-    def _check_if_user_is_host_of_room(self, room_id: str,user_id: str ) -> bool:
+
+    def _check_if_user_is_host_of_room(self, room_id: str, user_id: str) -> bool:
         return self.room_to_host_id.get(room_id) == user_id
-    
+
     def get_room_by_host_id(self, host_id: str) -> str:
         print(self.room_to_host_id)
         for room_id, room_host_id in self.room_to_host_id.items():
             if room_host_id == host_id:
                 return room_id
         return None
-    
-    def _create_new_room(self, room_id: str, user_id: str, questions = [], messages = []):
+
+    def _create_new_room(self, room_id: str, user_id: str, questions=[], messages=[]):
         self.active_room[room_id] = []
         self.room_to_host_id[room_id] = user_id
         self.questions[room_id] = questions
         self.messages[room_id] = messages
-    
+
     def _close_room(self, room_id: str):
         del self.active_room[room_id]
         del self.room_to_host_id[room_id]
         del self.questions[room_id]
         del self.messages[room_id]
-
 
     def _is_username_unique(self, room_id: str, username: str) -> bool:
         for user_id in self.active_room[room_id]:
@@ -238,9 +241,10 @@ class WebSocketManager:
 
     async def _broadcast_upvote(self, room_id: str, questionId: string):
         # TODO: check if username is HOST, only host allowed to do this
-        data = {'questionId': questionId,'type': 'upvote'}
+        data = {'questionId': questionId, 'type': 'upvote'}
 
-        logger.info(f"Broadcasting upvate question {questionId} in room {room_id}")
+        logger.info(
+            f"Broadcasting upvate question {questionId} in room {room_id}")
 
         for user_id in self.active_room[room_id]:
             user_conn = self.user_id_to_conn[user_id]
@@ -255,3 +259,20 @@ class WebSocketManager:
 
     def get_user_conn(self, user_id):
         return self.user_id_to_conn.get(user_id)
+
+    def _get_room_members(self, room_id: str) -> List[Dict[str, str]]:
+        """Get list of all members in a room with their usernames and host status."""
+        if room_id not in self.active_room:
+            return []
+        
+        members = []
+        host_id = self.room_to_host_id.get(room_id)
+        
+        for user_id in self.active_room[room_id]:
+            user_conn = self.user_id_to_conn[user_id]
+            members.append({
+                "username": user_conn.username,
+                "isHost": user_id == host_id
+            })
+        
+        return members

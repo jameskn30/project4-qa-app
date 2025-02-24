@@ -21,7 +21,7 @@ import { MdReportGmailerrorred } from "react-icons/md";
 import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaAngleDown, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import MessageInput from '@/app/components/MessageInput';
-import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash } from 'lucide-react';
+import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy } from 'lucide-react';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -359,10 +359,10 @@ const RoomPage: React.FC = () => {
 
   return (
     <RoomProvider>
-      <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-purple-200">
+      <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-blue-200">
         <Toaster expand={true} position='top-center' richColors />
         <Navbar onLeave={onLeave} />
-        <div className="flex flex-1 gap-1 w-full lg:px-5 mb-3  h-1/2">
+        <div className="px-2 flex flex-1 gap-1 w-full lg:px-5 mb-3 h-1/2">
           <div className="flex flex-1 flex-col w-2/3">
             <div className="flex-1 py-2 h-full overflow-y-auto">
               <QuestionList
@@ -383,16 +383,17 @@ const RoomPage: React.FC = () => {
             {
               isHost && (
 
-                <div className="h-auto">
+                <div className="h-1/4">
                   {
-                    <Card className="flex flex-col overflow-y-auto relative rounded-2xl p-1 bg-white h-full pb-10">
+                    <Card className="flex flex-col overflow-y-auto relative rounded-2xl bg-white h-full">
                       <CardHeader>
-                        <CardTitle>
-                          You are host
+                        <CardTitle className='flex justify-center items-center gap-1'>
+                          You are host of: <span className="bg-yellow-300 text-black rotate-2 p-1">{roomId}</span> 
+                          <Button variant="ghost"><Copy/></Button>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <CardDescription className='grid grid-cols-2 w-full gap-3'>
+                        <CardDescription className='grid grid-cols-2 w-full gap-1'>
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><MessagesSquare /> Live Q&A</Button>
@@ -491,8 +492,8 @@ const RoomPage: React.FC = () => {
           <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-50 backdrop-blur-sm p-4">
             <CardContent>
               <CardDescription>
-                <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm">
-                  <p className="text-xl font-bold text-black">Ask a question</p>
+                <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm min-w-[400px]">
+                  <p className="text-xl font-bold text-black">Ask a question (1 left)</p>
                   <MessageInput onSent={onSent} />
                   <Button variant="secondary" onClick={() => setShowMessageInput(false)} className="mt-4 w-full">Close</Button>
                 </div>

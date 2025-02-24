@@ -63,9 +63,7 @@ websocket_manager = WebSocketManager()
 @router.get("/list_members/{room_id}")
 def list_members(room_id: str):
     logger.info(f"Listing members in room {room_id}")
-    if room_id in websocket_manager.active_room:
-        return [websocket_manager.user_id_to_conn[user_id].username for user_id in websocket_manager.active_room[room_id]]
-    return []
+    return websocket_manager._get_room_members(room_id)
 
 
 @router.post("/room_exists")

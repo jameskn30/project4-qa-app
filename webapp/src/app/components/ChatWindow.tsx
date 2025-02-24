@@ -1,11 +1,12 @@
 'use client'
-import {useEffect, useRef } from 'react';
+import { useEffect, useRef  } from 'react';
 import { Toaster } from 'sonner';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import {MessageCircleMore, User} from 'lucide-react'
+import { MessageCircleMore, User } from 'lucide-react'
 import _ from 'lodash'
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+// import { ParticipantsList } from './ParticipantsList'
 
 export type Message = {
   username: string;
@@ -24,7 +25,7 @@ const MessageListItem = ({ username, content, flag }: Message) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <div className="relative mb-1 px-2 text-sm flex items-center hover:bg-slate-200 hover:cursor-pointer">
+        <div className="relative mb-1 px-2 text-sm flex items-center hover:bg-slate-100 hover:cursor-pointer rounded-lg">
           <div className="flex-1">
             <strong className="text-purple-700">{username}</strong> <span className="ml-1">{flag}</span> <span className="text-gray-700">{content}</span>
           </div>
@@ -42,9 +43,41 @@ interface ChatWindowProps {
   isHost: boolean
 }
 
-const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: ChatWindowProps) => {
+type Participant = {
+  username: string;
+  isHost?: boolean;
+}
 
+interface ParticipantsListProps {
+  participants: Participant[];
+}
+
+export const ParticipantsList = ({ participants }: ParticipantsListProps) => {
+  return (
+    <div className="space-y-2">
+      {participants.map((participant, index) => (
+        <div key={index} className="flex items-center gap-2 p-2 hover:bg-slate-100 rounded-lg">
+          <User className="h-5 w-5" />
+          <span>{participant.username}</span>
+          {participant.isHost && (
+            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">Host</span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+
+const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: ChatWindowProps) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  
+  // Mock participants data - replace with actual data
+  const participants = [
+    { username: "Host", isHost: true },
+    { username: "User1" },
+    { username: "User2" },
+  ];
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -55,19 +88,29 @@ const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: Cha
   return (
     <Card className="flex flex-col h-full overflow-y-auto bg-white relative rounded-2xl p-2">
       <Toaster expand={true} position='top-center' richColors />
-      <div className="w-full justify-center gap-2 flex items-center">
-        <Button variant="outline" className="flex-1"><MessageCircleMore/> Chat</Button>
-        <Button variant="outline" className="flex-1"><User/> Participants (36)</Button>
-      </div>
-      <div className={`flex-1 overflow-y-auto flex flex-col pt-5 `}>
-        {
-          messages &&
-          messages.map((msg, index) => (
-            <MessageListItem key={index} username={msg.username} content={msg.content} flag={msg.flag} />
-          ))
-        }
-        <div ref={messagesEndRef} />
-      </div>
+      <Tabs defaultValue="messages" className="flex flex-col flex-1">
+        <TabsList className="w-full grid grid-cols-2">
+          <TabsTrigger value="messages">
+            <MessageCircleMore className="mr-2 h-4 w-4" />
+            Chat
+          </TabsTrigger>
+          <TabsTrigger value="participants">
+            <User className="mr-2 h-4 w-4" />
+            Participants ({participants.length})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="messages" className="flex-1 overflow-y-auto">
+          <div className="flex flex-col pt-5">
+            {messages?.map((msg, index) => (
+              <MessageListItem key={index} {...msg} />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </TabsContent>
+        <TabsContent value="participants" className="flex-1 overflow-y-auto pt-5">
+          <ParticipantsList participants={participants} />
+        </TabsContent>
+      </Tabs>
     </Card>
   );
 };

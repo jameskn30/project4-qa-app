@@ -31,7 +31,9 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
             </div> */}
 
             <div className="flex p-1 space-2  gap-3 justify-end w-full ">
-                <Button variant={'ghost'} as="a" href="https://jameskn30.github.io/portfolio/" className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none" target="_blank">About me</Button>
+                <Button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white">
+                    <Link href="https://jameskn30.github.io/portfolio/" target="_blank">About Me</Link>
+                </Button>
                 {
                     isLoadingAuth ? (
                         <Spinner />
@@ -106,7 +108,7 @@ const WelcomePage = () => {
     };
 
     return (
-        <div className="relative flex flex-col bg-gradient-to-r from-white to-purple-200 items-center min-h-screen h-full">
+        <div className="relative flex flex-col bg-gradient-to-r from-white to-blue-200 items-center min-h-screen h-full">
             <LandingPageNavbar isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={handleSignOut} />
             <Toaster expand={true} position='top-center' richColors />
 
