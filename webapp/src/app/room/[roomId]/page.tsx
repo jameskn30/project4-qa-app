@@ -368,7 +368,10 @@ const RoomPage: React.FC = () => {
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-blue-200">
         <Toaster expand={true} position='top-center' richColors />
-        <Navbar onLeave={onLeave} />
+        <Navbar 
+          onLeave={onLeave}
+          userData={userData}
+         />
         <div className="flex-col px-2 flex flex-1 gap-1 w-full lg:px-5 mb-3 h-1/2 lg:flex-row">
           <div className="flex flex-1 flex-col lg:w-2/3 w-full h-1/3 lg:h-full">
             <div className="flex-1 py-2 h-full overflow-y-auto">

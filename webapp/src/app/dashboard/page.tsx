@@ -1,7 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Toaster } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
 import _ from 'lodash';
 import { useRouter } from 'next/navigation';
 import {
@@ -23,20 +22,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-
-import {
-    Menubar,
-    MenubarContent,
-    MenubarItem,
-    MenubarMenu,
-    MenubarSeparator,
-    MenubarTrigger,
-} from "@/components/ui/menubar"
 import Loading from './loading'
 import { signout } from '@/utils/supabase/auth';
-import { Button } from '@/components/ui/button';
 import JoinRoomForm from '../components/JoinRoomForm';
-import Image from 'next/image';
 import CreateRoomForm from '../components/CreateRoomForm';
 import { ChartColumnBig } from 'lucide-react'
 import Navbar from '../components/Navbar';
@@ -50,46 +38,6 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 
-interface NavBarProps {
-    userdata: UserData | null
-    handleSignOut: () => void
-    goToHomepage: () => void
-    isLoggingOut: boolean
-}
-
-// const NavBar = ({ userdata, handleSignOut, isLoggingOut, goToHomepage }: NavBarProps) => {
-
-//     return (
-//         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
-//             <div className="flex p-1 space-2  rounded-2xl items-center gap-2">
-//                 <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer" onClick={goToHomepage} />
-//                 <p className="text-2xl font-bold bg-yellow-300 rotate-2">Donask!</p>
-//                 <p className="text-sm"> Give the best Q&A experience to your audience </p>
-//             </div>
-//             <div className='flex gap-2 p-3'>
-//                 <Menubar>
-//                     <MenubarMenu>
-//                         <MenubarTrigger>
-//                             {userdata ? userdata.username : "Loading ..."}
-//                         </MenubarTrigger>
-//                         <MenubarContent >
-//                             <MenubarItem>
-//                                 email: {userdata ? userdata.email : "Loading ..."}
-//                             </MenubarItem>
-//                             <MenubarSeparator />
-//                             <MenubarItem>Settings</MenubarItem>
-//                         </MenubarContent>
-//                     </MenubarMenu>
-//                 </Menubar>
-
-//                 <Button variant={"destructive"} onClick={handleSignOut} disabled={isLoggingOut}>
-//                     {isLoggingOut ? <Spinner /> : "Logout"}
-//                 </Button>
-//             </div>
-//         </nav>
-//     )
-// }
-
 const NewRoomPage = () => {
     const [roomId, setRoomId] = useState(null);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -100,9 +48,7 @@ const NewRoomPage = () => {
     const [authLoading, setAuthLoading] = useState(true);
 
     const [userData, setUserData] = useState<UserData | null>(null)
-
     const [activeRoom, setActiveRoom] = useState<boolean>(false)
-
 
     useEffect(() => {
 
@@ -155,12 +101,11 @@ const NewRoomPage = () => {
     return (
         <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-blue-200 gap-3 overflow-y-auto h-auto py-10 overflow-x-hidden">
             <Navbar
-                // handleSignOut={handleSignOut} 
-                // userdata={userData} 
-                // isLoggingOut={isLoggingOut} 
-                // goToHomepage={goToHomepage}
-                onLeave={handleSignOut}
-                />
+                userData={userData}
+                login={() => console.log('nav bar login')}
+                signOut={handleSignOut}
+                signUp={() => console.log('nav bar sign up')}
+            />
             <Toaster expand={true} position='top-center' richColors />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 <div>
