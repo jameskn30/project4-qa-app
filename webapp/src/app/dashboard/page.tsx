@@ -39,7 +39,16 @@ import JoinRoomForm from '../components/JoinRoomForm';
 import Image from 'next/image';
 import CreateRoomForm from '../components/CreateRoomForm';
 import { ChartColumnBig } from 'lucide-react'
+import Navbar from '../components/Navbar';
 
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface NavBarProps {
     userdata: UserData | null
@@ -48,38 +57,38 @@ interface NavBarProps {
     isLoggingOut: boolean
 }
 
-const NavBar = ({ userdata, handleSignOut, isLoggingOut, goToHomepage }: NavBarProps) => {
+// const NavBar = ({ userdata, handleSignOut, isLoggingOut, goToHomepage }: NavBarProps) => {
 
-    return (
-        <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
-            <div className="flex p-1 space-2  rounded-2xl items-center gap-2">
-                <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer" onClick={goToHomepage} />
-                <p className="text-2xl font-bold bg-yellow-300 rotate-2">Donask!</p>
-                <p className="text-sm"> Give the best Q&A experience to your audience </p>
-            </div>
-            <div className='flex gap-2 p-3'>
-                <Menubar>
-                    <MenubarMenu>
-                        <MenubarTrigger>
-                            {userdata ? userdata.username : "Loading ..."}
-                        </MenubarTrigger>
-                        <MenubarContent >
-                            <MenubarItem>
-                                email: {userdata ? userdata.email : "Loading ..."}
-                            </MenubarItem>
-                            <MenubarSeparator />
-                            <MenubarItem>Settings</MenubarItem>
-                        </MenubarContent>
-                    </MenubarMenu>
-                </Menubar>
+//     return (
+//         <nav className="top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
+//             <div className="flex p-1 space-2  rounded-2xl items-center gap-2">
+//                 <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer" onClick={goToHomepage} />
+//                 <p className="text-2xl font-bold bg-yellow-300 rotate-2">Donask!</p>
+//                 <p className="text-sm"> Give the best Q&A experience to your audience </p>
+//             </div>
+//             <div className='flex gap-2 p-3'>
+//                 <Menubar>
+//                     <MenubarMenu>
+//                         <MenubarTrigger>
+//                             {userdata ? userdata.username : "Loading ..."}
+//                         </MenubarTrigger>
+//                         <MenubarContent >
+//                             <MenubarItem>
+//                                 email: {userdata ? userdata.email : "Loading ..."}
+//                             </MenubarItem>
+//                             <MenubarSeparator />
+//                             <MenubarItem>Settings</MenubarItem>
+//                         </MenubarContent>
+//                     </MenubarMenu>
+//                 </Menubar>
 
-                <Button variant={"destructive"} onClick={handleSignOut} disabled={isLoggingOut}>
-                    {isLoggingOut ? <Spinner /> : "Logout"}
-                </Button>
-            </div>
-        </nav>
-    )
-}
+//                 <Button variant={"destructive"} onClick={handleSignOut} disabled={isLoggingOut}>
+//                     {isLoggingOut ? <Spinner /> : "Logout"}
+//                 </Button>
+//             </div>
+//         </nav>
+//     )
+// }
 
 const NewRoomPage = () => {
     const [roomId, setRoomId] = useState(null);
@@ -144,15 +153,16 @@ const NewRoomPage = () => {
     }
 
     return (
-        <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-blue-200 gap-3 overflow-y-auto h-auto py-10">
-            <NavBar 
-                handleSignOut={handleSignOut} 
-                userdata={userData} 
-                isLoggingOut={isLoggingOut} 
-                goToHomepage={goToHomepage}
+        <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-blue-200 gap-3 overflow-y-auto h-auto py-10 overflow-x-hidden">
+            <Navbar
+                // handleSignOut={handleSignOut} 
+                // userdata={userData} 
+                // isLoggingOut={isLoggingOut} 
+                // goToHomepage={goToHomepage}
+                onLeave={handleSignOut}
                 />
             <Toaster expand={true} position='top-center' richColors />
-            <div className="grid grid-cols-4 gap-5 ">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 <div>
                     <JoinRoomForm />
                 </div>
@@ -170,29 +180,27 @@ const NewRoomPage = () => {
                 </div>
 
                 <div className='w-[250px] h-[250px]'>
-                    <Card
-                        onClick={() => setIsDialogOpen(true)}
-                        className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
-                        <CardHeader className='text-2xl'>
-                            <CardTitle>Create room </CardTitle>
-                        </CardHeader>
-                        <CardContent className='flex-1 flex flex-col justify-center items-center'>
-                            <FaCirclePlus size={60} />
-                        </CardContent>
-                    </Card>
-                    {
-                        isDialogOpen && (
-                            <Card
-                                className="w-full h-full absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-md p-4"
-                            >
-                                <div className='w-[350px] h-[350]px'>
-                                    <CreateRoomForm onClose={onCloseCreateRoom} />
-                                </div>
-
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
+                                <CardHeader className='text-2xl'>
+                                    <CardTitle>Create room </CardTitle>
+                                </CardHeader>
+                                <CardContent className='flex-1 flex flex-col justify-center items-center'>
+                                    <FaCirclePlus size={60} />
+                                </CardContent>
                             </Card>
-
-                        )
-                    }
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Create New Room</DialogTitle>
+                                <DialogDescription>
+                                    Set up a new room for your Q&A session
+                                </DialogDescription>
+                            </DialogHeader>
+                            <CreateRoomForm onClose={onCloseCreateRoom} />
+                        </DialogContent>
+                    </Dialog>
                 </div>
                 <div className='w-[250px] h-[250px]'>
                     <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
@@ -211,7 +219,7 @@ const NewRoomPage = () => {
             <div className='flex justify-center items-center w-1/2'>
                 <p className="w-auto text-lg font-bold mx-4">Past rooms</p>
             </div>
-            <div className="grid grid-cols-4 gap-5 ">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 <div>
                     <Card className='w-[250px] h-[250px]'>
                         <CardHeader>

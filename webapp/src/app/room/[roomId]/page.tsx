@@ -17,11 +17,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost, clearQuestions, syncRoom } from '@/utils/room.v2';
 
 import { QuestionItem } from '@/app/components/QuestionList'
-import { MdReportGmailerrorred } from "react-icons/md";
 import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaAngleDown, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import MessageInput from '@/app/components/MessageInput';
-import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy } from 'lucide-react';
+import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -41,6 +41,7 @@ const RoomPage: React.FC = () => {
   const [hostMessage, setHostMessage] = useState('')
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
+  const [showRestartRoomDialog, setShowRestartRoomDialog] = useState(false);
   const [isHost, setIsHost] = useState(false)
   const [showMessageInput, setShowMessageInput] = useState(false);
 
@@ -249,7 +250,7 @@ const RoomPage: React.FC = () => {
       }
     } catch (error) {
       toast.error("Internal error");
-    } finally{
+    } finally {
       setShowMessageInput(false)
     }
 
@@ -317,13 +318,19 @@ const RoomPage: React.FC = () => {
   }
 
   const handleRestartRound = () => {
+    setShowRestartRoomDialog(true);
+  }
+
+  const confirmRestartRound = () => {
     newRound(roomId!!)
       .then(data => console.log(data))
-      .then(data => { })
-      .catch(err =>
+      .catch(err => {
+        toast.error("Error while restarting room")
         console.error(err)
-      )
-      .finally(() => { })
+      })
+      .finally(() => {
+        setShowRestartRoomDialog(false);
+      })
   }
 
   const handleCloseRoom = () => {
@@ -362,8 +369,8 @@ const RoomPage: React.FC = () => {
       <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-blue-200">
         <Toaster expand={true} position='top-center' richColors />
         <Navbar onLeave={onLeave} />
-        <div className="px-2 flex flex-1 gap-1 w-full lg:px-5 mb-3 h-1/2">
-          <div className="flex flex-1 flex-col w-2/3">
+        <div className="flex-col px-2 flex flex-1 gap-1 w-full lg:px-5 mb-3 h-1/2 lg:flex-row">
+          <div className="flex flex-1 flex-col lg:w-2/3 w-full h-1/3 lg:h-full">
             <div className="flex-1 py-2 h-full overflow-y-auto">
               <QuestionList
                 questions={questions}
@@ -379,63 +386,70 @@ const RoomPage: React.FC = () => {
               />
             </div>
           </div>
-          <div className="lg:flex flex-col m-2 hidden w-1/3 h-full gap-3">
+          <div className="lg:flex lg:w-1/3 w-full gap-2 flex-col my-2">
             {
               isHost && (
-
-                <div className="h-1/4">
-                  {
-                    <Card className="flex flex-col overflow-y-auto relative rounded-2xl bg-white h-full">
-                      <CardHeader>
-                        <CardTitle className='flex justify-center items-center gap-1'>
-                          You are host of: <span className="bg-yellow-300 text-black rotate-2 p-1">{roomId}</span> 
-                          <Button variant="ghost"><Copy/></Button>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <CardDescription className='grid grid-cols-2 w-full gap-1'>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><MessagesSquare /> Live Q&A</Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-48 p-2 backdrop-blur-sm">
-                              <Button onClick={handleGroupQuestions} className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaRegComments /> Group questions</Button>
-                              <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear questions</Button>
-                              <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart round</Button>
-                              <Button onClick={handleCloseRoom} className='justify-between w-full bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaExclamation /> Close room</Button>
-                            </PopoverContent>
-                          </Popover>
-                          {/* Poll button */}
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button className='text-center w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><ChartColumnBig /> Start polls</Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-48 p-2 backdrop-blur-sm">
-                              <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaSquarePollVertical /> Create polls</Button>
-                            </PopoverContent>
-                          </Popover>
-                          <Button className='text-center w-full mb-2 bg-green-700 text-white hover:bg-yellow-700 font-bold flex'><ScanQrCode /> Show room QR</Button>
-                          <Button variant="destructive" className='text-center w-full mb-2 font-bold flex'><Trash /> Close room</Button>
-                        </CardDescription>
-                      </CardContent>
-                    </Card>
-                  }
+                <div className="w-full">
+                  <Card className="flex flex-col overflow-y-auto relative rounded-2xl bg-white h-full">
+                    <CardHeader>
+                      <CardTitle className='flex justify-center items-center gap-1'>
+                        You are host of: <span className="bg-yellow-300 text-black rotate-2 p-1">{roomId}</span>
+                        <Button variant="ghost"><Copy /></Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className='grid grid-cols-2 w-full gap-1'>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><MessagesSquare /> Live Q&A</Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2 backdrop-blur-sm">
+                            <Button onClick={handleGroupQuestions} className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaRegComments /> Group questions</Button>
+                            <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear questions</Button>
+                            <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart round</Button>
+                          </PopoverContent>
+                        </Popover>
+                        {/* Poll button */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button className='text-center w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><ChartColumnBig /> Start polls</Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2 backdrop-blur-sm">
+                            <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaSquarePollVertical /> Create polls</Button>
+                          </PopoverContent>
+                        </Popover>
+                        <Button className='text-center w-full mb-2 bg-green-700 text-white hover:bg-yellow-700 font-bold flex'><ScanQrCode /> Show room QR</Button>
+                        <Button variant="destructive" className='text-center w-full mb-2 font-bold flex' onClick={handleCloseRoom}><Trash /> Close room</Button>
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
                 </div>
               )
             }
 
-            {/* <div className={`flex-1 ${isHost ? 'h-2/3' : 'h-full pb-5'}  mb-5`} id='chat-container'> */}
-            <div className='flex-grow h-1/2' id='chat-container'>
+            <div className='h-1/3 lg:h-1/2 lg:flex-grow hidden lg:block bottom-0 left-0 right-0 lg:bottom-auto lg:left-auto lg:right-auto' id='chat-container'>
               <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
+
+              <div className="lg:hidden">
+                <Button variant="outline" className="lg:hidden flex-shrink text-gray-500 flex justify-between items-center gap-3"> <FaAngleUp /> more chat</Button>
+              </div>
             </div>
             {
               !isHost && (
-                <Card id='chat-container' className="w-full flex flex-col justify-center items-center mb-5 p-2 rounded-xl">
-                  <Button variant="outline" className="lg:hidden flex-shrinktext-gray-500 flex justify-between items-center gap-3"> <FaAngleUp /> more chat</Button>
+                <Card id='chat-container' className="w-full flex flex-col justify-center items-center lg:mb-5 p-2 rounded-xl bg-white gap-2">
+                  <p className="font-bold">Ask your questions</p>
                   <div className="flex flex-col gap-2 w-full justify-center">
                     <div className="top-0 flex justify-center w-full gap-4 text-center">
-                      <Button id='question-button' onClick={handleQuestionButtonClick} className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-700">{questionsLeft} questions left</Button>
-                      <Button className="flex-1 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700">{upvotesLeft} upvotes left</Button>
+
+                      <Button
+                        id='question-button'
+                        onClick={handleQuestionButtonClick}
+                        className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-700">
+                        {questionsLeft} questions left
+                      </Button>
+                      <Button className="flex-1 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700">
+                        {upvotesLeft} upvotes left
+                      </Button>
                     </div>
                   </div>
                 </Card>
@@ -443,63 +457,81 @@ const RoomPage: React.FC = () => {
             }
           </div>
         </div>
-        {showDialog && (
-          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm p-4">
-            <form onSubmit={handleUsernameSubmit} className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm">
-              <CardHeader>
-                <CardTitle>
-                  What's your name? ☺️
-                </CardTitle>
-              </CardHeader>
-              <Input type="text" id="username" name="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)}
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>What's your name? ☺️</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUsernameSubmit}>
+              <Input
+                type="text"
+                id="username"
+                name="username"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                required />
-              <Button type="submit" variant="default" className="mt-4 w-full bg-blue-500 hover:bg-blue-700 text-white py-2 rounded-md">Submit</Button>
+                required
+              />
+              <Button type="submit" variant="default" className="mt-4 w-full bg-blue-500 hover:bg-blue-700 text-white py-2 rounded-md">
+                Submit
+              </Button>
             </form>
-          </Card>
-        )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showRestartRoomDialog} onOpenChange={setShowRestartRoomDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className='flex gap-2 justify-center text-xl'>
+                <Skull className="h-5 w-5" />
+                Confirm Restart Room
+              </DialogTitle>
+            </DialogHeader>
+            <p className="mt-4">Are you sure you want to restart the room?</p>
+            <p className="mt-4">This will clear all current questions, all messages in the room, and start a new round.</p>
+            <div className="mt-4 flex justify-center gap-4">
+              <Button variant={"destructive"} onClick={confirmRestartRound}>Yes, Restart</Button>
+              <Button variant="secondary" onClick={() => setShowRestartRoomDialog(false)}>Cancel</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showCloseRoomDialog} onOpenChange={setShowCloseRoomDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className='flex gap-2 justify-center text-xl'>
+                <Skull className="h-5 w-5" />
+                <span className="bg-red-200 p-1">
+                  DANGER, DANGER !!
+                </span>
+              </DialogTitle>
+            </DialogHeader>
+            <p className="mt-4">
+              This action will save your activities (questions, messages, ...) and will kick all participants out. It can't be undone</p>
+            <div className="mt-4 flex justify-center gap-4">
+              <Button variant={"destructive"} onClick={confirmCloseRoom}>Yes, Close Room</Button>
+              <Button variant="secondary" onClick={() => setShowCloseRoomDialog(false)}>Cancel</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showMessageInput} onOpenChange={setShowMessageInput}>
+          <DialogContent>
+            <p className="text-xl font-bold text-black">Ask a question (1 left)</p>
+            <MessageInput onSent={onSent} />
+            <Button variant="secondary" onClick={() => setShowMessageInput(false)} className="mt-4 w-full">Close</Button>
+          </DialogContent>
+        </Dialog>
+
         {roomClosed && (
-          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm p-4">
-            <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm text-center">
-              <CardHeader>
-                <CardTitle>
-                  Room Closed
-                </CardTitle>
-              </CardHeader>
+          <Dialog open={roomClosed} onOpenChange={() => { }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Room Closed</DialogTitle>
+              </DialogHeader>
               <p className="mt-4">The room has been closed and is no longer accessible. You will be redirected to the homepage shortly.</p>
-            </div>
-          </Card>
-        )}
-        {showCloseRoomDialog && (
-          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-75 backdrop-blur-sm p-4">
-            <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm text-center">
-              <CardHeader>
-                <CardTitle className='flex gap-2 justify-center text-xl'>
-                  <MdReportGmailerrorred />
-                  Confirm Close Room
-                </CardTitle>
-              </CardHeader>
-              <p className="mt-4">Are you sure you want to close the room?</p>
-              <p className="mt-4">This action can't be undone</p>
-              <div className="mt-4 flex justify-center gap-4">
-                <Button variant={"destructive"} onClick={confirmCloseRoom} >Yes, Close Room</Button>
-                <Button variant="secondary" onClick={() => setShowCloseRoomDialog(false)}>Cancel</Button>
-              </div>
-            </div>
-          </Card>
-        )}
-        {showMessageInput && (
-          <Card className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 bg-opacity-50 backdrop-blur-sm p-4">
-            <CardContent>
-              <CardDescription>
-                <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-slate-100 w-full max-w-sm min-w-[400px]">
-                  <p className="text-xl font-bold text-black">Ask a question (1 left)</p>
-                  <MessageInput onSent={onSent} />
-                  <Button variant="secondary" onClick={() => setShowMessageInput(false)} className="mt-4 w-full">Close</Button>
-                </div>
-              </CardDescription>
-            </CardContent>
-          </Card>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </RoomProvider>

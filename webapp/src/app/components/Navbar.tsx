@@ -6,7 +6,7 @@ import { FaBars } from 'react-icons/fa'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { DoorOpen, LayoutDashboard, Router } from 'lucide-react';
-import {useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 
 interface NavbarProps {
@@ -56,7 +56,7 @@ const Navbar = ({ onLeave }: NavbarProps) => {
           </ul>
         </div>
 
-        <div className="lg:hidden">
+        <div className="lg:hidden" id="mobile-menu">
           <Popover>
             <PopoverTrigger asChild>
               <Button className="p-2">
@@ -69,15 +69,24 @@ const Navbar = ({ onLeave }: NavbarProps) => {
                   Room: {roomId}
                 </span>
                 <div className="mx-4 border border-slate-100"></div>
-                <Button >
-                  Login
-                </Button>
-                <Button className="bg-gradient-to-r from-purple-600 via-purpl-700 to-red-600 text-white hover:bg-gradient-to-r hover:from-green-400 hover:via-blue-500 hover:to-purple-600">
-                  Sign Up
-                </Button>
-                <Button onClick={onLeave}>
-                  Leave
-                </Button>
+
+                <div className="flex flex-col w-full gap-2">
+                  <Button className="w-full" variant="outline" onClick={() => router.push('/dashboard')}>
+                    <LayoutDashboard className="mr-2" />
+                    Dashboard
+                  </Button>
+                  <Button className="w-full" onClick={onLeave} variant="outline">
+                    <DoorOpen className="mr-2" />
+                    Leave room
+                  </Button>
+                  <Button className="w-full" variant="outline" >
+                    Login
+                  </Button>
+                  {/* <Button className="w-full" variant="outline" className="bg-gradient-to-r from-purple-600 via-purpl-700 to-red-600 text-white hover:bg-gradient-to-r hover:from-green-400 hover:via-blue-500 hover:to-purple-600 hover:text-white"> */}
+                  <Button className="w-full" variant="outline" >
+                    Sign Up
+                  </Button>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
