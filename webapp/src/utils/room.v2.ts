@@ -6,21 +6,9 @@ import { hasUncaughtExceptionCaptureCallback } from "process";
 
 const CHATAPI_ENDPOINT = process.env.CHATAPI_ENDPOINT;
 
-// export const isRoomExists = async (roomId: string) => {
-//     const res = await fetch(`${CHATAPI_ENDPOINT}/room_exists`, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ roomId: roomId }),
-//     });
-
-//     return res.ok
-// }
-
-const _getUserData = async (client: SupabaseClient|null  = null) => {
+const _getUserData = async (client: SupabaseClient | null = null) => {
     let supabase
-    if (client){
+    if (client) {
         supabase = client
     } else {
         supabase = await createClient()
@@ -39,7 +27,6 @@ const _getUserData = async (client: SupabaseClient|null  = null) => {
 export const getActiveRooms = async () => {
     const user = await _getUserData()
     const userId = user.id
-    console.log(userId)
     const res = await fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
 
     if (!res.ok) {
@@ -76,7 +63,6 @@ export const fetchRoomId = async () => {
     if (!res.ok) {
         throw new Error('Failed to fetch room ID');
     }
-    console.log(res)
 
     return res.json();
 }
@@ -88,23 +74,23 @@ export const groupMessages = async (messages: string[]) => {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ messages: messages}),
+        body: JSON.stringify({ messages: messages }),
     });
 
     return res.json()
 }
 
-export const clearQuestions = async (roomId: string) => {
-    const res = await fetch(`${CHATAPI_ENDPOINT}/clear_questions`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ roomId: roomId }),
-    });
+// export const clearQuestions = async (roomId: string) => {
+//     const res = await fetch(`${CHATAPI_ENDPOINT}/clear_questions`, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ roomId: roomId }),
+//     });
 
-    return res.json()
-}
+//     return res.json()
+// }
 
 export const upvoteMessage = async (roomId: string, questionId: string) => {
     const res = await fetch(`${CHATAPI_ENDPOINT}/upvote`, {
@@ -148,25 +134,25 @@ export const closeRoom = async (roomId: string) => {
 export const fetchRoom = async (roomName: string) => {
     const supabase = await createClient()
     let user = null
-    try{
+    try {
         user = await _getUserData()
-    } catch(err){
+    } catch (err) {
         console.log('user not signed in')
     }
-    
+
     const { data, error } = await supabase
         .from('Room')
-        .select('id, hostId, created_at, name, is_active')
+        .select('id, host_id, created_at, name, is_active')
         .eq('name', roomName)
         .eq('is_active', 'TRUE')
         .single()
-    
+
     if (error) {
         console.error('Error checking room:', error)
         throw new Error('Room does not exist')
     }
-    
-    return {'name': data.name, 'isHost': data?.hostId === user?.id, 'id': data.id}
+
+    return { 'name': data.name, 'isHost': data?.host_id === user?.id, 'id': data.id }
 }
 
 export const fetchMessages = async (roomId: string) => {
@@ -175,15 +161,85 @@ export const fetchMessages = async (roomId: string) => {
     const { data, error } = await supabase
         .from('Message')
         .select('content, guestName, created_at')
-        .eq('roomId', roomId)
+        .eq('room_id', roomId)
         .order('created_at', { ascending: true })
-    
-    console.log('messsages from room ', roomId)
-    console.log(data)
-    
+
     if (error) {
         console.error('Error fetching messages:', error)
         throw new Error('Failed to fetch messages')
-    }   
+    }
     return data
+}
+
+interface ProcessedQuestion {
+    uuid: string;
+    rephrase: string;
+    upvotes: number;
+    downvotes: number;
+}
+
+export const insertQuestions = async (roomId: string, questions: ProcessedQuestion[], round: number) => {
+    const supabase = await createClient()
+
+    try {
+        // First delete existing questions for this room and round
+        const { error: deleteError } = await supabase
+            .from('ProcessedQuestions')
+            .delete()
+            .eq('room_id', roomId)
+            .eq('round', round)
+
+        if (deleteError) throw deleteError
+
+        // Then insert new questions
+        const { data, error: insertError } = await supabase
+            .from('ProcessedQuestions')
+            .insert({
+                room_id: roomId,
+                round: round,
+                questions: questions
+            })
+            .select()
+
+        if (insertError) throw insertError
+        return data
+
+    } catch (error) {
+        console.error('Error saving processed questions:', error)
+        throw new Error(`Failed to save processed questions: ${error.message}`)
+    }
+}
+
+export const fetchQuestions = async (roomId: string, round: number) => {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('ProcessedQuestions')
+        .select('questions')
+        .eq('room_id', roomId)
+        .eq('round', round)
+        .single()
+
+    if (error) {
+        console.error('Error fetching questions:', error)
+        throw new Error('Failed to fetch questions')
+    }
+
+    return data.questions
+}
+
+export const clearQuestions = async (roomId: string, round: number) => {
+    const supabase = await createClient()
+    console.log('Clearing questions for room', roomId, 'round', round)
+
+    const { error: deleteError } = await supabase
+        .from('ProcessedQuestions')
+        .delete()
+        .eq('room_id', roomId)
+        .eq('round', round)
+    
+
+    if (deleteError) {
+        console.error(deleteError)
+        throw deleteError
+    }
 }

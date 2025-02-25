@@ -14,7 +14,7 @@ import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages, upvoteMessage, newRound, closeRoom, clearQuestions, fetchRoom, fetchMessages } from '@/utils/room.v2';
+import { groupMessages, upvoteMessage, newRound, closeRoom, clearQuestions, fetchRoom, fetchMessages, insertQuestions, fetchQuestions } from '@/utils/room.v2';
 
 import { QuestionItem } from '@/app/components/QuestionList'
 import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
@@ -49,7 +49,6 @@ const RoomPage: React.FC = () => {
   const [questionsLeft, setQuestionsLeft] = useState(GIVEN_QUESTIONS)
   const [upvotesLeft, setUpvotesLeft] = useState(GIVEN_UPVOTES)
   const [hostMessage, setHostMessage] = useState('')
-  const [participants, setParticipants] = useState([])
 
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
@@ -78,8 +77,6 @@ const RoomPage: React.FC = () => {
       const { username, content } = payload;
       const message: Message = { username, content, flag: '🇺🇸' };
       setMessages((prevMessages) => [...prevMessages, message]);
-
-
     });
 
     // Handle questions
@@ -113,7 +110,9 @@ const RoomPage: React.FC = () => {
       const { command } = payload;
       switch (command) {
         case 'clear_questions':
-          clearQuestionsCommand();
+          setLoadingQuestions(true);
+          setQuestions([])
+          setLoadingQuestions(false);
           setHostMessage("Host cleared questions");
           break;
         case 'grouping_questions':
@@ -223,6 +222,17 @@ const RoomPage: React.FC = () => {
             content: message.content,
             flag: '🇺🇸'
           })));
+        
+        const questions = await fetchQuestions(roomData.id, 1)
+        console.log('questions = ', questions)
+
+        setQuestions(questions.map(
+          (question: {uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
+            uuid: question.uuid,
+            rephrase: question.rephrase,
+            upvotes: question.upvotes,
+          })));
+
       }
 
       sync()
@@ -300,6 +310,10 @@ const RoomPage: React.FC = () => {
         }
       });
 
+      //insert or update the questions
+      await insertQuestions(roomData.id, res.message, 1)
+
+
       toast.success('Grouped questions');
     } catch (error) {
       toast.error('Error grouping questions');
@@ -309,14 +323,20 @@ const RoomPage: React.FC = () => {
     }
   };
 
-  const clearQuestionsCommand = () => {
-    setLoadingQuestions(true);
-    setQuestions([])
-    setLoadingQuestions(false);
-  }
+  // const  = () => {
+  //   setLoadingQuestions(true);
+  //   setQuestions([])
+  //   setLoadingQuestions(false);
+  // }
 
-  const handleClearQuestion = () => {
-    clearQuestions(roomName!!)
+  const handleClearQuestion = async () => {
+    await clearQuestions(roomData.id, 1)
+
+    channel?.send({
+      type: 'broadcast',
+      event: 'command',
+      payload: { command: 'clear_questions' }
+    })
   }
 
   const handleUpvote = (uuid: string) => {
@@ -398,9 +418,9 @@ const RoomPage: React.FC = () => {
                 hostMessage={hostMessage}
                 roundNumber={1}
                 isHost={roomData.isHost}
-                handleClearQuestion={handleClearQuestion}
-                handleRestartRound={handleRestartRound}
-                handleCloseRoom={handleCloseRoom}
+                handleClearQuestion={() => console.log('clear questions')}
+                handleRestartRound={() => {}}
+                handleCloseRoom={() => {}}
               />
             </div>
           </div>
