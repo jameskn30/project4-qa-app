@@ -211,6 +211,7 @@ export const insertQuestions = async (roomId: string, questions: ProcessedQuesti
 }
 
 export const fetchQuestions = async (roomId: string, round: number) => {
+    console.log(roomId, ' ', round)
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('ProcessedQuestions')
