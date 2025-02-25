@@ -92,44 +92,44 @@ export const groupMessages = async (messages: string[]) => {
 //     return res.json()
 // }
 
-export const upvoteMessage = async (roomId: string, questionId: string) => {
-    const res = await fetch(`${CHATAPI_ENDPOINT}/upvote`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            roomId: roomId,
-            questionId: questionId,
-            username: ''
-        }),
-    });
+// export const upvoteMessage = async (roomId: string, questionId: string) => {
+//     const res = await fetch(`${CHATAPI_ENDPOINT}/upvote`, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({
+//             roomId: roomId,
+//             questionId: questionId,
+//             username: ''
+//         }),
+//     });
 
-    return res.json()
-}
+//     return res.json()
+// }
 
-export const newRound = async (roomId: string) => {
-    const res = await fetch(`${CHATAPI_ENDPOINT}/new_round`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ roomId: roomId }),
-    });
+// export const newRound = async (roomId: string) => {
+//     const res = await fetch(`${CHATAPI_ENDPOINT}/new_round`, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ roomId: roomId }),
+//     });
 
-    return res.json()
-}
+//     return res.json()
+// }
 
-export const closeRoom = async (roomId: string) => {
-    const res = await fetch(`${CHATAPI_ENDPOINT}/close_room`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ roomId: roomId }),
-    });
-    return res.json()
-}
+// export const closeRoom = async (roomId: string) => {
+//     const res = await fetch(`${CHATAPI_ENDPOINT}/close_room`, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ roomId: roomId }),
+//     });
+//     return res.json()
+// }
 
 export const fetchRoom = async (roomName: string) => {
     const supabase = await createClient()
@@ -175,7 +175,6 @@ interface ProcessedQuestion {
     uuid: string;
     rephrase: string;
     upvotes: number;
-    downvotes: number;
 }
 
 export const insertQuestions = async (roomId: string, questions: ProcessedQuestion[], round: number) => {

@@ -14,7 +14,7 @@ import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages, upvoteMessage, newRound, closeRoom, clearQuestions, fetchRoom, fetchMessages, insertQuestions, fetchQuestions } from '@/utils/room.v2';
+import { groupMessages, upvoteMessage, clearQuestions, fetchRoom, fetchMessages, insertQuestions, fetchQuestions } from '@/utils/room.v2';
 
 import { QuestionItem } from '@/app/components/QuestionList'
 import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
@@ -24,6 +24,7 @@ import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull } from '
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { storeSessionData, getStoredSessionData, removeSession } from '@/utils/localstorage'
 import { createClient } from '@/utils/supabase/client';
+import _ from 'lodash'
 
 const RoomPage: React.FC = () => {
 
@@ -44,8 +45,8 @@ const RoomPage: React.FC = () => {
   //TODO: to protect performance in the MVP, each user can ask 1 question and upvote 1 question
   //prevent server overload
   //maybe give them 3 questions and 3 upvotes if they sign up
-  const GIVEN_QUESTIONS = 1
-  const GIVEN_UPVOTES = 1
+  const GIVEN_QUESTIONS = 10
+  const GIVEN_UPVOTES = 10
   const [questionsLeft, setQuestionsLeft] = useState(GIVEN_QUESTIONS)
   const [upvotesLeft, setUpvotesLeft] = useState(GIVEN_UPVOTES)
   const [hostMessage, setHostMessage] = useState('')
@@ -59,12 +60,51 @@ const RoomPage: React.FC = () => {
   const [channel, setChannel] = useState<any>(null);
   const supabase = createClient();
 
-  // Replace WebSocket connection with Supabase channel
-  const setupRealtimeConnection = useCallback(() => {
-    if (!username || !roomName) {
-      toast.error('Internal error');
-      return;
+  // Memoize event handlers
+  const handleUpvote = useCallback((uuid: string) => {
+    if (upvotesLeft <= 0) {
+      toast.error('You have no more upvotes left')
+      return
     }
+
+    try {
+      channel?.send({
+        type: 'broadcast',
+        event: 'upvote',
+        payload: { questionId: uuid }
+      });
+      setUpvotesLeft(prev => prev - 1);
+    } catch (error) {
+      console.error('Error broadcasting upvote:', error);
+      toast.error('Failed to upvote');
+    }
+  }, [channel, upvotesLeft]);
+
+  const onSent = useCallback((content: string) => {
+    if (questionsLeft <= 0) {
+      toast.error('You have no more questions left')
+      return
+    }
+
+    try {
+      if (channel) {
+        channel.send({
+          type: 'broadcast',
+          event: 'message',
+          payload: { username, content }
+        });
+        setQuestionsLeft(prev => prev - 1);
+      }
+    } catch (error) {
+      toast.error("Internal error");
+    } finally {
+      setShowMessageInput(false);
+    }
+  }, [channel, questionsLeft, username]);
+
+  // Separate channel setup into its own effect
+  useEffect(() => {
+    if (!username || !roomName) return;
 
     const channel = supabase.channel(`room-${roomName}`, {
       config: {
@@ -81,28 +121,36 @@ const RoomPage: React.FC = () => {
 
     // Handle questions
     channel.on('broadcast', { event: 'questions' }, ({ payload }) => {
-      const newQuestions = payload.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
+      setQuestions(payload.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
         uuid: question.uuid,
         rephrase: question.rephrase,
         upvotes: question.upvotes,
-        downvotes: question.downvotes
-      }));
-      console.log('received questions')
-      setQuestions(newQuestions);
+      })));
       setLoadingQuestions(false);
       setHostMessage("");
     });
 
+    const updateQuestionsOnDb = _.debounce(async (questions: QuestionItem[]) => {
+      await insertQuestions(roomData.id, questions, 1);
+      console.log('updated questions on db')
+    }, 2000); 
+
     // Handle upvotes
     channel.on('broadcast', { event: 'upvote' }, ({ payload }) => {
-      const { questionId } = payload;
-      setQuestions((prevQuestions) =>
-        prevQuestions.map((question) =>
-          question.uuid === questionId
-            ? { ...question, upvotes: question.upvotes + 1 }
+      setQuestions(prevQuestions => {
+        const updatedQuestions = prevQuestions.map(question => 
+          question.uuid === payload.questionId
+            ? { ...question, upvotes: (question.upvotes || 0) + 1 }
             : question
-        )
-      );
+        );
+
+        if (roomData?.isHost) {
+          // insertQuestions(roomData.id, updatedQuestions, 1);
+          updateQuestionsOnDb(updatedQuestions);
+        }
+
+        return updatedQuestions;
+      });
     });
 
     // Handle commands
@@ -133,19 +181,13 @@ const RoomPage: React.FC = () => {
       }
     });
 
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        toast.success("Joined room");
-      }
-    });
-
+    channel.subscribe();
     setChannel(channel);
-    console.log('setup connection')
 
     return () => {
       channel.unsubscribe();
     };
-  }, [roomName, username]);
+  }, [roomName, username, roomData]);
 
   //USE EFFECT
 
@@ -204,6 +246,7 @@ const RoomPage: React.FC = () => {
 
   }, [roomName]);
 
+  // Initial data sync
   useEffect(() => {
     console.log('setting up username and websocket')
 
@@ -211,37 +254,30 @@ const RoomPage: React.FC = () => {
 
       storeSessionData(roomName!!, username, questionsLeft, upvotesLeft)
 
-      const cleanup = setupRealtimeConnection();
-
       const sync = async () => {
-        const messages = await fetchMessages(roomData.id)
+        const [messages, questions] = await Promise.all([
+          fetchMessages(roomData.id),
+          fetchQuestions(roomData.id, 1)
+        ]);
 
-        setMessages(messages.map(
-          (message: { guestName: string, content: string }) => ({
-            username: message.guestName,
-            content: message.content,
-            flag: '🇺🇸'
-          })));
-        
-        const questions = await fetchQuestions(roomData.id, 1)
-        console.log('questions = ', questions)
+        setMessages(messages.map(message => ({
+          username: message.guestName,
+          content: message.content,
+          flag: '🇺🇸'
+        })));
 
-        setQuestions(questions.map(
-          (question: {uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
-            uuid: question.uuid,
-            rephrase: question.rephrase,
-            upvotes: question.upvotes,
-          })));
+        setQuestions(questions.map(question => ({
+          uuid: question.uuid,
+          rephrase: question.rephrase,
+          upvotes: question.upvotes,
+        })));
+      };
 
-      }
-
-      sync()
-
-      return cleanup;
+      sync();
     } else {
       console.log('not setting up username and websocket')
     }
-  }, [setupRealtimeConnection, loading, username, roomExists, showDialog]);
+  }, [loading, username, showDialog, roomData]);
 
 
   if (!roomExists) {
@@ -251,28 +287,6 @@ const RoomPage: React.FC = () => {
   if (loading) {
     return <Loading />;
   }
-
-  const onSent = (content: string) => {
-    if (questionsLeft <= 0) {
-      toast.error('You have no more questions left')
-      return
-    }
-
-    try {
-      if (channel) {
-        channel.send({
-          type: 'broadcast',
-          event: 'message',
-          payload: { username, content }
-        });
-        setQuestionsLeft(questionsLeft - 1);
-      }
-    } catch (error) {
-      toast.error("Internal error");
-    } finally {
-      setShowMessageInput(false);
-    }
-  };
 
   const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -297,22 +311,16 @@ const RoomPage: React.FC = () => {
       const res = await groupMessages(messages.map(msg => msg.content));
 
       // Broadcast the grouped questions to all room participants
-      channel?.send({
-        type: 'broadcast',
-        event: 'questions',
-        payload: {
-          questions: res.message.map((item: any) => ({
-            uuid: item.uuid,
-            rephrase: item.rephrase,
-            upvotes: item.upvotes,
-            downvotes: 0
-          }))
-        }
-      });
+      broadcastQuestions(
+        res.message.map((item: any) => ({
+          uuid: item.uuid,
+          rephrase: item.rephrase,
+          upvotes: item.upvotes,
+        }))
+      )
 
       //insert or update the questions
       await insertQuestions(roomData.id, res.message, 1)
-
 
       toast.success('Grouped questions');
     } catch (error) {
@@ -323,11 +331,17 @@ const RoomPage: React.FC = () => {
     }
   };
 
-  // const  = () => {
-  //   setLoadingQuestions(true);
-  //   setQuestions([])
-  //   setLoadingQuestions(false);
-  // }
+  const broadcastQuestions = (questions: QuestionItem[]) => {
+    channel?.send({
+      type: 'broadcast',
+      event: 'questions',
+      payload: {
+        questions: questions
+      }
+    });
+
+  }
+
 
   const handleClearQuestion = async () => {
     await clearQuestions(roomData.id, 1)
@@ -339,34 +353,12 @@ const RoomPage: React.FC = () => {
     })
   }
 
-  const handleUpvote = (uuid: string) => {
-    if (upvotesLeft <= 0) {
-      toast.error('You have no more upvotes left')
-      return
-    }
-    setUpvotesLeft(upvotesLeft - 1)
-    upvoteMessage(roomName!!, uuid)
-      .then(data => { console.log(data) })
-      .catch(err => {
-        toast.error('An error occured, try restarting')
-      })
-      .finally(() => { })
-  }
-
   const handleRestartRound = () => {
     setShowRestartRoomDialog(true);
   }
 
   const confirmRestartRound = () => {
-    newRound(roomName!!)
-      .then(data => console.log(data))
-      .catch(err => {
-        toast.error("Error while restarting room")
-        console.error(err)
-      })
-      .finally(() => {
-        setShowRestartRoomDialog(false);
-      })
+    console.log("confirmRestartRound")
   }
 
   const handleCloseRoom = () => {
@@ -374,17 +366,18 @@ const RoomPage: React.FC = () => {
   }
 
   const confirmCloseRoom = () => {
-    closeRoom(roomName!!)
-      .then(data => console.log(data))
-      .then(data => {
-        onLeave()
-      })
-      .catch(err => {
-        toast.error("Error while closing room")
-      })
-      .finally(() => {
-        setShowCloseRoomDialog(false);
-      })
+    console.log("confirmCloseRoom")
+    // closeRoom(roomName!!)
+    //   .then(data => console.log(data))
+    //   .then(data => {
+    //     onLeave()
+    //   })
+    //   .catch(err => {
+    //     toast.error("Error while closing room")
+    //   })
+    //   .finally(() => {
+    //     setShowCloseRoomDialog(false);
+    //   })
   }
 
   const onLeave = () => {
@@ -419,8 +412,8 @@ const RoomPage: React.FC = () => {
                 roundNumber={1}
                 isHost={roomData.isHost}
                 handleClearQuestion={() => console.log('clear questions')}
-                handleRestartRound={() => {}}
-                handleCloseRoom={() => {}}
+                handleRestartRound={() => { }}
+                handleCloseRoom={() => { }}
               />
             </div>
           </div>
