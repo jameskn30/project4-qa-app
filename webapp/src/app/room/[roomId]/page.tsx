@@ -17,11 +17,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost, clearQuestions, syncRoom } from '@/utils/room.v2';
 
 import { QuestionItem } from '@/app/components/QuestionList'
-import { FaExclamation, FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaAngleDown, FaSquarePollVertical } from "react-icons/fa6";
+import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import MessageInput from '@/app/components/MessageInput';
 import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { storeSessionData, getStoredSessionData, removeSession } from '@/utils/localstorage'
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -46,8 +47,6 @@ const RoomPage: React.FC = () => {
   const [showMessageInput, setShowMessageInput] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null)
-
-  const messageInputRef = useRef<HTMLDivElement>(null);
 
   //WEBSOKET
   const connectWebSocket = useCallback(async () => {
@@ -180,6 +179,15 @@ const RoomPage: React.FC = () => {
       if (user) {
         setUsername(user.username)
         setShowDialog(false)
+      } else {
+        const storedSession = getStoredSessionData();
+
+        if (storedSession && !username) {
+          setUsername(storedSession.username);
+          setQuestionsLeft(storedSession.questionsLeft);
+          setUpvotesLeft(storedSession.upvotesLeft);
+          setShowDialog(false)
+        }
       }
     }
 
@@ -189,7 +197,11 @@ const RoomPage: React.FC = () => {
 
   useEffect(() => {
     console.log('setting up username and websocket')
+
     if (!loading && username && roomExists && !showDialog) {
+
+      storeSessionData(roomId!!, username, questionsLeft, upvotesLeft)
+
       const cleanup = connectWebSocket();
 
       if (userData) {
@@ -354,6 +366,8 @@ const RoomPage: React.FC = () => {
   const onLeave = () => {
     wsRef.current?.close();
 
+    removeSession()
+
     router.push("/").then(() => {
     }).catch((error: any) => {
       console.error('Error navigating to home page:', error);
@@ -368,10 +382,10 @@ const RoomPage: React.FC = () => {
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-blue-200">
         <Toaster expand={true} position='top-center' richColors />
-        <Navbar 
+        <Navbar
           onLeave={onLeave}
           userData={userData}
-         />
+        />
         <div className="flex-col px-2 flex flex-1 gap-1 w-full lg:px-5 mb-3 h-1/2 lg:flex-row">
           <div className="flex flex-1 flex-col lg:w-2/3 w-full h-1/3 lg:h-full">
             <div className="flex-1 py-2 h-full overflow-y-auto">
