@@ -52,7 +52,6 @@ const RoomPage: React.FC = () => {
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [showRestartRoomDialog, setShowRestartRoomDialog] = useState(false);
-  const [isHost, setIsHost] = useState(false)
   const [showMessageInput, setShowMessageInput] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null)
@@ -87,6 +86,7 @@ const RoomPage: React.FC = () => {
         upvotes: question.upvotes,
         downvotes: question.downvotes
       }));
+      console.log('received questions')
       setQuestions(newQuestions);
       setLoadingQuestions(false);
       setHostMessage("");
@@ -158,8 +158,6 @@ const RoomPage: React.FC = () => {
           if (res) {
             setRoomExists(true);
             setRoomData(res)
-            // setIsHost(isHost);
-            //fetch room messages
 
           } else {
             console.error('room does not exist')
@@ -240,7 +238,7 @@ const RoomPage: React.FC = () => {
             content: message.content,
             flag: '🇺🇸'
           })));
-        
+
       }
 
       sync()
@@ -285,22 +283,6 @@ const RoomPage: React.FC = () => {
   const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      // const response = await fetch('/chatapi/is_username_unique', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ roomId, username: usernameInput }),
-      // });
-
-      // if (response.ok) {
-      //   setUsername(usernameInput);
-      //   setShowDialog(false);
-      // } else {
-      //   const data = await response.json();
-      //   toast.error(data.detail || 'Username is already taken');
-      // }
-
       setUsername(usernameInput);
       setShowDialog(false);
     } catch (error) {
@@ -311,7 +293,29 @@ const RoomPage: React.FC = () => {
   const handleGroupQuestions = async () => {
     setLoadingQuestions(true);
     try {
-      await groupMessages(roomName!!);
+
+      channel?.send({
+        type: 'broadcast',
+        event: 'command',
+        payload: { command: 'grouping_questions' }
+      })
+
+      const res = await groupMessages(messages.map(msg => msg.content));
+
+      // Broadcast the grouped questions to all room participants
+      channel?.send({
+        type: 'broadcast',
+        event: 'questions',
+        payload: {
+          questions: res.message.map((item: any) => ({
+            uuid: item.uuid,
+            rephrase: item.rephrase,
+            upvotes: item.upvotes,
+            downvotes: 0
+          }))
+        }
+      });
+
       toast.success('Grouped questions');
     } catch (error) {
       toast.error('Error grouping questions');
@@ -409,7 +413,7 @@ const RoomPage: React.FC = () => {
                 loadingQuestions={loadingQuestions}
                 hostMessage={hostMessage}
                 roundNumber={1}
-                isHost={isHost}
+                isHost={roomData.isHost}
                 handleClearQuestion={handleClearQuestion}
                 handleRestartRound={handleRestartRound}
                 handleCloseRoom={handleCloseRoom}
@@ -418,7 +422,7 @@ const RoomPage: React.FC = () => {
           </div>
           <div className="lg:flex lg:w-1/3 w-full gap-2 flex-col my-2">
             {
-              isHost && (
+              roomData.isHost && (
                 <div className="w-full">
                   <Card className="flex flex-col overflow-y-auto relative rounded-2xl bg-white h-full">
                     <CardHeader>
@@ -458,14 +462,14 @@ const RoomPage: React.FC = () => {
             }
 
             <div className='h-1/3 lg:h-1/2 lg:flex-grow hidden lg:block bottom-0 left-0 right-0 lg:bottom-auto lg:left-auto lg:right-auto' id='chat-container'>
-              <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={isHost} />
+              <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={roomData.isHost} />
 
               <div className="lg:hidden">
                 <Button variant="outline" className="lg:hidden flex-shrink text-gray-500 flex justify-between items-center gap-3"> <FaAngleUp /> more chat</Button>
               </div>
             </div>
             {
-              !isHost && (
+              !roomData.isHost && (
                 <Card id='chat-container' className="w-full flex flex-col justify-center items-center lg:mb-5 p-2 rounded-xl bg-white gap-2">
                   <p className="font-bold">Ask your questions</p>
                   <div className="flex flex-col gap-2 w-full justify-center">

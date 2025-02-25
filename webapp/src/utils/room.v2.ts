@@ -81,40 +81,14 @@ export const fetchRoomId = async () => {
     return res.json();
 }
 
-// export const amIHost = async (roomId: string) => {
-//     const user = await _getUserData()
-//     let userId = user.id
-//     //TODO: remove this after testing
-//     if (roomId === 'test room 10'){
-//         userId = '1'
-//     }
-
-//     const queryParams = new URLSearchParams({
-//         roomId: roomId,
-//         userId: userId
-//     }).toString();
-
-//     const res = await fetch(`${CHATAPI_ENDPOINT}/am_i_host?${queryParams}`);
-//     return res.ok
-// }
-
-// export const syncRoom = async (roomId: string) => {
-//     const res = await fetch(`${CHATAPI_ENDPOINT}/sync_room/${roomId}`);
-//     return res.json()
-// }
-
-// export const getActiveRoomsByUserId = async (userId: string) => {
-//     return fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
-// }
-
-export const groupMessages = async (roomId: string) => {
+export const groupMessages = async (messages: string[]) => {
 
     const res = await fetch(`${CHATAPI_ENDPOINT}/group_messages`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ roomId: roomId }),
+        body: JSON.stringify({ messages: messages}),
     });
 
     return res.json()
