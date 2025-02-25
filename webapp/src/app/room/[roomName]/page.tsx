@@ -1,64 +1,72 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { toast, Toaster } from 'sonner';
+import _ from 'lodash';
+
+// Components
 import QuestionList from '@/app/components/QuestionList';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
-import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
-// import { fetchRoom } from '@/utils/room.v2';
-import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth'
-import { useRouter, useParams } from 'next/navigation';
-import Loading from './loading'
+import Loading from './loading';
 import ErrorPage from './error';
-import { toast, Toaster } from 'sonner';
-import { Message } from '@/app/components/ChatWindow';
+import MessageInput from '@/app/components/MessageInput';
+
+// UI Components
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages, upvoteMessage, clearQuestions, fetchRoom, fetchMessages, insertQuestions, fetchQuestions } from '@/utils/room.v2';
-
-import { QuestionItem } from '@/app/components/QuestionList'
-import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import MessageInput from '@/app/components/MessageInput';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+// Icons
+import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
 import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { storeSessionData, getStoredSessionData, removeSession } from '@/utils/localstorage'
+
+// Utils & Types
+import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
+import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth';
+import { Message } from '@/app/components/ChatWindow';
+import { QuestionItem } from '@/app/components/QuestionList';
+import { groupMessages, clearQuestions, fetchRoom, fetchMessages, insertQuestions, fetchQuestions } from '@/utils/room.v2';
+import { storeSessionData, removeSession } from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
-import _ from 'lodash'
 
 const RoomPage: React.FC = () => {
-
   const router = useRouter();
   const params = useParams<{ roomName: string }>();
   const roomName = params?.roomName ? decodeURIComponent(params.roomName) : null;
+  const supabase = createClient();
 
+  // Room state
   const [roomData, setRoomData] = useState<any>(null);
-
   const [loading, setLoading] = useState(true);
   const [roomExists, setRoomExists] = useState(true);
+  const [roomClosed, setRoomClosed] = useState(false);
+
+  // User state
   const [username, setUsername] = useState<string>('');
   const [usernameInput, setUsernameInput] = useState<string>('');
-  const [showDialog, setShowDialog] = useState(!username);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [questions, setQuestions] = useState<QuestionItem[]>([]);
-  const [loadingQuestions, setLoadingQuestions] = useState(false);
-  //TODO: to protect performance in the MVP, each user can ask 1 question and upvote 1 question
-  //prevent server overload
-  //maybe give them 3 questions and 3 upvotes if they sign up
-  const GIVEN_QUESTIONS = 10
-  const GIVEN_UPVOTES = 10
-  const [questionsLeft, setQuestionsLeft] = useState(GIVEN_QUESTIONS)
-  const [upvotesLeft, setUpvotesLeft] = useState(GIVEN_UPVOTES)
-  const [hostMessage, setHostMessage] = useState('')
+  const [userData, setUserData] = useState<UserData | null>(null);
 
-  const [roomClosed, setRoomClosed] = useState(false);
+  // UI state
+  const [showDialog, setShowDialog] = useState(!username);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [showRestartRoomDialog, setShowRestartRoomDialog] = useState(false);
   const [showMessageInput, setShowMessageInput] = useState(false);
 
-  const [userData, setUserData] = useState<UserData | null>(null)
+  // Content state
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [questions, setQuestions] = useState<QuestionItem[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [hostMessage, setHostMessage] = useState('');
   const [channel, setChannel] = useState<any>(null);
-  const supabase = createClient();
+
+  // Limits
+  const GIVEN_QUESTIONS = 1;
+  const GIVEN_UPVOTES = 1;
+  const [questionsLeft, setQuestionsLeft] = useState(GIVEN_QUESTIONS);
+  const [upvotesLeft, setUpvotesLeft] = useState(GIVEN_UPVOTES);
 
   // Memoize event handlers
   const handleUpvote = useCallback((uuid: string) => {
@@ -535,7 +543,7 @@ const RoomPage: React.FC = () => {
                 <span className="bg-red-200 p-1">
                   DANGER, DANGER !!
                 </span>
-              </DialogTitle>
+            </DialogTitle>
             </DialogHeader>
             <p className="mt-4">
               This action will save your activities (questions, messages, ...) and will kick all participants out. It can't be undone</p>
