@@ -53,8 +53,8 @@ def healthcheck():
     logger.info("Healthcheck endpoint was called")
     return {"status": "ok"}
 
-app.include_router(chat.router)
-# app.include_router(llm.router)
+# app.include_router(chat.router)
+app.include_router(llm.router)
     
 #TODO:
 # add sentry for monitoring
@@ -62,7 +62,7 @@ app.include_router(chat.router)
 @app.on_event("startup")
 def startup_event():
     logger.info("Startup events:")
-    asyncio.create_task(chat.redis_listener())
+    # asyncio.create_task(chat.redis_listener())
     logger.info("redis_listener task started")
 
 if __name__ == "__main__":
