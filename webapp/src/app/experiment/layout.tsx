@@ -1,12 +1,11 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 
 export default function ExperimentLayout(
-    { children, editform }:
-        Readonly<{ children: React.ReactNode, editform: React.ReactNode }>) {
+    { children }:
+        Readonly<{ children: React.ReactNode}>) {
     return (
         <div className="experiment-layout">
             {children}
-            {editform}
         </div>
     );
 };

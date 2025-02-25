@@ -27,15 +27,17 @@ const JoinRoomForm = () => {
         setJoiningLoader(true);
 
         try {
-            const res = await isRoomExists(roomCode)
-            if (res) {
-                console.log('room exists')
-                router.push(`/room/${roomCode}`);
-            } else {
-                const msg = `Room ${roomCode} does not exist`
-                toast.error(msg);
-                console.error(msg)
-            }
+            //TODO: testing supabase realtime
+            router.push(`/room/${roomCode}`);
+            // const res = await isRoomExists(roomCode)
+            // if (res) {
+            //     console.log('room exists')
+            //     router.push(`/room/${roomCode}`);
+            // } else {
+            //     const msg = `Room ${roomCode} does not exist`
+            //     toast.error(msg);
+            //     console.error(msg)
+            // }
         } catch (err) {
             console.error(err)
         } finally {

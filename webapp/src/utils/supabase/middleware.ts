@@ -35,6 +35,7 @@ export const updateSession = async (request: NextRequest) => {
         if (!user && request.nextUrl.pathname !== '/' && !request.nextUrl.pathname.startsWith('/room') 
             && !request.nextUrl.pathname.startsWith("/api/chat")
             && !request.nextUrl.pathname.startsWith("/chatapi")
+            && !request.nextUrl.pathname.startsWith("/experiment")
         
         ) {
             console.log('redirecting back to welcome page')

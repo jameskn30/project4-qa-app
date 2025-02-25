@@ -23,6 +23,7 @@ import MessageInput from '@/app/components/MessageInput';
 import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { storeSessionData, getStoredSessionData, removeSession } from '@/utils/localstorage'
+import { createClient } from '@/utils/supabase/client';
 
 const RoomPage: React.FC = () => {
 
@@ -31,7 +32,6 @@ const RoomPage: React.FC = () => {
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
   const [loading, setLoading] = useState(true);
   const [roomExists, setRoomExists] = useState(true);
-  const wsRef = useRef<WebSocket | null>(null);
   const [username, setUsername] = useState<string>('');
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [showDialog, setShowDialog] = useState(!username);
@@ -53,92 +53,91 @@ const RoomPage: React.FC = () => {
   const [showMessageInput, setShowMessageInput] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null)
+  const [channel, setChannel] = useState<any>(null);
+  const supabase = createClient();
 
-  //WEBSOKET
-  const connectWebSocket = useCallback(async () => {
-    if (!username) {
+  // Replace WebSocket connection with Supabase channel
+  const setupRealtimeConnection = useCallback(() => {
+    if (!username || !roomId) {
       toast.error('Internal error');
       return;
     }
 
-    const response = await fetch(`/api/chat?roomId=${roomId}&username=${username}`);
-    const data = await response.json();
-    console.log('URL = ' + data.websocketUrl)
-    const ws = new WebSocket(data.websocketUrl);
-
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      toast.success("Joined room");
-    };
-
-    ws.onmessage = (event) => {
-      const parsedData = JSON.parse(event.data);
-      const type = parsedData.type;
-
-      if (type === "message") {
-        const content = parsedData.message;
-        const username = parsedData.username;
-        const message: Message = { username, content, flag: '🇺🇸' };
-        setMessages((prevMessages) => [...prevMessages, message]);
+    const channel = supabase.channel(`room-${roomId}`, {
+      config: {
+        broadcast: { self: true },
       }
-      else if (type === "questions") {
-        const newQuestions = parsedData.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
-          uuid: question.uuid,
-          rephrase: question.rephrase,
-          upvotes: question.upvotes,
-          downvotes: question.downvotes
-        }));
-        setQuestions(newQuestions)
-        setLoadingQuestions(false)
-        setHostMessage("")
-      }
-      else if (type === 'upvote') {
-        const questionId = parsedData.questionId;
-        setQuestions((prevQuestions) =>
-          prevQuestions.map((question) =>
-            question.uuid === questionId
-              ? { ...question, upvotes: question.upvotes + 1 }
-              : question
-          )
-        );
-      }
-      else if (type === 'command') {
-        const command = parsedData.command;
-        if (command === 'clear_questions') {
-          clearQuestionsCommand()
-          setHostMessage("Host cleared questions")
-        }
-        else if (command === "grouping_questions") {
-          setLoadingQuestions(true)
-          setHostMessage("Host grouping questions")
-        }
-        else if (command === "new_round") {
-          setHostMessage("Host started new round of questions")
-          setMessages([])
-          setQuestions([])
-          setQuestionsLeft(GIVEN_QUESTIONS)
-          setUpvotesLeft(GIVEN_UPVOTES)
-        }
-        else if (command === "close_room") {
+    });
+
+    // Handle messages
+    channel.on('broadcast', { event: 'message' }, ({ payload }) => {
+      const { username, content } = payload;
+      const message: Message = { username, content, flag: '🇺🇸' };
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    // Handle questions
+    channel.on('broadcast', { event: 'questions' }, ({ payload }) => {
+      const newQuestions = payload.questions.map((question: { uuid: string, rephrase: string, upvotes: number, downvotes: number }) => ({
+        uuid: question.uuid,
+        rephrase: question.rephrase,
+        upvotes: question.upvotes,
+        downvotes: question.downvotes
+      }));
+      setQuestions(newQuestions);
+      setLoadingQuestions(false);
+      setHostMessage("");
+    });
+
+    // Handle upvotes
+    channel.on('broadcast', { event: 'upvote' }, ({ payload }) => {
+      const { questionId } = payload;
+      setQuestions((prevQuestions) =>
+        prevQuestions.map((question) =>
+          question.uuid === questionId
+            ? { ...question, upvotes: question.upvotes + 1 }
+            : question
+        )
+      );
+    });
+
+    // Handle commands
+    channel.on('broadcast', { event: 'command' }, ({ payload }) => {
+      const { command } = payload;
+      switch (command) {
+        case 'clear_questions':
+          clearQuestionsCommand();
+          setHostMessage("Host cleared questions");
+          break;
+        case 'grouping_questions':
+          setLoadingQuestions(true);
+          setHostMessage("Host grouping questions");
+          break;
+        case 'new_round':
+          setHostMessage("Host started new round of questions");
+          setMessages([]);
+          setQuestions([]);
+          setQuestionsLeft(GIVEN_QUESTIONS);
+          setUpvotesLeft(GIVEN_UPVOTES);
+          break;
+        case 'close_room':
           setRoomClosed(true);
-          setTimeout(() => {
-            onLeave()
-          }, 3000);
-        }
+          setTimeout(onLeave, 3000);
+          break;
       }
-    };
+    });
 
-    ws.onclose = () => {
-    };
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        toast.success("Joined room");
+      }
+    });
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast.error("Error while connecting to room");
-    };
+    setChannel(channel);
+    console.log('setup connection')
 
     return () => {
-      ws.close();
+      channel.unsubscribe();
     };
   }, [roomId, username]);
 
@@ -146,30 +145,30 @@ const RoomPage: React.FC = () => {
   
   useEffect(() => {
 
-    const checkRoomExists = async () => {
-      if (roomId !== null) {
-        try {
-          const exists = await isRoomExists(roomId)
+    // const checkRoomExists = async () => {
+    //   if (roomId !== null) {
+    //     try {
+    //       const exists = await isRoomExists(roomId)
 
-          if (exists) {
-            if (exists) {
-              setRoomExists(true);
-            } else {
-              console.log()
-              setRoomExists(false);
-            }
-            setLoading(false)
-          }
+    //       if (exists) {
+    //         if (exists) {
+    //           setRoomExists(true);
+    //         } else {
+    //           console.log()
+    //           setRoomExists(false);
+    //         }
+    //         setLoading(false)
+    //       }
 
-        } catch (err) {
-          console.error(err)
-          setRoomExists(false);
-          setLoading(false)
-        }
-      };
-    }
+    //     } catch (err) {
+    //       console.error(err)
+    //       setRoomExists(false);
+    //       setLoading(false)
+    //     }
+    //   };
+    // }
 
-    checkRoomExists();
+    // checkRoomExists();
 
     const getUserData = async () => {
       const user = await _getUserData()
@@ -193,51 +192,56 @@ const RoomPage: React.FC = () => {
 
     getUserData()
 
+    setLoading(false)
+
   }, [roomId]);
 
   useEffect(() => {
     console.log('setting up username and websocket')
+    console.log(loading)
+    console.log(username)
+    console.log(showDialog)
 
-    if (!loading && username && roomExists && !showDialog) {
+    if (!loading && username && !showDialog) {
 
       storeSessionData(roomId!!, username, questionsLeft, upvotesLeft)
 
-      const cleanup = connectWebSocket();
+      const cleanup = setupRealtimeConnection();
 
       if (userData) {
-        amIHost(roomId!!)
-          .then(isTrue => {
-            setIsHost(isTrue)
-          })
-          .catch(err => {
-            console.error(err)
-          }).finally(() => { })
+        // amIHost(roomId!!)
+        //   .then(isTrue => {
+        //     setIsHost(isTrue)
+        //   })
+        //   .catch(err => {
+        //     console.error(err)
+        //   }).finally(() => { })
       }
 
-      syncRoom(roomId!!)
-        .then(data => {
-          setMessages(data.messages.map((message: { username: string, content: string }) => ({
-            username: message.username,
-            content: message.content,
-            flag: '🇺🇸'
-          })));
+      // syncRoom(roomId!!)
+      //   .then(data => {
+      //     setMessages(data.messages.map((message: { username: string, content: string }) => ({
+      //       username: message.username,
+      //       content: message.content,
+      //       flag: '🇺🇸'
+      //     })));
 
-          setQuestions(data.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
-            uuid: question.uuid,
-            rephrase: question.rephrase,
-            upvotes: question.upvotes,
-          })));
+      //     setQuestions(data.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
+      //       uuid: question.uuid,
+      //       rephrase: question.rephrase,
+      //       upvotes: question.upvotes,
+      //     })));
 
-        }).catch(err => {
-          toast.error(err);
-          console.error(err)
-        });
+      //   }).catch(err => {
+      //     toast.error(err);
+      //     console.error(err)
+      //   });
 
-      return () => {
-        cleanup.then((close) => close && close());
-      };
+      return cleanup;
+    } else {
+      console.log('not setting up username and websocket')
     }
-  }, [connectWebSocket, loading, username, roomExists, showDialog]);
+  }, [setupRealtimeConnection, loading, username, roomExists, showDialog]);
 
 
   if (!roomExists) {
@@ -253,40 +257,43 @@ const RoomPage: React.FC = () => {
       toast.error('You have no more questions left')
       return
     }
-    setQuestionsLeft(questionsLeft - 1)
+    
     try {
-      if (wsRef.current) {
-        console.log('sending')
-        wsRef.current.send(content);
-        setQuestionsLeft(questionsLeft - 1)
+      if (channel) {
+        channel.send({
+          type: 'broadcast',
+          event: 'message',
+          payload: { username, content }
+        });
+        setQuestionsLeft(questionsLeft - 1);
       }
     } catch (error) {
       toast.error("Internal error");
     } finally {
-      setShowMessageInput(false)
+      setShowMessageInput(false);
     }
-
-
   };
 
   const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await fetch('/chatapi/is_username_unique', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ roomId, username: usernameInput }),
-      });
+      // const response = await fetch('/chatapi/is_username_unique', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({ roomId, username: usernameInput }),
+      // });
 
-      if (response.ok) {
-        setUsername(usernameInput);
-        setShowDialog(false);
-      } else {
-        const data = await response.json();
-        toast.error(data.detail || 'Username is already taken');
-      }
+      // if (response.ok) {
+      //   setUsername(usernameInput);
+      //   setShowDialog(false);
+      // } else {
+      //   const data = await response.json();
+      //   toast.error(data.detail || 'Username is already taken');
+      // }
+      setUsername(usernameInput);
+      setShowDialog(false);
     } catch (error) {
       toast.error('Error checking username uniqueness');
     }
@@ -364,15 +371,12 @@ const RoomPage: React.FC = () => {
   }
 
   const onLeave = () => {
-    wsRef.current?.close();
-
-    removeSession()
-
-    router.push("/").then(() => {
-    }).catch((error: any) => {
-      console.error('Error navigating to home page:', error);
-    });
-  }
+    if (channel) {
+      channel.unsubscribe();
+    }
+    removeSession();
+    router.push("/");
+  };
 
   const handleQuestionButtonClick = () => {
     setShowMessageInput(true);

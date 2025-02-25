@@ -201,19 +201,19 @@ async def get_active_room(user_id: str):
 
 # SUPABASE
 
-@router.get("/fetch_room/{room_id}")
-async def check_room_in_supabase(room_id: str):
-    try:
-        logger.info(f"Checking room {room_id} in Supabase")
-        response = supabase.table("room").select("*").eq("id", room_id).execute()
-        logger.info(f"Response from Supabase: {response}")
-        if response.data:
-            return {"message": "Room found", "data": response.data}
-        else:
-            raise HTTPException(status_code=404, detail=f"Room {room_id} not found in Supabase")
-    except Exception as e:
-        logger.error(f"Error checking room in Supabase: {str(e)}")
-        raise
+# @router.get("/fetch_room/{room_id}")
+# async def check_room_in_supabase(room_id: str):
+#     try:
+#         logger.info(f"Checking room {room_id} in Supabase")
+#         response = supabase.table("room").select("*").eq("id", room_id).execute()
+#         logger.info(f"Response from Supabase: {response}")
+#         if response.data:
+#             return {"message": "Room found", "data": response.data}
+#         else:
+#             raise HTTPException(status_code=404, detail=f"Room {room_id} not found in Supabase")
+#     except Exception as e:
+#         logger.error(f"Error checking room in Supabase: {str(e)}")
+#         raise
 
 # WEBSOCKET 
 
