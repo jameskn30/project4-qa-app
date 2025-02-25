@@ -49,6 +49,8 @@ const RoomPage: React.FC = () => {
   const [questionsLeft, setQuestionsLeft] = useState(GIVEN_QUESTIONS)
   const [upvotesLeft, setUpvotesLeft] = useState(GIVEN_UPVOTES)
   const [hostMessage, setHostMessage] = useState('')
+  const [participants, setParticipants] = useState([])
+
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [showRestartRoomDialog, setShowRestartRoomDialog] = useState(false);
@@ -76,6 +78,8 @@ const RoomPage: React.FC = () => {
       const { username, content } = payload;
       const message: Message = { username, content, flag: '🇺🇸' };
       setMessages((prevMessages) => [...prevMessages, message]);
+
+
     });
 
     // Handle questions
@@ -210,25 +214,6 @@ const RoomPage: React.FC = () => {
 
       const cleanup = setupRealtimeConnection();
 
-      // syncRoom(roomId!!)
-      //   .then(data => {
-      //     setMessages(data.messages.map((message: { username: string, content: string }) => ({
-      //       username: message.username,
-      //       content: message.content,
-      //       flag: '🇺🇸'
-      //     })));
-
-      //     setQuestions(data.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
-      //       uuid: question.uuid,
-      //       rephrase: question.rephrase,
-      //       upvotes: question.upvotes,
-      //     })));
-
-      //   }).catch(err => {
-      //     toast.error(err);
-      //     console.error(err)
-      //   });
-
       const sync = async () => {
         const messages = await fetchMessages(roomData.id)
 
@@ -238,7 +223,6 @@ const RoomPage: React.FC = () => {
             content: message.content,
             flag: '🇺🇸'
           })));
-
       }
 
       sync()

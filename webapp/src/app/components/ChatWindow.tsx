@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef  } from 'react';
+import { useEffect, useRef, useState  } from 'react';
 import { Toaster } from 'sonner';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { MessageCircleMore, User } from 'lucide-react'
@@ -56,7 +56,7 @@ export const ParticipantsList = ({ participants }: ParticipantsListProps) => {
   return (
     <div className="space-y-2">
       {participants.map((participant, index) => (
-        <div key={index} className="flex items-center gap-2 p-2 hover:bg-slate-100 rounded-lg">
+        <div key={index} className="flex items-center gap-2 p-1 hover:bg-slate-100 rounded-lg text-sm">
           <User className="h-5 w-5" />
           <span>{participant.username}</span>
           {participant.isHost && (
@@ -71,18 +71,15 @@ export const ParticipantsList = ({ participants }: ParticipantsListProps) => {
 
 const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: ChatWindowProps) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
   
-  // Mock participants data - replace with actual data
-  const participants = [
-    { username: "Host", isHost: true },
-    { username: "User1" },
-    { username: "User2" },
-  ];
-
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+
+    setParticipants(messages.map((msg) => ({ username: msg.username})));
+
   }, [messages]);
 
   return (
