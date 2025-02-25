@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { storeSessionData, getStoredSessionData, removeSession } from '@/utils/localstorage'
 
 const RoomPage: React.FC = () => {
+
   const router = useRouter();
   const params = useParams<{ roomId: string }>();
   const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
@@ -37,8 +38,13 @@ const RoomPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
-  const [questionsLeft, setQuestionsLeft] = useState(3)
-  const [upvotesLeft, setUpvotesLeft] = useState(3)
+  //TODO: to protect performance in the MVP, each user can ask 1 question and upvote 1 question
+  //prevent server overload
+  //maybe give them 3 questions and 3 upvotes if they sign up
+  const GIVEN_QUESTIONS = 1
+  const GIVEN_UPVOTES = 1
+  const [questionsLeft, setQuestionsLeft] = useState(GIVEN_QUESTIONS)
+  const [upvotesLeft, setUpvotesLeft] = useState(GIVEN_UPVOTES)
   const [hostMessage, setHostMessage] = useState('')
   const [roomClosed, setRoomClosed] = useState(false);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
@@ -111,8 +117,8 @@ const RoomPage: React.FC = () => {
           setHostMessage("Host started new round of questions")
           setMessages([])
           setQuestions([])
-          setQuestionsLeft(3)
-          setUpvotesLeft(3)
+          setQuestionsLeft(GIVEN_QUESTIONS)
+          setUpvotesLeft(GIVEN_UPVOTES)
         }
         else if (command === "close_room") {
           setRoomClosed(true);
@@ -137,13 +143,7 @@ const RoomPage: React.FC = () => {
   }, [roomId, username]);
 
   //USE EFFECT
-
-  // useEffect(() => {
-  //   if (!username) {
-  //     setUsername(generateRandomUsername());
-  //   }
-  // }, [username]);
-
+  
   useEffect(() => {
 
     const checkRoomExists = async () => {

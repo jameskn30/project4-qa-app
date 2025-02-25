@@ -35,7 +35,7 @@ const Navbar = ({
 
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [profileForm, setProfileForm] = useState({
-    name: userData?.full_name || '',
+    name: userData?.username || '',
     password: '',
     username: userData?.username || '',
     email: userData?.email || ''
@@ -71,6 +71,11 @@ const Navbar = ({
 
         <div className="hidden lg:flex gap-3">
           <ul className="flex space-x-4 ">
+            {userData && (
+              <li>
+                <ProfileButton />
+              </li>
+            )}
             {userData && (
               <>
                 <li>
@@ -113,11 +118,6 @@ const Navbar = ({
                   </Button>
                 </li>
               </>
-            )}
-            {userData && (
-              <li>
-                <ProfileButton />
-              </li>
             )}
           </ul>
         </div>

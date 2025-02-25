@@ -18,7 +18,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -26,8 +25,9 @@ import Loading from './loading'
 import { signout } from '@/utils/supabase/auth';
 import JoinRoomForm from '../components/JoinRoomForm';
 import CreateRoomForm from '../components/CreateRoomForm';
-import { ChartColumnBig } from 'lucide-react'
 import Navbar from '../components/Navbar';
+import { Button } from '@/components/ui/button';
+import { UserRound } from 'lucide-react';
 
 import {
     Dialog,
@@ -65,7 +65,6 @@ const NewRoomPage = () => {
         const getActiveRooms = async () => {
             const data = await _getActiveRooms()
             if (data) {
-                console.log(data)
                 setActiveRoom(true)
                 setRoomId(data.roomId)
             } else {
@@ -93,13 +92,17 @@ const NewRoomPage = () => {
         router.push('/')
     }
 
+    const handleJoinActiveRoom = () => {
+        router.push(`/room/${roomId}`)
+    }
+
 
     if (authLoading) {
         return <Loading />
     }
 
     return (
-        <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-blue-200 gap-3 overflow-y-auto h-auto py-10 overflow-x-hidden">
+        <div className="flex items-center flex-col min-h-screen bg-gradient-to-r from-white to-blue-200 gap-3 overflow-y-auto h-auto overflow-x-hidden">
             <Navbar
                 userData={userData}
                 login={() => console.log('nav bar login')}
@@ -108,46 +111,64 @@ const NewRoomPage = () => {
             />
             <Toaster expand={true} position='top-center' richColors />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div>
+                <div className='w-[250px] h-[250px]'>
                     <JoinRoomForm />
                 </div>
-                <div className='w-[250px] h-[250px]'>
-                    <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
-                        <CardHeader className='text-2xl'>
-                            <CardTitle>Lazy Fox 64</CardTitle>
-                            <CardDescription>On going room</CardDescription>
-                        </CardHeader>
-                        <CardContent className='flex-1 flex flex-col justify-center'>
-                            <p>Icon: number</p>
-                            <p>Polls: 3</p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div className='w-[250px] h-[250px]'>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
+                {
+                    activeRoom && (
+                        <div className='w-[250px] h-[250px]'>
                             <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
                                 <CardHeader className='text-2xl'>
-                                    <CardTitle>Create room </CardTitle>
+                                    <CardTitle>{roomId} </CardTitle>
+
+                                    <CardDescription className="flex items-center gap-2">
+                                        LIVE<span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className='flex-1 flex flex-col justify-center items-center'>
-                                    <FaCirclePlus size={60} />
+                                <CardContent className='flex-1 flex flex-col justify-center w-full'>
+                                    <div className='flex p-3'>
+                                        <UserRound/>
+                                        <p>participants: 50</p>
+                                    </div>
+                                    <Button className="bg-blue-500 text-white hover:bg-blue-700" onClick={handleJoinActiveRoom}>
+                                        Join room
+                                    </Button>
                                 </CardContent>
                             </Card>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle>Create New Room</DialogTitle>
-                                <DialogDescription>
-                                    Set up a new room for your Q&A session
-                                </DialogDescription>
-                            </DialogHeader>
-                            <CreateRoomForm onClose={onCloseCreateRoom} />
-                        </DialogContent>
-                    </Dialog>
-                </div>
-                <div className='w-[250px] h-[250px]'>
+                        </div>
+
+                    )
+                }
+                {
+                    !activeRoom && (
+                        <div className='w-[250px] h-[250px]'>
+                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
+                                        <CardHeader className='text-2xl'>
+                                            <CardTitle>Create room </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className='flex-1 flex flex-col justify-center items-center'>
+                                            <FaCirclePlus size={60} />
+                                        </CardContent>
+                                    </Card>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[425px]">
+                                    <DialogHeader>
+                                        <DialogTitle>Create New Room</DialogTitle>
+                                        <DialogDescription>
+                                            Set up a new room for your Q&A session
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <CreateRoomForm onClose={onCloseCreateRoom} />
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+
+                    )
+                }
+
+                {/* <div className='w-[250px] h-[250px]'>
                     <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
                         <CardHeader className='text-2xl flex'>
                             <CardTitle className='flex gap-2'>
@@ -159,9 +180,11 @@ const NewRoomPage = () => {
                             <p>You have 3 preset polls</p>
                         </CardContent>
                     </Card>
-                </div>
+                </div> */}
             </div>
-            <div className='flex justify-center items-center w-1/2'>
+
+            {/* TODO:  add more features after MVP */}
+            {/* <div className='flex justify-center items-center w-1/2'>
                 <p className="w-auto text-lg font-bold mx-4">Past rooms</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -238,7 +261,7 @@ const NewRoomPage = () => {
                     </Card>
                 </div>
 
-            </div>
+            </div> */}
         </div>
     );
 };

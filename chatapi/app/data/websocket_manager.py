@@ -9,6 +9,7 @@ import json
 from fastapi import WebSocket
 import os
 from enum import Enum
+from supabase_api.supabase import  add_participant_to_room, remove_participant_from_room,create_room_by_host_id 
 
 logger = logging.getLogger("chat")
 
@@ -113,11 +114,13 @@ class WebSocketManager:
         self.room_to_host_id: Dict[str, str] = {}
 
         # Test data for development
-        self._create_new_room('test room 10', '1')
+        self._create_new_room('test room 10', '1', test=True)
         self.messages['test room 10'] = [
-            {"username": gen_random_username(),
-             "content": msg
-             } for msg in MOCK_MESSAGES]
+            {
+                'uuid': id,
+                "username": gen_random_username(),
+                "content": msg
+             } for id, msg in enumerate(MOCK_MESSAGES)]
 
         # end test setup
 
@@ -131,11 +134,15 @@ class WebSocketManager:
                 return room_id
         return None
 
-    def _create_new_room(self, room_id: str, user_id: str, questions=[], messages=[]):
+    def _create_new_room(self, room_id: str, user_id: str, questions=[], messages=[], test = False):
+        # test is for creating without update db on supabase
         self.active_room[room_id] = []
         self.room_to_host_id[room_id] = user_id
         self.questions[room_id] = questions
         self.messages[room_id] = messages
+
+        if not test:
+            create_room_by_host_id(user_id, room_id)
 
     def _close_room(self, room_id: str):
         del self.active_room[room_id]
@@ -171,9 +178,12 @@ class WebSocketManager:
         self.active_room[room_id].append(user_id)
         self.user_id_to_room[user_id] = room_id
         # self.room_to_username[room_id].add(username)  # Add username to set
-
         logger.info(
             f'User {user_id}:{websocket.client.host} joined room {room_id}')
+        
+        # Update supabase
+        add_participant_to_room(room_id, user_id, user_conn.username)
+
         return user_id
 
     async def leave_room(self, room_id: str, user_id: str):
@@ -192,9 +202,13 @@ class WebSocketManager:
             logger.info(f'User {user_id} left room {room_id}')
             await self._broadcast_redis_system(room_id, f'User {username} left the room')
 
+            # TODO: update supabase
+            remove_participant_from_room(room_id, username)
+
         else:
             logger.error(f'User {user_id} not found in room {room_id}')
             raise AssertionError(f'User {user_id} not found in room {room_id}')
+        
 
     async def send_group_message(self, user_id: str, message: str):
         logger.info(f"Sending group message from user_id {user_id}: {message}")
@@ -276,3 +290,4 @@ class WebSocketManager:
             })
         
         return members
+    
