@@ -72,12 +72,19 @@ const Navbar = ({
         <div className="hidden lg:flex gap-3">
           <ul className="flex space-x-4 ">
             {userData && (
-              <li>
-                <Button variant="outline" onClick={() => router.push('/dashboard')}>
-                  <LayoutDashboard />
-                  Dashboard
-                </Button>
-              </li>
+              <>
+                <li>
+                  <Button variant="outline" onClick={() => router.push('/dashboard')}>
+                    <LayoutDashboard />
+                    Dashboard
+                  </Button>
+                </li>
+                <li>
+                  <Button variant="destructive" onClick={signOut ?? (() => {})}>
+                    Sign out
+                  </Button>
+                </li>
+              </>
             )}
             {onLeave && (
               <li>
@@ -115,7 +122,7 @@ const Navbar = ({
           </ul>
         </div>
 
-        <div className="lg:hidden" id="mobile-menu">
+        <div className="lg:hidden " id="mobile-menu">
           <Popover>
             <PopoverTrigger asChild>
               <Button className="p-2">
@@ -153,7 +160,16 @@ const Navbar = ({
                     </>
                   )}
                   {userData && (
-                    <ProfileButton />
+                    <>
+                      <ProfileButton />
+                      <Button 
+                        className="w-full" 
+                        variant="destructive" 
+                        onClick={signOut ?? (() => {})}
+                      >
+                        Sign out
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
