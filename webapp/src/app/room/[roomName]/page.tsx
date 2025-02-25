@@ -3,8 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import QuestionList from '@/app/components/QuestionList';
 import ChatWindow from '@/app/components/ChatWindow';
 import Navbar from '@/app/components/Navbar';
-import { RoomProvider } from '@/app/room/[roomId]/RoomContext';
-import { isRoomExists } from '@/utils/room.v2';
+import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
+// import { fetchRoom } from '@/utils/room.v2';
 import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth'
 import { useRouter, useParams } from 'next/navigation';
 import Loading from './loading'
@@ -14,7 +14,7 @@ import { Message } from '@/app/components/ChatWindow';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { groupMessages, upvoteMessage, newRound, closeRoom, amIHost, clearQuestions, syncRoom } from '@/utils/room.v2';
+import { groupMessages, upvoteMessage, newRound, closeRoom, clearQuestions, fetchRoom, fetchMessages } from '@/utils/room.v2';
 
 import { QuestionItem } from '@/app/components/QuestionList'
 import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
@@ -28,8 +28,11 @@ import { createClient } from '@/utils/supabase/client';
 const RoomPage: React.FC = () => {
 
   const router = useRouter();
-  const params = useParams<{ roomId: string }>();
-  const roomId = params?.roomId ? decodeURIComponent(params.roomId) : null;
+  const params = useParams<{ roomName: string }>();
+  const roomName = params?.roomName ? decodeURIComponent(params.roomName) : null;
+
+  const [roomData, setRoomData] = useState<any>(null);
+
   const [loading, setLoading] = useState(true);
   const [roomExists, setRoomExists] = useState(true);
   const [username, setUsername] = useState<string>('');
@@ -58,12 +61,12 @@ const RoomPage: React.FC = () => {
 
   // Replace WebSocket connection with Supabase channel
   const setupRealtimeConnection = useCallback(() => {
-    if (!username || !roomId) {
+    if (!username || !roomName) {
       toast.error('Internal error');
       return;
     }
 
-    const channel = supabase.channel(`room-${roomId}`, {
+    const channel = supabase.channel(`room-${roomName}`, {
       config: {
         broadcast: { self: true },
       }
@@ -139,36 +142,42 @@ const RoomPage: React.FC = () => {
     return () => {
       channel.unsubscribe();
     };
-  }, [roomId, username]);
+  }, [roomName, username]);
 
   //USE EFFECT
-  
+
   useEffect(() => {
 
-    // const checkRoomExists = async () => {
-    //   if (roomId !== null) {
-    //     try {
-    //       const exists = await isRoomExists(roomId)
+    const checkRoomExists = async () => {
+      if (roomName !== null) {
+        try {
+          const res = await fetchRoom(roomName)
 
-    //       if (exists) {
-    //         if (exists) {
-    //           setRoomExists(true);
-    //         } else {
-    //           console.log()
-    //           setRoomExists(false);
-    //         }
-    //         setLoading(false)
-    //       }
+          // const { name, isHost, id } = res;
 
-    //     } catch (err) {
-    //       console.error(err)
-    //       setRoomExists(false);
-    //       setLoading(false)
-    //     }
-    //   };
-    // }
+          if (res) {
+            setRoomExists(true);
+            setRoomData(res)
+            // setIsHost(isHost);
+            //fetch room messages
 
-    // checkRoomExists();
+          } else {
+            console.error('room does not exist')
+            setRoomExists(false);
+
+          }
+
+          setLoading(false)
+
+        } catch (err) {
+          console.error(err)
+          setRoomExists(false);
+          setLoading(false)
+        }
+      };
+    }
+
+    checkRoomExists();
 
     const getUserData = async () => {
       const user = await _getUserData()
@@ -179,44 +188,29 @@ const RoomPage: React.FC = () => {
         setUsername(user.username)
         setShowDialog(false)
       } else {
-        const storedSession = getStoredSessionData();
+        // const storedSession = getStoredSessionData();
 
-        if (storedSession && !username) {
-          setUsername(storedSession.username);
-          setQuestionsLeft(storedSession.questionsLeft);
-          setUpvotesLeft(storedSession.upvotesLeft);
-          setShowDialog(false)
-        }
+        // if (storedSession && !username) {
+        //   setUsername(storedSession.username);
+        //   setQuestionsLeft(storedSession.questionsLeft);
+        //   setUpvotesLeft(storedSession.upvotesLeft);
+        //   setShowDialog(false)
+        // }
       }
     }
 
     getUserData()
 
-    setLoading(false)
-
-  }, [roomId]);
+  }, [roomName]);
 
   useEffect(() => {
     console.log('setting up username and websocket')
-    console.log(loading)
-    console.log(username)
-    console.log(showDialog)
 
-    if (!loading && username && !showDialog) {
+    if (!loading && username && !showDialog && roomData) {
 
-      storeSessionData(roomId!!, username, questionsLeft, upvotesLeft)
+      storeSessionData(roomName!!, username, questionsLeft, upvotesLeft)
 
       const cleanup = setupRealtimeConnection();
-
-      if (userData) {
-        // amIHost(roomId!!)
-        //   .then(isTrue => {
-        //     setIsHost(isTrue)
-        //   })
-        //   .catch(err => {
-        //     console.error(err)
-        //   }).finally(() => { })
-      }
 
       // syncRoom(roomId!!)
       //   .then(data => {
@@ -236,6 +230,20 @@ const RoomPage: React.FC = () => {
       //     toast.error(err);
       //     console.error(err)
       //   });
+
+      const sync = async () => {
+        const messages = await fetchMessages(roomData.id)
+
+        setMessages(messages.map(
+          (message: { guestName: string, content: string }) => ({
+            username: message.guestName,
+            content: message.content,
+            flag: '🇺🇸'
+          })));
+        
+      }
+
+      sync()
 
       return cleanup;
     } else {
@@ -257,7 +265,7 @@ const RoomPage: React.FC = () => {
       toast.error('You have no more questions left')
       return
     }
-    
+
     try {
       if (channel) {
         channel.send({
@@ -292,6 +300,7 @@ const RoomPage: React.FC = () => {
       //   const data = await response.json();
       //   toast.error(data.detail || 'Username is already taken');
       // }
+
       setUsername(usernameInput);
       setShowDialog(false);
     } catch (error) {
@@ -302,7 +311,7 @@ const RoomPage: React.FC = () => {
   const handleGroupQuestions = async () => {
     setLoadingQuestions(true);
     try {
-      await groupMessages(roomId!!);
+      await groupMessages(roomName!!);
       toast.success('Grouped questions');
     } catch (error) {
       toast.error('Error grouping questions');
@@ -319,7 +328,7 @@ const RoomPage: React.FC = () => {
   }
 
   const handleClearQuestion = () => {
-    clearQuestions(roomId!!)
+    clearQuestions(roomName!!)
   }
 
   const handleUpvote = (uuid: string) => {
@@ -328,7 +337,7 @@ const RoomPage: React.FC = () => {
       return
     }
     setUpvotesLeft(upvotesLeft - 1)
-    upvoteMessage(roomId!!, uuid)
+    upvoteMessage(roomName!!, uuid)
       .then(data => { console.log(data) })
       .catch(err => {
         toast.error('An error occured, try restarting')
@@ -341,7 +350,7 @@ const RoomPage: React.FC = () => {
   }
 
   const confirmRestartRound = () => {
-    newRound(roomId!!)
+    newRound(roomName!!)
       .then(data => console.log(data))
       .catch(err => {
         toast.error("Error while restarting room")
@@ -357,7 +366,7 @@ const RoomPage: React.FC = () => {
   }
 
   const confirmCloseRoom = () => {
-    closeRoom(roomId!!)
+    closeRoom(roomName!!)
       .then(data => console.log(data))
       .then(data => {
         onLeave()
@@ -414,7 +423,7 @@ const RoomPage: React.FC = () => {
                   <Card className="flex flex-col overflow-y-auto relative rounded-2xl bg-white h-full">
                     <CardHeader>
                       <CardTitle className='flex justify-center items-center gap-1'>
-                        You are host of: <span className="bg-yellow-300 text-black rotate-2 p-1">{roomId}</span>
+                        You are host of: <span className="bg-yellow-300 text-black rotate-2 p-1">{roomName}</span>
                         <Button variant="ghost"><Copy /></Button>
                       </CardTitle>
                     </CardHeader>

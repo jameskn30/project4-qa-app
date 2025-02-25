@@ -1,23 +1,30 @@
 'use server'
 import { createClient } from "@/utils/supabase/server"
+import { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache"
+import { hasUncaughtExceptionCaptureCallback } from "process";
 
 const CHATAPI_ENDPOINT = process.env.CHATAPI_ENDPOINT;
 
-export const isRoomExists = async (roomId: string) => {
-    const res = await fetch(`${CHATAPI_ENDPOINT}/room_exists`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ roomId: roomId }),
-    });
+// export const isRoomExists = async (roomId: string) => {
+//     const res = await fetch(`${CHATAPI_ENDPOINT}/room_exists`, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ roomId: roomId }),
+//     });
 
-    return res.ok
-}
+//     return res.ok
+// }
 
-const _getUserData = async () => {
-    const supabase = await createClient()
+const _getUserData = async (client: SupabaseClient|null  = null) => {
+    let supabase
+    if (client){
+        supabase = client
+    } else {
+        supabase = await createClient()
+    }
 
     const { data: { user }, error } = await supabase.auth.getUser()
 
@@ -74,27 +81,27 @@ export const fetchRoomId = async () => {
     return res.json();
 }
 
-export const amIHost = async (roomId: string) => {
-    const user = await _getUserData()
-    let userId = user.id
-    //TODO: remove this after testing
-    if (roomId === 'test room 10'){
-        userId = '1'
-    }
+// export const amIHost = async (roomId: string) => {
+//     const user = await _getUserData()
+//     let userId = user.id
+//     //TODO: remove this after testing
+//     if (roomId === 'test room 10'){
+//         userId = '1'
+//     }
 
-    const queryParams = new URLSearchParams({
-        roomId: roomId,
-        userId: userId
-    }).toString();
+//     const queryParams = new URLSearchParams({
+//         roomId: roomId,
+//         userId: userId
+//     }).toString();
 
-    const res = await fetch(`${CHATAPI_ENDPOINT}/am_i_host?${queryParams}`);
-    return res.ok
-}
+//     const res = await fetch(`${CHATAPI_ENDPOINT}/am_i_host?${queryParams}`);
+//     return res.ok
+// }
 
-export const syncRoom = async (roomId: string) => {
-    const res = await fetch(`${CHATAPI_ENDPOINT}/sync_room/${roomId}`);
-    return res.json()
-}
+// export const syncRoom = async (roomId: string) => {
+//     const res = await fetch(`${CHATAPI_ENDPOINT}/sync_room/${roomId}`);
+//     return res.json()
+// }
 
 // export const getActiveRoomsByUserId = async (userId: string) => {
 //     return fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
@@ -162,4 +169,47 @@ export const closeRoom = async (roomId: string) => {
         body: JSON.stringify({ roomId: roomId }),
     });
     return res.json()
+}
+
+export const fetchRoom = async (roomName: string) => {
+    const supabase = await createClient()
+    let user = null
+    try{
+        user = await _getUserData()
+    } catch(err){
+        console.log('user not signed in')
+    }
+    
+    const { data, error } = await supabase
+        .from('Room')
+        .select('id, hostId, created_at, name, is_active')
+        .eq('name', roomName)
+        .eq('is_active', 'TRUE')
+        .single()
+    
+    if (error) {
+        console.error('Error checking room:', error)
+        throw new Error('Room does not exist')
+    }
+    
+    return {'name': data.name, 'isHost': data?.hostId === user?.id, 'id': data.id}
+}
+
+export const fetchMessages = async (roomId: string) => {
+
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('Message')
+        .select('content, guestName, created_at')
+        .eq('roomId', roomId)
+        .order('created_at', { ascending: true })
+    
+    console.log('messsages from room ', roomId)
+    console.log(data)
+    
+    if (error) {
+        console.error('Error fetching messages:', error)
+        throw new Error('Failed to fetch messages')
+    }   
+    return data
 }

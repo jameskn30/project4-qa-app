@@ -46,7 +46,6 @@ const ExperimentPage = () => {
     }, [])
 
     const sendMessage = () => {
-        console.log('sendMessage')
         if (channel) {
             channel.send({
                 type: 'broadcast',

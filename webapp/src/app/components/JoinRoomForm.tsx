@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/ui/spinner';
-import { isRoomExists } from '@/utils/room.v2';
+import { fetchRoom } from '@/utils/room.v2';
 
 const JoinRoomForm = () => {
     const router = useRouter();
@@ -27,17 +27,15 @@ const JoinRoomForm = () => {
         setJoiningLoader(true);
 
         try {
-            //TODO: testing supabase realtime
-            router.push(`/room/${roomCode}`);
-            // const res = await isRoomExists(roomCode)
-            // if (res) {
-            //     console.log('room exists')
-            //     router.push(`/room/${roomCode}`);
-            // } else {
-            //     const msg = `Room ${roomCode} does not exist`
-            //     toast.error(msg);
-            //     console.error(msg)
-            // }
+            const res = await fetchRoom(roomCode)
+            if (res) {
+                console.log('room exists')
+                router.push(`/room/${roomCode}`);
+            } else {
+                const msg = `Room ${roomCode} does not exist`
+                toast.error(msg);
+                console.error(msg)
+            }
         } catch (err) {
             console.error(err)
         } finally {
