@@ -55,6 +55,7 @@ const RoomPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [roomExists, setRoomExists] = useState(true);
   const [roomClosed, setRoomClosed] = useState(false);
+  const [hostOnline, setHostOnline] = useState(false)
 
   // User state
   const [username, setUsername] = useState<string>('');
@@ -82,6 +83,7 @@ const RoomPage: React.FC = () => {
 
   // Add these near other state declarations
   const [feedback, setFeedback] = useState('');
+  const [feedbackSent, setFeedbackSent] = useState(false);
 
   // Memoize event handlers
   const handleUpvote = useCallback((uuid: string) => {
@@ -140,7 +142,7 @@ const RoomPage: React.FC = () => {
       const { username, content } = payload;
       const message: Message = { username, content, flag: '🇺🇸' };
       setMessages((prevMessages) => [...prevMessages, message]);
-      if (roomData?.isHost){
+      if (roomData?.isHost) {
         addMessage(roomData.id, content, username, 1)
       }
     });
@@ -183,6 +185,12 @@ const RoomPage: React.FC = () => {
     channel.on('broadcast', { event: 'command' }, ({ payload }) => {
       const { command } = payload;
       switch (command) {
+        case 'host_offline':
+          setHostOnline(false)
+          break
+        case 'host_online':
+          setHostOnline(true)
+          break
         case 'clear_questions':
           setLoadingQuestions(true);
           setQuestions([])
@@ -207,10 +215,57 @@ const RoomPage: React.FC = () => {
       }
     });
 
-    channel.subscribe();
+    //Presence
+    channel
+      .on("presence", { event: 'sync' }, () => {
+        console.log('sync')
+      })
+      .on("presence", { event: 'join' }, ({ key, newPresences }) => {
+        if (!hostOnline) {
+          newPresences.forEach((presence) => {
+            if (presence.isHost) setHostOnline(true)
+          })
+        }
+      })
+      .on("presence", { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('leave', key, leftPresences)
+        leftPresences.forEach((presence) => {
+          if (presence.isHost) {
+            setHostOnline(false)
+          }
+        })
+      })
+
+    channel.subscribe(async (status) => {
+      if (status !== 'SUBSCRIBED') return
+      const data = { "isHost": false }
+
+      if (roomData.isHost) {
+        data.isHost = true
+      }
+      const trackStatus = await channel.track(data)
+      console.log('trackStatus', trackStatus)
+    }
+
+
+    );
     setChannel(channel);
 
-    return () => {
+    channel?.send({
+      type: 'broadcast',
+      event: 'command',
+      payload: { command: 'host_online' }
+    })
+
+    return async () => {
+      if (roomData.isHost) {
+        await channel?.send({
+          type: 'broadcast',
+          event: 'command',
+          payload: { command: 'host_online' }
+        })
+      }
+
       channel.unsubscribe();
     };
   }, [roomName, username, roomData]);
@@ -363,9 +418,7 @@ const RoomPage: React.FC = () => {
         questions: questions
       }
     });
-
   }
-
 
   const handleClearQuestion = async () => {
     await clearQuestions(roomData.id, 1)
@@ -395,12 +448,12 @@ const RoomPage: React.FC = () => {
 
     closeRoom(roomData.id)
       .then(_ => {
-        toast.success("Room closed successfully")
         channel?.send({
           type: 'broadcast',
           event: 'command',
           payload: { command: 'close_room' }
         })
+        toast.success("Room closed successfully")
       })
       .catch(err => {
         toast.error("Error while closing room, try again later")
@@ -408,11 +461,6 @@ const RoomPage: React.FC = () => {
       })
       .finally(() => {
       })
-
-
-
-
-
   }
 
   const onLeave = () => {
@@ -428,11 +476,16 @@ const RoomPage: React.FC = () => {
   };
 
   // Add these before the return statement
-  const handleFeedbackSubmit = (type: 'like' | 'dislike') => {
-    // Here you can implement the feedback submission logic
-    console.log('Feedback:', { type, message: feedback });
-    setFeedbackSent(true);
-  };
+  // const handleFeedbackSubmit = (type: 'like' | 'dislike') => {
+  //   // Here you can implement the feedback submission logic
+  //   console.log('Feedback:', { type, message: feedback });
+  //   setFeedbackSent(true);
+  // };
+
+  // // Add function to reconnect or return to home
+  // const handleReturnHome = () => {
+  //   onLeave();
+  // };
 
   return (
     <RoomProvider>
@@ -626,7 +679,7 @@ const RoomPage: React.FC = () => {
                     </label>
                   </div>
                 </div>
-                <input name="roomId" id="roomId" className='hidden' value={roomData.id}/>
+                <input name="roomId" id="roomId" className='hidden' value={roomData.id} />
                 <div>
                   <Input
                     id="feedback"
@@ -645,6 +698,26 @@ const RoomPage: React.FC = () => {
                 Submit and leave
               </Button>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add the host offline dialog */}
+        <Dialog open={!hostOnline}>
+          <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle className="text-center text-red-600">Waiting for host</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-center">
+                Waiting for host to start the room ...
+              </p>
+              <div className="flex flex-col gap-4 mt-4">
+                <Button
+                  variant="outline">
+                  Wait for host to start this room
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
