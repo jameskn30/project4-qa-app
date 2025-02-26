@@ -68,7 +68,7 @@ const RoomPage: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
 
   // UI state
-  const [showDialog, setShowDialog] = useState(!username);
+  const [showUsernameDialog, setShowUsernameDialog] = useState(!username);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [showRestartRoomDialog, setShowRestartRoomDialog] = useState(false);
   const [showMessageInput, setShowMessageInput] = useState(false);
@@ -161,7 +161,7 @@ const RoomPage: React.FC = () => {
       setUserData(user)
       if (user) {
         setUsername(user.username)
-        setShowDialog(false)
+        setShowUsernameDialog(false)
       } else {
         const storedSession = getStoredSessionData();
 
@@ -169,7 +169,7 @@ const RoomPage: React.FC = () => {
           setUsername(storedSession.username);
           setQuestionsLeft(storedSession.questionsLeft);
           setUpvotesLeft(storedSession.upvotesLeft);
-          setShowDialog(false)
+          setShowUsernameDialog(false)
         }
       }
     }
@@ -221,7 +221,7 @@ const RoomPage: React.FC = () => {
     console.log('setting up username and websocket')
     console.log(hostOnline)
 
-    if (!loading && username && !showDialog && roomData) {
+    if (!loading && username && !showUsernameDialog && roomData) {
 
       storeSessionData(roomName!!, username, questionsLeft, upvotesLeft)
 
@@ -248,7 +248,7 @@ const RoomPage: React.FC = () => {
     } else {
       console.log('not setting up username and websocket')
     }
-  }, [loading, username, showDialog, roomData]);
+  }, [loading, username, showUsernameDialog, roomData]);
 
 
   if (!roomExists) {
@@ -263,7 +263,7 @@ const RoomPage: React.FC = () => {
     e.preventDefault();
     try {
       setUsername(usernameInput);
-      setShowDialog(false);
+      setShowUsernameDialog(false);
     } catch (error) {
       toast.error('Error checking username uniqueness');
     }
@@ -340,18 +340,6 @@ const RoomPage: React.FC = () => {
   const handleQuestionButtonClick = () => {
     setShowMessageInput(true);
   };
-
-  // Add these before the return statement
-  // const handleFeedbackSubmit = (type: 'like' | 'dislike') => {
-  //   // Here you can implement the feedback submission logic
-  //   console.log('Feedback:', { type, message: feedback });
-  //   setFeedbackSent(true);
-  // };
-
-  // // Add function to reconnect or return to home
-  // const handleReturnHome = () => {
-  //   onLeave();
-  // };
 
   return (
     <RoomProvider>
@@ -449,7 +437,7 @@ const RoomPage: React.FC = () => {
             }
           </div>
         </div>
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <Dialog open={showUsernameDialog}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>What's your name? ☺️</DialogTitle>
