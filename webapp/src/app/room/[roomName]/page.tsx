@@ -185,12 +185,6 @@ const RoomPage: React.FC = () => {
     channel.on('broadcast', { event: 'command' }, ({ payload }) => {
       const { command } = payload;
       switch (command) {
-        case 'host_offline':
-          setHostOnline(false)
-          break
-        case 'host_online':
-          setHostOnline(true)
-          break
         case 'clear_questions':
           setLoadingQuestions(true);
           setQuestions([])
@@ -218,7 +212,6 @@ const RoomPage: React.FC = () => {
     //Presence
     channel
       .on("presence", { event: 'sync' }, () => {
-        console.log('sync')
       })
       .on("presence", { event: 'join' }, ({ key, newPresences }) => {
         if (!hostOnline) {
@@ -228,7 +221,6 @@ const RoomPage: React.FC = () => {
         }
       })
       .on("presence", { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('leave', key, leftPresences)
         leftPresences.forEach((presence) => {
           if (presence.isHost) {
             setHostOnline(false)
@@ -247,25 +239,10 @@ const RoomPage: React.FC = () => {
       console.log('trackStatus', trackStatus)
     }
 
-
     );
     setChannel(channel);
 
-    channel?.send({
-      type: 'broadcast',
-      event: 'command',
-      payload: { command: 'host_online' }
-    })
-
     return async () => {
-      if (roomData.isHost) {
-        await channel?.send({
-          type: 'broadcast',
-          event: 'command',
-          payload: { command: 'host_online' }
-        })
-      }
-
       channel.unsubscribe();
     };
   }, [roomName, username, roomData]);
@@ -711,13 +688,8 @@ const RoomPage: React.FC = () => {
               <p className="text-center">
                 Waiting for host to start the room ...
               </p>
-              <div className="flex flex-col gap-4 mt-4">
-                <Button
-                  variant="outline">
-                  Wait for host to start this room
-                </Button>
-              </div>
             </div>
+            <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif"/>
           </DialogContent>
         </Dialog>
       </div>
