@@ -1,13 +1,12 @@
 'use client'
+
+// React and Next.js imports
 import React, { useState, useEffect } from 'react';
-import { Toaster } from 'sonner';
-import _ from 'lodash';
 import { useRouter } from 'next/navigation';
-import {
-    getActiveRooms as _getActiveRooms,
-    createRoom as _createRoom,
-    fetchRoomId as _fetchRoomId
-} from '@/utils/room.v2'
+import { format, parseISO } from 'date-fns';
+
+// Third-party imports
+import { Toaster } from 'sonner';
 import {
     getUserData as _getUserData,
     UserData
@@ -27,7 +26,8 @@ import JoinRoomForm from '../components/JoinRoomForm';
 import CreateRoomForm from '../components/CreateRoomForm';
 import Navbar from '../components/Navbar';
 import { Button } from '@/components/ui/button';
-import { UserRound } from 'lucide-react';
+import { UserRound, MessageCircleQuestion, MessageCircleWarning, ThumbsUp } from 'lucide-react';
+import { fetchMyRooms } from '@/utils/room.v2';
 
 import {
     Dialog,
@@ -48,7 +48,11 @@ const NewRoomPage = () => {
     const [authLoading, setAuthLoading] = useState(true);
 
     const [userData, setUserData] = useState<UserData | null>(null)
-    const [activeRoom, setActiveRoom] = useState<boolean>(false)
+    const [activeRoom, setActiveRoom] = useState<any>()
+
+    const [pastRooms, setPastRooms] = useState<any[]>([])
+    const [isStatsDialogOpen, setIsStatsDialogOpen] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState<any>(null);
 
     useEffect(() => {
 
@@ -63,13 +67,19 @@ const NewRoomPage = () => {
         getUserData()
 
         const getActiveRooms = async () => {
-            const data = await _getActiveRooms()
-            if (data) {
-                setActiveRoom(true)
-                setRoomId(data.roomId)
-            } else {
-                console.log('no active rooms')
-            }
+            const data = await fetchMyRooms()
+
+            let pastRooms: any[] = []
+
+            data.forEach((room) => {
+                if (room.is_active) {
+                    setActiveRoom(room)
+                } else {
+                    pastRooms.push(room)
+                }
+
+            })
+            setPastRooms(pastRooms)
         }
 
         getActiveRooms()
@@ -93,9 +103,13 @@ const NewRoomPage = () => {
     }
 
     const handleJoinActiveRoom = () => {
-        router.push(`/room/${roomId}`)
+        router.push(`/room/${activeRoom.name}`)
     }
 
+    const handleViewStats = (room: any) => {
+        setSelectedRoom(room);
+        setIsStatsDialogOpen(true);
+    };
 
     if (authLoading) {
         return <Loading />
@@ -119,15 +133,14 @@ const NewRoomPage = () => {
                         <div className='w-[250px] h-[250px]'>
                             <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
                                 <CardHeader className='text-2xl'>
-                                    <CardTitle>{roomId} </CardTitle>
-
-                                    <CardDescription className="flex items-center gap-2">
+                                    <CardTitle>{activeRoom.name} </CardTitle>
+                                    <CardDescription className="flex items-center gap-2 text-red-500 font-bold">
                                         LIVE<span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className='flex-1 flex flex-col justify-center w-full'>
                                     <div className='flex p-3'>
-                                        <UserRound/>
+                                        <UserRound />
                                         <p>participants: 50</p>
                                     </div>
                                     <Button className="bg-blue-500 text-white hover:bg-blue-700" onClick={handleJoinActiveRoom}>
@@ -167,7 +180,7 @@ const NewRoomPage = () => {
 
                     )
                 }
-
+                {/* TODO: add poll feature */}
                 {/* <div className='w-[250px] h-[250px]'>
                     <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
                         <CardHeader className='text-2xl flex'>
@@ -180,88 +193,111 @@ const NewRoomPage = () => {
                             <p>You have 3 preset polls</p>
                         </CardContent>
                     </Card>
-                </div> */}
-            </div>
+                </div>
+             */}</div>
 
-            {/* TODO:  add more features after MVP */}
-            {/* <div className='flex justify-center items-center w-1/2'>
+            {/* <div className="container mx-auto px-4"> */}
+            <div className='flex justify-center items-center w-1/2'>
                 <p className="w-auto text-lg font-bold mx-4">Past rooms</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div>
-                    <Card className='w-[250px] h-[250px]'>
-                        <CardHeader>
-                            <CardTitle>Card Title</CardTitle>
-                            <CardDescription>Card Description</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>Card Content</p>
-                        </CardContent>
-                        <CardFooter>
-                            <p>Card Footer</p>
-                        </CardFooter>
-                    </Card>
-                </div>
-                <div>
-                    <Card className='w-[250px] h-[250px]'>
-                        <CardHeader>
-                            <CardTitle>Card Title</CardTitle>
-                            <CardDescription>Card Description</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>Card Content</p>
-                        </CardContent>
-                        <CardFooter>
-                            <p>Card Footer</p>
-                        </CardFooter>
-                    </Card>
-                </div>
+                {pastRooms.map((room) => (
+                    <div className='w-[250px] h-[250px]'>
+                        <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
+                            <CardHeader>
+                                <CardTitle>{room.name} (closed)</CardTitle>
+                                <CardDescription>
+                                    started <span className='font-bold'>
+                                        {format(parseISO(room.created_at), 'PPp')}
+                                    </span>
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className='flex justify-center gap-2 flex-col text-sm'>
+                                    <div className='flex gap-2'>
+                                        <UserRound size={18} />
+                                        <p>50 participants</p>
+                                    </div>
 
-                <div>
-                    <Card className='w-[250px] h-[250px]'>
-                        <CardHeader>
-                            <CardTitle>Card Title</CardTitle>
-                            <CardDescription>Card Description</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>Card Content</p>
-                        </CardContent>
-                        <CardFooter>
-                            <p>Card Footer</p>
-                        </CardFooter>
-                    </Card>
-                </div>
-                <div>
-                    <Card className='w-[250px] h-[250px]'>
-                        <CardHeader>
-                            <CardTitle>Card Title</CardTitle>
-                            <CardDescription>Card Description</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>Card Content</p>
-                        </CardContent>
-                        <CardFooter>
-                            <p>Card Footer</p>
-                        </CardFooter>
-                    </Card>
-                </div>
+                                    <div className='flex gap-2'>
+                                        <MessageCircleQuestion size={18} />
+                                        <p>103 questions asked </p>
+                                    </div>
 
-                <div>
-                    <Card className='w-[250px] h-[250px]'>
-                        <CardHeader>
-                            <CardTitle>Card Title</CardTitle>
-                            <CardDescription>Card Description</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p>Card Content</p>
-                        </CardContent>
-                        <CardFooter>
-                            <p>Card Footer</p>
-                        </CardFooter>
-                    </Card>
-                </div>
+                                    <div className='flex gap-2'>
+                                        <MessageCircleWarning size={18} />
+                                        <p>2 followups </p>
+                                    </div>
 
-            </div> */}
+                                    <div className='flex gap-2'>
+                                        <ThumbsUp size={18} />
+                                        <p>183 likes the session </p>
+                                    </div>
+                                    <Button className="bg-blue-500 text-white hover:bg-blue-700" onClick={() => handleViewStats(room)}>
+                                        See stats
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                ))}
+            </div>
+
+            <Dialog open={isStatsDialogOpen} onOpenChange={setIsStatsDialogOpen}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Room Statistics - {selectedRoom?.name}</DialogTitle>
+                        <DialogDescription>
+                            Detailed analytics for your Q&A session
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Participation Overview</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <span>Total Participants:</span>
+                                        <span className="font-bold">50</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Active Participants:</span>
+                                        <span className="font-bold">35</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Average Engagement:</span>
+                                        <span className="font-bold">75%</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Question Statistics</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <span>Total Questions:</span>
+                                        <span className="font-bold">103</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Answered Questions:</span>
+                                        <span className="font-bold">95</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Follow-ups:</span>
+                                        <span className="font-bold">2</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

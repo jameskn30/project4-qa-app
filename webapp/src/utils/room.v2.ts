@@ -1,11 +1,22 @@
 'use server'
-import { createClient } from "@/utils/supabase/server"
-import { SupabaseClient } from "@supabase/supabase-js";
-import { revalidatePath } from "next/cache"
-import { hasUncaughtExceptionCaptureCallback } from "process";
 
+// Third-party imports
+import { SupabaseClient } from "@supabase/supabase-js";
+
+// Local imports
+import { createClient } from "@/utils/supabase/server";
+
+// Constants
 const CHATAPI_ENDPOINT = process.env.CHATAPI_ENDPOINT;
 
+// Types
+interface ProcessedQuestion {
+    uuid: string;
+    rephrase: string;
+    upvotes: number;
+}
+
+// Helper functions
 const _getUserData = async (client: SupabaseClient | null = null) => {
     let supabase
     if (client) {
@@ -24,18 +35,7 @@ const _getUserData = async (client: SupabaseClient | null = null) => {
     return user
 }
 
-export const getActiveRooms = async () => {
-    const user = await _getUserData()
-    const userId = user.id
-    const res = await fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
-
-    if (!res.ok) {
-        return null
-    } else {
-        return res.json()
-    }
-}
-
+// Room management functions
 export const createRoom = async (roomId: string) => {
     const user = await _getUserData()
     const userId = user.id
@@ -56,80 +56,6 @@ export const createRoom = async (roomId: string) => {
     }
     return false
 }
-
-export const fetchRoomId = async () => {
-    const res = await fetch(`${CHATAPI_ENDPOINT}/get_random_room_id`);
-
-    if (!res.ok) {
-        throw new Error('Failed to fetch room ID');
-    }
-
-    return res.json();
-}
-
-export const groupMessages = async (messages: string[]) => {
-
-    const res = await fetch(`${CHATAPI_ENDPOINT}/group_messages`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages: messages }),
-    });
-
-    return res.json()
-}
-
-// export const clearQuestions = async (roomId: string) => {
-//     const res = await fetch(`${CHATAPI_ENDPOINT}/clear_questions`, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ roomId: roomId }),
-//     });
-
-//     return res.json()
-// }
-
-// export const upvoteMessage = async (roomId: string, questionId: string) => {
-//     const res = await fetch(`${CHATAPI_ENDPOINT}/upvote`, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//             roomId: roomId,
-//             questionId: questionId,
-//             username: ''
-//         }),
-//     });
-
-//     return res.json()
-// }
-
-// export const newRound = async (roomId: string) => {
-//     const res = await fetch(`${CHATAPI_ENDPOINT}/new_round`, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ roomId: roomId }),
-//     });
-
-//     return res.json()
-// }
-
-// export const closeRoom = async (roomId: string) => {
-//     const res = await fetch(`${CHATAPI_ENDPOINT}/close_room`, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ roomId: roomId }),
-//     });
-//     return res.json()
-// }
 
 export const fetchRoom = async (roomName: string) => {
     const supabase = await createClient()
@@ -155,6 +81,64 @@ export const fetchRoom = async (roomName: string) => {
     return { 'name': data.name, 'isHost': data?.host_id === user?.id, 'id': data.id }
 }
 
+// export const getActiveRooms = async () => {
+//     const user = await _getUserData()
+//     const userId = user.id
+//     const res = await fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
+
+//     if (!res.ok) {
+//         return null
+//     } else {
+//         return res.json()
+//     }
+// }
+
+export const fetchRoomId = async () => {
+    const res = await fetch(`${CHATAPI_ENDPOINT}/get_random_room_id`);
+
+    if (!res.ok) {
+        throw new Error('Failed to fetch room ID');
+    }
+
+    return res.json();
+}
+
+export const closeRoom = async (roomId: string) => {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+        .from('Room')
+        .delete()
+        .eq('id', roomId)
+
+    console.log(data)
+
+    if (error) {
+        console.error('Error closing room:', error)
+        throw new Error('Failed to close room')
+    }
+
+    return data
+}
+
+export const fetchMyRooms = async () => {
+    const supabase = await createClient()
+    const userData = await _getUserData(supabase)
+
+    const {data,error} = await supabase
+        .from('Room')
+        .select('name, is_active, created_at')
+        .eq('host_id', userData.id)
+
+    if (error) {    
+        console.error('Error fetching rooms:', error)
+        throw new Error('Failed to fetch rooms')
+    }
+
+    return data
+}
+
+// Message and question handling
 export const fetchMessages = async (roomId: string) => {
 
     const supabase = await createClient()
@@ -171,10 +155,17 @@ export const fetchMessages = async (roomId: string) => {
     return data
 }
 
-interface ProcessedQuestion {
-    uuid: string;
-    rephrase: string;
-    upvotes: number;
+export const groupMessages = async (messages: string[]) => {
+
+    const res = await fetch(`${CHATAPI_ENDPOINT}/group_messages`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages: messages }),
+    });
+
+    return res.json()
 }
 
 export const insertQuestions = async (roomId: string, questions: ProcessedQuestion[], round: number) => {
@@ -236,7 +227,7 @@ export const clearQuestions = async (roomId: string, round: number) => {
         .delete()
         .eq('room_id', roomId)
         .eq('round', round)
-    
+
 
     if (deleteError) {
         console.error(deleteError)

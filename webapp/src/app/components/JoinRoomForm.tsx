@@ -27,17 +27,11 @@ const JoinRoomForm = () => {
         setJoiningLoader(true);
 
         try {
-            const res = await fetchRoom(roomCode)
-            if (res) {
-                console.log('room exists')
-                router.push(`/room/${roomCode}`);
-            } else {
-                const msg = `Room ${roomCode} does not exist`
-                toast.error(msg);
-                console.error(msg)
-            }
+            await fetchRoom(roomCode)
+            router.push('/room/' + roomCode);
         } catch (err) {
             console.error(err)
+            toast.error("Room not found");
         } finally {
             setJoiningLoader(false);
         }
