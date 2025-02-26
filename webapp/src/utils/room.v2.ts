@@ -144,24 +144,6 @@ export const addMessage = async (roomId: string, message: string, guestName: str
     }
 }
 
-//TODO: this is bulk insert
-// export const addMessages = async (roomId: string, messages: {content:string , username:string }[]) => {
-//     const supabase = await createClient()
-
-//     const {data, error: insertError} = await supabase.from('Message')
-//         .insert(messages.map((m) => ({
-//             room_id: roomId,
-//             content: m.content,
-//             guest_name: m.username,
-//         })))
-    
-//     if (insertError) {
-//         console.error('Error adding messages:', insertError)
-//         throw new Error('Failed to add messages')
-//     }
-// }
-
-// Message and question handling
 export const fetchMessages = async (roomId: string) => {
 
     const supabase = await createClient()
@@ -175,6 +157,7 @@ export const fetchMessages = async (roomId: string) => {
         console.error('Error fetching messages:', error)
         throw new Error('Failed to fetch messages')
     }
+
     return data
 }
 
@@ -231,14 +214,16 @@ export const fetchQuestions = async (roomId: string, round: number) => {
         .select('questions')
         .eq('room_id', roomId)
         .eq('round', round)
-        .single()
+        .maybeSingle()
+    
+    console.log(data)
 
     if (error) {
         console.error('Error fetching questions:', error)
         throw new Error('Failed to fetch questions')
     }
 
-    return data.questions
+    return data ? data.questions : []
 }
 
 export const clearQuestions = async (roomId: string, round: number) => {

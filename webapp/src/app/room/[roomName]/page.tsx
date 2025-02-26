@@ -297,16 +297,6 @@ const RoomPage: React.FC = () => {
     }
   };
 
-  const broadcastQuestions = (questions: QuestionItem[]) => {
-    channel?.send({
-      type: 'broadcast',
-      event: 'questions',
-      payload: {
-        questions: questions
-      }
-    });
-  }
-
   const handleClearQuestion = async () => {
     await clearQuestions(roomData.id, 1);
     realtimeApi?.sendCommand('clear_questions');
