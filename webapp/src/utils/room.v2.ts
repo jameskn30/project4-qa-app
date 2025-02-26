@@ -98,7 +98,7 @@ export const closeRoom = async (roomId: string) => {
 
     const { error } = await supabase
         .from('Room')
-        .update({ is_active: false })
+        .update({ is_active: true })
         .eq('id', roomId)
         
     if (error) {
@@ -218,5 +218,38 @@ export const clearQuestions = async (roomId: string, round: number) => {
     if (deleteError) {
         console.error(deleteError)
         throw deleteError
+    }
+}
+
+export const submitFeedback = async (formData: FormData) => {
+    const feedback = formData.get("feedback") as string;
+    const roomId = formData.get("roomId") as string;
+    const isLiked = formData.get("like") === 'on';
+    console.log(roomId)
+    console.log(isLiked)
+    if (feedback.trim() === '' && !isLiked) {
+        return
+    }
+
+    const supabase = await createClient();
+
+    const user = await _getUserData(supabase);
+    
+    try {
+        const { error } = await supabase
+            .from('Feedback')
+            .insert({
+                user_id: user ? user.id : null,
+                feedback: feedback,
+                like: isLiked,
+                room_id: roomId
+            });
+
+        if (error) throw error;
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Error submitting feedback:', error);
+        throw new Error('Failed to submit feedback');
     }
 }

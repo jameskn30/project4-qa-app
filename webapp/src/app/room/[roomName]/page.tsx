@@ -28,17 +28,20 @@ import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
 import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth';
 import { Message } from '@/app/components/ChatWindow';
 import { QuestionItem } from '@/app/components/QuestionList';
-import { 
-  groupMessages, 
-  clearQuestions, 
-  fetchRoom, 
-  fetchMessages, 
-  insertQuestions, 
+import {
+  groupMessages,
+  clearQuestions,
+  fetchRoom,
+  fetchMessages,
+  insertQuestions,
   fetchQuestions,
-  closeRoom
- } from '@/utils/room.v2';
+  closeRoom,
+  submitFeedback
+} from '@/utils/room.v2';
 import { storeSessionData, removeSession } from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -75,6 +78,9 @@ const RoomPage: React.FC = () => {
   const GIVEN_UPVOTES = 1;
   const [questionsLeft, setQuestionsLeft] = useState(GIVEN_QUESTIONS);
   const [upvotesLeft, setUpvotesLeft] = useState(GIVEN_UPVOTES);
+
+  // Add these near other state declarations
+  const [feedback, setFeedback] = useState('');
 
   // Memoize event handlers
   const handleUpvote = useCallback((uuid: string) => {
@@ -149,12 +155,12 @@ const RoomPage: React.FC = () => {
     const updateQuestionsOnDb = _.debounce(async (questions: QuestionItem[]) => {
       await insertQuestions(roomData.id, questions, 1);
       console.log('updated questions on db')
-    }, 2000); 
+    }, 2000);
 
     // Handle upvotes
     channel.on('broadcast', { event: 'upvote' }, ({ payload }) => {
       setQuestions(prevQuestions => {
-        const updatedQuestions = prevQuestions.map(question => 
+        const updatedQuestions = prevQuestions.map(question =>
           question.uuid === payload.questionId
             ? { ...question, upvotes: (question.upvotes || 0) + 1 }
             : question
@@ -192,7 +198,7 @@ const RoomPage: React.FC = () => {
           break;
         case 'close_room':
           setRoomClosed(true);
-          setTimeout(onLeave, 3000);
+          // setTimeout(onLeave, 3000);
           break;
       }
     });
@@ -282,7 +288,7 @@ const RoomPage: React.FC = () => {
           flag: '🇺🇸'
         })));
 
-        setQuestions(questions.map((question:any) => ({
+        setQuestions(questions.map((question: any) => ({
           uuid: question.uuid,
           rephrase: question.rephrase,
           upvotes: question.upvotes,
@@ -375,6 +381,7 @@ const RoomPage: React.FC = () => {
 
   const confirmRestartRound = () => {
     console.log("confirmRestartRound")
+    setShowRestartRoomDialog(false)
   }
 
   const handleCloseRoom = () => {
@@ -385,25 +392,25 @@ const RoomPage: React.FC = () => {
     console.log("confirmCloseRoom")
 
     closeRoom(roomData.id)
-    .then(_ => {
-      toast.success("Room closed successfully")
-      channel?.send({
-        type: 'broadcast',
-        event: 'command',
-        payload: { command: 'close_room' }
+      .then(_ => {
+        toast.success("Room closed successfully")
+        channel?.send({
+          type: 'broadcast',
+          event: 'command',
+          payload: { command: 'close_room' }
+        })
       })
-    })
-    .catch(err => {
-      toast.error("Error while closing room, try again later")
-      console.error(err)
-    })
-    .finally(() => {
-    })
+      .catch(err => {
+        toast.error("Error while closing room, try again later")
+        console.error(err)
+      })
+      .finally(() => {
+      })
 
 
 
 
-    
+
   }
 
   const onLeave = () => {
@@ -416,6 +423,13 @@ const RoomPage: React.FC = () => {
 
   const handleQuestionButtonClick = () => {
     setShowMessageInput(true);
+  };
+
+  // Add these before the return statement
+  const handleFeedbackSubmit = (type: 'like' | 'dislike') => {
+    // Here you can implement the feedback submission logic
+    console.log('Feedback:', { type, message: feedback });
+    setFeedbackSent(true);
   };
 
   return (
@@ -462,8 +476,8 @@ const RoomPage: React.FC = () => {
                           </PopoverTrigger>
                           <PopoverContent className="w-48 p-2 backdrop-blur-sm">
                             <Button onClick={handleGroupQuestions} className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaRegComments /> Group questions</Button>
-                            <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear questions</Button>
-                            <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart round</Button>
+                            <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear Q&A</Button>
+                            <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart Q&A</Button>
                           </PopoverContent>
                         </Popover>
                         {/* Poll button */}
@@ -541,11 +555,11 @@ const RoomPage: React.FC = () => {
             <DialogHeader>
               <DialogTitle className='flex gap-2 justify-center text-xl'>
                 <Skull className="h-5 w-5" />
-                Confirm Restart Room
+                Confirm Start New Q&A Round
               </DialogTitle>
             </DialogHeader>
-            <p className="mt-4">Are you sure you want to restart the room?</p>
-            <p className="mt-4">This will clear all current questions, all messages in the room, and start a new round.</p>
+            <p className="mt-4">Are you sure you want to start a new round?</p>
+            <p className="mt-4">All users questions will be archived and everyone will have <br /> <span className="bg-orange-200"> {GIVEN_QUESTIONS} questions </span>and <span className="bg-orange-200">{GIVEN_UPVOTES} upvotes</span> again </p>
             <div className="mt-4 flex justify-center gap-4">
               <Button variant={"destructive"} onClick={confirmRestartRound}>Yes, Restart</Button>
               <Button variant="secondary" onClick={() => setShowRestartRoomDialog(false)}>Cancel</Button>
@@ -561,7 +575,7 @@ const RoomPage: React.FC = () => {
                 <span className="bg-red-200 p-1">
                   DANGER, DANGER !!
                 </span>
-            </DialogTitle>
+              </DialogTitle>
             </DialogHeader>
             <p className="mt-4">
               This action will save your activities (questions, messages, ...) and will kick all participants out. It can't be undone</p>
@@ -580,16 +594,57 @@ const RoomPage: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        {roomClosed && (
-          <Dialog open={roomClosed} onOpenChange={() => { }}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Room Closed</DialogTitle>
-              </DialogHeader>
-              <p className="mt-4">The room has been closed and is no longer accessible. You will be redirected to the homepage shortly.</p>
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={roomClosed} onOpenChange={() => router.push('/')}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Room by host</DialogTitle>
+            </DialogHeader>
+            <form className="space-y-4" action={(formData) => {
+              submitFeedback(formData).then(_ => {
+                toast.success("Feedback submitted. Redirecting to home page")
+                setTimeout(() => {
+                  router.push('/')
+                }, 1000)
+              }
+              ).catch(err => {
+                toast.error("Some error happened, please close this tab ")
+              })
+            }}>
+              <div className="flex gap-3 flex-col">
+                <p className="mb-4">You can leave feedback, follow-up question, how you like the session, the host will be informed</p>
+                <div className="flex justify-center gap-4 items-center">
+                  <p>Do you think this session helpful?</p>
+                  <div className="flex gap-2 justify-center items-center">
+                    <Checkbox
+                      id="like"
+                      name="like"
+                    />
+                    <label htmlFor="like">
+                      👍 Yes
+                    </label>
+                  </div>
+                </div>
+                <input name="roomId" id="roomId" className='hidden' value={roomData.id}/>
+                <div>
+                  <Input
+                    id="feedback"
+                    name="feedback"
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder="Any feedback or follow-up question?"
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+              <Button
+                type="submit"
+                className="w-full mt-4 bg-blue-500 hover:bg-blue-600"
+              >
+                Submit and leave
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </RoomProvider>
   );
