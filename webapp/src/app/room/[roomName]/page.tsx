@@ -42,6 +42,11 @@ import {
 import { storeSessionData, removeSession, getStoredSessionData } from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  setupRealtimeChannel, 
+  RealtimeChannelApi, 
+  RoomData 
+} from '@/utils/realtime';
 
 
 const RoomPage: React.FC = () => {
@@ -58,7 +63,7 @@ const RoomPage: React.FC = () => {
   const [hostOnline, setHostOnline] = useState(false)
 
   // User state
-  const [username, setUsername] = useState<string>('');
+  const [username, setUsername] = useState<string|null>(null);
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [userData, setUserData] = useState<UserData | null>(null);
 
@@ -84,6 +89,7 @@ const RoomPage: React.FC = () => {
   // Add these near other state declarations
   const [feedback, setFeedback] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const [realtimeApi, setRealtimeApi] = useState<RealtimeChannelApi | null>(null);
 
   // Memoize event handlers
   const handleUpvote = useCallback((uuid: string) => {
@@ -93,17 +99,13 @@ const RoomPage: React.FC = () => {
     }
 
     try {
-      channel?.send({
-        type: 'broadcast',
-        event: 'upvote',
-        payload: { questionId: uuid }
-      });
+      realtimeApi?.sendUpvote(uuid);
       setUpvotesLeft(prev => prev - 1);
     } catch (error) {
       console.error('Error broadcasting upvote:', error);
       toast.error('Failed to upvote');
     }
-  }, [channel, upvotesLeft]);
+  }, [realtimeApi, upvotesLeft]);
 
   const onSent = useCallback((content: string) => {
     if (questionsLeft <= 0) {
@@ -112,140 +114,14 @@ const RoomPage: React.FC = () => {
     }
 
     try {
-      if (channel) {
-        channel.send({
-          type: 'broadcast',
-          event: 'message',
-          payload: { username, content }
-        });
-        setQuestionsLeft(prev => prev - 1);
-      }
+      realtimeApi?.sendMessage(content);
+      setQuestionsLeft(prev => prev - 1);
     } catch (error) {
       toast.error("Internal error");
     } finally {
       setShowMessageInput(false);
     }
-  }, [channel, questionsLeft, username]);
-
-  // Separate channel setup into its own effect
-  useEffect(() => {
-    if (!username || !roomName) return;
-
-    const channel = supabase.channel(`room-${roomName}`, {
-      config: {
-        broadcast: { self: true },
-      }
-    });
-
-    // Handle messages
-    channel.on('broadcast', { event: 'message' }, ({ payload }) => {
-      const { username, content } = payload;
-      const message: Message = { username, content, flag: '🇺🇸' };
-      setMessages((prevMessages) => [...prevMessages, message]);
-      if (roomData?.isHost) {
-        addMessage(roomData.id, content, username, 1)
-      }
-    });
-
-    // Handle questions
-    channel.on('broadcast', { event: 'questions' }, ({ payload }) => {
-      setQuestions(payload.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
-        uuid: question.uuid,
-        rephrase: question.rephrase,
-        upvotes: question.upvotes,
-      })));
-      setLoadingQuestions(false);
-      setHostMessage("");
-    });
-
-    const updateQuestionsOnDb = _.debounce(async (questions: QuestionItem[]) => {
-      await insertQuestions(roomData.id, questions, 1);
-      console.log('updated questions on db')
-    }, 2000);
-
-    // Handle upvotes
-    channel.on('broadcast', { event: 'upvote' }, ({ payload }) => {
-      setQuestions(prevQuestions => {
-        const updatedQuestions = prevQuestions.map(question =>
-          question.uuid === payload.questionId
-            ? { ...question, upvotes: (question.upvotes || 0) + 1 }
-            : question
-        );
-
-        if (roomData?.isHost) {
-          // insertQuestions(roomData.id, updatedQuestions, 1);
-          updateQuestionsOnDb(updatedQuestions);
-        }
-
-        return updatedQuestions;
-      });
-    });
-
-    // Handle commands
-    channel.on('broadcast', { event: 'command' }, ({ payload }) => {
-      const { command } = payload;
-      switch (command) {
-        case 'clear_questions':
-          setLoadingQuestions(true);
-          setQuestions([])
-          setLoadingQuestions(false);
-          setHostMessage("Host cleared questions");
-          break;
-        case 'grouping_questions':
-          setLoadingQuestions(true);
-          setHostMessage("Host grouping questions");
-          break;
-        case 'new_round':
-          setHostMessage("Host started new round of questions");
-          setMessages([]);
-          setQuestions([]);
-          setQuestionsLeft(GIVEN_QUESTIONS);
-          setUpvotesLeft(GIVEN_UPVOTES);
-          break;
-        case 'close_room':
-          setRoomClosed(true);
-          // setTimeout(onLeave, 3000);
-          break;
-      }
-    });
-
-    //Presence
-    channel
-      .on("presence", { event: 'sync' }, () => {
-      })
-      .on("presence", { event: 'join' }, ({ key, newPresences }) => {
-        if (!hostOnline) {
-          newPresences.forEach((presence) => {
-            if (presence.isHost) setHostOnline(true)
-          })
-        }
-      })
-      .on("presence", { event: 'leave' }, ({ key, leftPresences }) => {
-        leftPresences.forEach((presence) => {
-          if (presence.isHost) {
-            setHostOnline(false)
-          }
-        })
-      })
-
-    channel.subscribe(async (status) => {
-      if (status !== 'SUBSCRIBED') return
-      const data = { "isHost": false }
-
-      if (roomData.isHost) {
-        data.isHost = true
-      }
-      const trackStatus = await channel.track(data)
-      console.log('trackStatus', trackStatus)
-    }
-
-    );
-    setChannel(channel);
-
-    return async () => {
-      channel.unsubscribe();
-    };
-  }, [roomName, username, roomData]);
+  }, [realtimeApi, questionsLeft]);
 
   //USE EFFECT
 
@@ -302,9 +178,48 @@ const RoomPage: React.FC = () => {
 
   }, [roomName]);
 
+  // Separate channel setup into its own effect
+  useEffect(() => {
+    if (!username || !roomName || !roomData) return;
+
+    const handlers = {
+      setMessages,
+      setQuestions,
+      setLoadingQuestions,
+      setHostMessage,
+      setQuestionsLeft,
+      setUpvotesLeft,
+      setHostOnline,
+      setRoomClosed
+    };
+
+    const config = {
+      GIVEN_QUESTIONS,
+      GIVEN_UPVOTES
+    };
+
+    const api = setupRealtimeChannel(
+      supabase,
+      roomName,
+      roomData as RoomData,
+      username,
+      handlers,
+      config
+    );
+
+    setRealtimeApi(api);
+    setChannel(api.channel);
+
+    return () => {
+      api.unsubscribe();
+    };
+  }, [roomName, username, roomData]);
+
+
   // Initial data sync
   useEffect(() => {
     console.log('setting up username and websocket')
+    console.log(hostOnline)
 
     if (!loading && username && !showDialog && roomData) {
 
@@ -357,26 +272,21 @@ const RoomPage: React.FC = () => {
   const handleGroupQuestions = async () => {
     setLoadingQuestions(true);
     try {
-
-      channel?.send({
-        type: 'broadcast',
-        event: 'command',
-        payload: { command: 'grouping_questions' }
-      })
+      realtimeApi?.sendCommand('grouping_questions');
 
       const res = await groupMessages(messages.map(msg => msg.content));
 
       // Broadcast the grouped questions to all room participants
-      broadcastQuestions(
+      realtimeApi?.broadcastQuestions(
         res.message.map((item: any) => ({
           uuid: item.uuid,
           rephrase: item.rephrase,
           upvotes: item.upvotes,
         }))
-      )
+      );
 
       //insert or update the questions
-      await insertQuestions(roomData.id, res.message, 1)
+      await insertQuestions(roomData.id, res.message, 1);
 
       toast.success('Grouped questions');
     } catch (error) {
@@ -398,13 +308,8 @@ const RoomPage: React.FC = () => {
   }
 
   const handleClearQuestion = async () => {
-    await clearQuestions(roomData.id, 1)
-
-    channel?.send({
-      type: 'broadcast',
-      event: 'command',
-      payload: { command: 'clear_questions' }
-    })
+    await clearQuestions(roomData.id, 1);
+    realtimeApi?.sendCommand('clear_questions');
   }
 
   const handleRestartRound = () => {
@@ -421,28 +326,22 @@ const RoomPage: React.FC = () => {
   }
 
   const confirmCloseRoom = () => {
-    console.log("confirmCloseRoom")
+    console.log("confirmCloseRoom");
 
     closeRoom(roomData.id)
       .then(_ => {
-        channel?.send({
-          type: 'broadcast',
-          event: 'command',
-          payload: { command: 'close_room' }
-        })
-        toast.success("Room closed successfully")
+        realtimeApi?.sendCommand('close_room');
+        toast.success("Room closed successfully");
       })
       .catch(err => {
-        toast.error("Error while closing room, try again later")
-        console.error(err)
-      })
-      .finally(() => {
-      })
+        toast.error("Error while closing room, try again later");
+        console.error(err);
+      });
   }
 
   const onLeave = () => {
-    if (channel) {
-      channel.unsubscribe();
+    if (realtimeApi) {
+      realtimeApi.unsubscribe();
     }
     removeSession();
     router.push("/");
@@ -679,7 +578,7 @@ const RoomPage: React.FC = () => {
         </Dialog>
 
         {/* Add the host offline dialog */}
-        <Dialog open={!hostOnline}>
+        {/* <Dialog open={!hostOnline && !username}>
           <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="text-center text-red-600">Waiting for host</DialogTitle>
@@ -689,9 +588,9 @@ const RoomPage: React.FC = () => {
                 Waiting for host to start the room ...
               </p>
             </div>
-            <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif"/>
+            <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif"/>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
       </div>
     </RoomProvider>
   );
