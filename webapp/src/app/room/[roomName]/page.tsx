@@ -568,7 +568,7 @@ const RoomPage: React.FC = () => {
         </Dialog>
 
         {/* Add the host offline dialog */}
-        {/* <Dialog open={!hostOnline && !username}>
+        <Dialog open={username !== null && !hostOnline}>
           <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="text-center text-red-600">Waiting for host</DialogTitle>
@@ -580,7 +580,7 @@ const RoomPage: React.FC = () => {
             </div>
             <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif"/>
           </DialogContent>
-        </Dialog> */}
+        </Dialog>
       </div>
     </RoomProvider>
   );
