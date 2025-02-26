@@ -27,7 +27,7 @@ const JoinRoomForm = () => {
         setJoiningLoader(true);
 
         try {
-            await fetchRoom(roomCode)
+            const res = await fetchRoom(roomCode)
             router.push('/room/' + roomCode);
         } catch (err) {
             console.error(err)

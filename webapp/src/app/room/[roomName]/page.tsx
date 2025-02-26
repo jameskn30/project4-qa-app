@@ -28,7 +28,15 @@ import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
 import { getUserData as _getUserData, UserData } from '@/utils/supabase/auth';
 import { Message } from '@/app/components/ChatWindow';
 import { QuestionItem } from '@/app/components/QuestionList';
-import { groupMessages, clearQuestions, fetchRoom, fetchMessages, insertQuestions, fetchQuestions } from '@/utils/room.v2';
+import { 
+  groupMessages, 
+  clearQuestions, 
+  fetchRoom, 
+  fetchMessages, 
+  insertQuestions, 
+  fetchQuestions,
+  closeRoom
+ } from '@/utils/room.v2';
 import { storeSessionData, removeSession } from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
 
@@ -274,7 +282,7 @@ const RoomPage: React.FC = () => {
           flag: '🇺🇸'
         })));
 
-        setQuestions(questions.map(question => ({
+        setQuestions(questions.map((question:any) => ({
           uuid: question.uuid,
           rephrase: question.rephrase,
           upvotes: question.upvotes,
@@ -375,17 +383,27 @@ const RoomPage: React.FC = () => {
 
   const confirmCloseRoom = () => {
     console.log("confirmCloseRoom")
-    // closeRoom(roomName!!)
-    //   .then(data => console.log(data))
-    //   .then(data => {
-    //     onLeave()
-    //   })
-    //   .catch(err => {
-    //     toast.error("Error while closing room")
-    //   })
-    //   .finally(() => {
-    //     setShowCloseRoomDialog(false);
-    //   })
+
+    closeRoom(roomData.id)
+    .then(_ => {
+      toast.success("Room closed successfully")
+      channel?.send({
+        type: 'broadcast',
+        event: 'command',
+        payload: { command: 'close_room' }
+      })
+    })
+    .catch(err => {
+      toast.error("Error while closing room, try again later")
+      console.error(err)
+    })
+    .finally(() => {
+    })
+
+
+
+
+    
   }
 
   const onLeave = () => {

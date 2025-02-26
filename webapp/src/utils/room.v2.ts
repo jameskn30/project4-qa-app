@@ -81,18 +81,6 @@ export const fetchRoom = async (roomName: string) => {
     return { 'name': data.name, 'isHost': data?.host_id === user?.id, 'id': data.id }
 }
 
-// export const getActiveRooms = async () => {
-//     const user = await _getUserData()
-//     const userId = user.id
-//     const res = await fetch(`${CHATAPI_ENDPOINT}/get_active_room/${userId}`);
-
-//     if (!res.ok) {
-//         return null
-//     } else {
-//         return res.json()
-//     }
-// }
-
 export const fetchRoomId = async () => {
     const res = await fetch(`${CHATAPI_ENDPOINT}/get_random_room_id`);
 
@@ -106,19 +94,17 @@ export const fetchRoomId = async () => {
 export const closeRoom = async (roomId: string) => {
     const supabase = await createClient()
 
-    const { data, error } = await supabase
+    console.log(roomId)
+
+    const { error } = await supabase
         .from('Room')
-        .delete()
+        .update({ is_active: false })
         .eq('id', roomId)
-
-    console.log(data)
-
+        
     if (error) {
         console.error('Error closing room:', error)
         throw new Error('Failed to close room')
     }
-
-    return data
 }
 
 export const fetchMyRooms = async () => {
