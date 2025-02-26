@@ -124,13 +124,50 @@ export const fetchMyRooms = async () => {
     return data
 }
 
+export const addMessage = async (roomId: string, message: string, guestName: string, round: number) => {
+    const supabase = await createClient()
+    console.log("add message")
+    console.log(round)
+    
+
+    const {data, error: insertError} = await supabase.from('Message')
+        .insert({
+            room_id: roomId,
+            guest_name: guestName,
+            content: message,
+            round: round
+        })
+    
+    if (insertError) {
+        console.error('Error adding message', insertError)
+        throw new Error('Failed to add message')
+    }
+}
+
+//TODO: this is bulk insert
+// export const addMessages = async (roomId: string, messages: {content:string , username:string }[]) => {
+//     const supabase = await createClient()
+
+//     const {data, error: insertError} = await supabase.from('Message')
+//         .insert(messages.map((m) => ({
+//             room_id: roomId,
+//             content: m.content,
+//             guest_name: m.username,
+//         })))
+    
+//     if (insertError) {
+//         console.error('Error adding messages:', insertError)
+//         throw new Error('Failed to add messages')
+//     }
+// }
+
 // Message and question handling
 export const fetchMessages = async (roomId: string) => {
 
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('Message')
-        .select('content, guestName, created_at')
+        .select('content, guest_name, created_at')
         .eq('room_id', roomId)
         .order('created_at', { ascending: true })
 

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast, Toaster } from 'sonner';
-import _ from 'lodash';
+import _, { add } from 'lodash';
 
 // Components
 import QuestionList from '@/app/components/QuestionList';
@@ -36,12 +36,13 @@ import {
   insertQuestions,
   fetchQuestions,
   closeRoom,
-  submitFeedback
+  submitFeedback,
+  addMessage
 } from '@/utils/room.v2';
-import { storeSessionData, removeSession } from '@/utils/localstorage';
+import { storeSessionData, removeSession, getStoredSessionData } from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
@@ -139,6 +140,9 @@ const RoomPage: React.FC = () => {
       const { username, content } = payload;
       const message: Message = { username, content, flag: '🇺🇸' };
       setMessages((prevMessages) => [...prevMessages, message]);
+      if (roomData?.isHost){
+        addMessage(roomData.id, content, username, 1)
+      }
     });
 
     // Handle questions
@@ -247,20 +251,18 @@ const RoomPage: React.FC = () => {
     const getUserData = async () => {
       const user = await _getUserData()
       setUserData(user)
-      console.log('user data')
-      console.log(user)
       if (user) {
         setUsername(user.username)
         setShowDialog(false)
       } else {
-        // const storedSession = getStoredSessionData();
+        const storedSession = getStoredSessionData();
 
-        // if (storedSession && !username) {
-        //   setUsername(storedSession.username);
-        //   setQuestionsLeft(storedSession.questionsLeft);
-        //   setUpvotesLeft(storedSession.upvotesLeft);
-        //   setShowDialog(false)
-        // }
+        if (storedSession && !username) {
+          setUsername(storedSession.username);
+          setQuestionsLeft(storedSession.questionsLeft);
+          setUpvotesLeft(storedSession.upvotesLeft);
+          setShowDialog(false)
+        }
       }
     }
 
@@ -283,7 +285,7 @@ const RoomPage: React.FC = () => {
         ]);
 
         setMessages(messages.map(message => ({
-          username: message.guestName,
+          username: message.guest_name,
           content: message.content,
           flag: '🇺🇸'
         })));

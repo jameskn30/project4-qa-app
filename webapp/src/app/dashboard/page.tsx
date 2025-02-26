@@ -214,7 +214,7 @@ const NewRoomPage = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className='flex justify-center gap-2 flex-col text-sm'>
-                                    <div className='flex gap-2'>
+                                    {/* <div className='flex gap-2'>
                                         <UserRound size={18} />
                                         <p>50 participants</p>
                                     </div>
@@ -227,12 +227,12 @@ const NewRoomPage = () => {
                                     <div className='flex gap-2'>
                                         <MessageCircleWarning size={18} />
                                         <p>2 followups </p>
-                                    </div>
+                                    </div> */}
 
-                                    <div className='flex gap-2'>
+                                    {/* <div className='flex gap-2'>
                                         <ThumbsUp size={18} />
                                         <p>183 likes the session </p>
-                                    </div>
+                                    </div> */}
                                     <Button className="bg-blue-500 text-white hover:bg-blue-700" onClick={() => handleViewStats(room)}>
                                         See stats
                                     </Button>
