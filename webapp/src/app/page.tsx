@@ -22,16 +22,9 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
 
     return (
         <nav className="sticky top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
-            {/* <div className="flex p-1 space-2 bg-white  shadow-xl rounded-2xl border border-slate-200">
-                <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer"/>
-                <p>Donask</p>
-            </div> */}
-            {/* <div className="flex p-1 gap-3 bg-white shadow-xl rounded-2xl border border-slate-200">
-                <Button variant={'ghost'} onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Wait list</Button>
-            </div> */}
 
             <div className="flex p-1 space-2  gap-3 justify-end w-full ">
-                <Button className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white">
+                <Button variant="secondary">
                     <Link href="https://jameskn30.github.io/portfolio/" target="_blank">About Me</Link>
                 </Button>
                 {
@@ -39,7 +32,7 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
                         <Spinner />
                     ) : (
                         isLoggedIn === false ? (
-                            <Button variant={'ghost'} onClick={scrollToWaitlist} className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">Login/Signup</Button>
+                            <Button variant={'destructive'} onClick={scrollToWaitlist}>Login/Signup</Button>
                         ) : (
                             <>
                                 <Button variant={'ghost'} asChild className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">
@@ -131,7 +124,7 @@ const WelcomePage = () => {
                     </div>
                 </div>
 
-                <div className="flex w-1/3 justify-center items-center">
+                <div className="flex w-full lg:w-1/3 justify-center items-center">
                     <div className=" w-[300px] h-[300px]">
                         <JoinRoomForm />
                     </div>
