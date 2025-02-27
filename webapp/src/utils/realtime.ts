@@ -104,15 +104,15 @@ export const setupRealtimeChannel = (
       return updatedQuestions;
     });
     
+    // This is redundant since we're already updating upvotesLeft in the component
     if (roomData?.isHost) {
       setUpvotesLeft(prev => prev - 1);
     }
   });
 
-  // Handle commands
+  // Handle commands with switch statement
   channel.on('broadcast', { event: 'command' }, ({ payload }: { payload: any }) => {
-    const { command } = payload;
-    switch (command) {
+    switch (payload.command) {
       case 'clear_questions':
         setLoadingQuestions(true);
         setQuestions([]);
@@ -136,62 +136,48 @@ export const setupRealtimeChannel = (
     }
   });
 
-  // Presence handling
+  // Simplified presence handling
   channel
     .on("presence", { event: 'sync' }, () => {
-      console.log('presence sync');
-      const state = channel.presenceState();
-      console.log('presence state', state);
+      // If user is host, no need to check presence
+      if (roomData.isHost) {
+        setHostOnline(true);
+        return;
+      }
       
       // Check if host is in the room
-      const presences = Object.values(state).flat();
-      const hostPresent = presences.some((presence: any) => presence.isHost === true);
-      setHostOnline(hostPresent || roomData.isHost);
+      const presences = Object.values(channel.presenceState()).flat();
+      setHostOnline(presences.some((presence: any) => presence.isHost === true));
     })
-    .on("presence", { event: 'join' }, ({ key, newPresences }: { key: string, newPresences: any[] }) => {
-      // When someone joins, check if they're the host
-      const hostJoined = newPresences.some((presence: any) => presence.isHost === true);
-      if (hostJoined) {
-        console.log('Host joined the room');
+    .on("presence", { event: 'join' }, ({ newPresences }: { key: string, newPresences: any[] }) => {
+      if (roomData.isHost) return;
+      
+      if (newPresences.some((presence: any) => presence.isHost === true)) {
         setHostOnline(true);
       }
     })
-    .on("presence", { event: 'leave' }, ({ key, leftPresences }: { key: string, leftPresences: any[] }) => {
-      // Only check for host leaving if we're not the host ourselves
-      if (!roomData.isHost) {
-        const hostLeft = leftPresences.some((presence: any) => presence.isHost === true);
-        if (hostLeft) {
-          // We need to check if there are other host instances still in the room
-          const state = channel.presenceState();
-          const remainingPresences = Object.values(state).flat();
-          const hostStillPresent = remainingPresences.some((presence: any) => 
-            presence.isHost === true && !leftPresences.includes(presence)
-          );
-          
-          if (!hostStillPresent) {
-            console.log('All hosts have left the room');
-            setHostOnline(false);
-          }
-        }
+    .on("presence", { event: 'leave' }, ({ leftPresences }: { key: string, leftPresences: any[] }) => {
+      if (roomData.isHost) return;
+      
+      if (leftPresences.some((presence: any) => presence.isHost === true)) {
+        setHostOnline(false);
       }
     });
 
   // Subscribe and track presence
   channel.subscribe(async (status: string) => {
-    if (status !== 'SUBSCRIBED') return;
-    
-    const presenceData = { 
-      username: username, 
-      isHost: roomData.isHost,
-      online: true,
-    };
-    
-    const trackStatus = await channel.track(presenceData);
-    console.log('trackStatus', trackStatus);
-    
-    // If we are the host, immediately set hostOnline to true
-    if (roomData.isHost) {
-      setHostOnline(true);
+    if (status === 'SUBSCRIBED') {
+      const presenceData = { 
+        username, 
+        isHost: roomData.isHost,
+        online: true,
+      };
+      
+      await channel.track(presenceData);
+      
+      if (roomData.isHost) {
+        setHostOnline(true);
+      }
     }
   });
 

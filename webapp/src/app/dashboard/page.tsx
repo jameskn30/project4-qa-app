@@ -181,20 +181,7 @@ const NewRoomPage = () => {
                     )
                 }
                 {/* TODO: add poll feature */}
-                {/* <div className='w-[250px] h-[250px]'>
-                    <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
-                        <CardHeader className='text-2xl flex'>
-                            <CardTitle className='flex gap-2'>
-                                Add polls
-                                <ChartColumnBig />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className='flex-1 flex flex-col justify-center'>
-                            <p>You have 3 preset polls</p>
-                        </CardContent>
-                    </Card>
-                </div>
-             */}</div>
+            </div>
 
             {/* <div className="container mx-auto px-4"> */}
             <div className='flex justify-center items-center w-1/2'>
@@ -273,7 +260,7 @@ const NewRoomPage = () => {
                                 </div>
                             </CardContent>
                         </Card>
-                        
+
                         <Card>
                             <CardHeader>
                                 <CardTitle>Question Statistics</CardTitle>

@@ -7,6 +7,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/server";
 
 // Constants
+//LLM service
 const CHATAPI_ENDPOINT = process.env.CHATAPI_ENDPOINT;
 
 // Types
@@ -19,6 +20,7 @@ interface ProcessedQuestion {
 // Helper functions
 const _getUserData = async (client: SupabaseClient | null = null) => {
     let supabase
+
     if (client) {
         supabase = client
     } else {
@@ -36,25 +38,8 @@ const _getUserData = async (client: SupabaseClient | null = null) => {
 }
 
 // Room management functions
-export const createRoom = async (roomId: string) => {
-    const user = await _getUserData()
-    const userId = user.id
-
-    const response = await fetch(`${CHATAPI_ENDPOINT}/create_room`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            roomId: roomId,
-            userId: userId
-        }),
-    });
-
-    if (response.ok) {
-        return true;
-    }
-    return false
+export const createRoom = async (roomName: string) => {
+    console.log('createRoom')
 }
 
 export const fetchRoom = async (roomName: string) => {
@@ -81,26 +66,14 @@ export const fetchRoom = async (roomName: string) => {
     return { 'name': data.name, 'isHost': data?.host_id === user?.id, 'id': data.id }
 }
 
-export const fetchRoomId = async () => {
-    const res = await fetch(`${CHATAPI_ENDPOINT}/get_random_room_id`);
-
-    if (!res.ok) {
-        throw new Error('Failed to fetch room ID');
-    }
-
-    return res.json();
-}
-
 export const closeRoom = async (roomId: string) => {
     const supabase = await createClient()
-
-    console.log(roomId)
 
     const { error } = await supabase
         .from('Room')
         .update({ is_active: true })
         .eq('id', roomId)
-        
+
     if (error) {
         console.error('Error closing room:', error)
         throw new Error('Failed to close room')
@@ -111,12 +84,12 @@ export const fetchMyRooms = async () => {
     const supabase = await createClient()
     const userData = await _getUserData(supabase)
 
-    const {data,error} = await supabase
+    const { data, error } = await supabase
         .from('Room')
         .select('name, is_active, created_at')
         .eq('host_id', userData.id)
 
-    if (error) {    
+    if (error) {
         console.error('Error fetching rooms:', error)
         throw new Error('Failed to fetch rooms')
     }
@@ -126,18 +99,15 @@ export const fetchMyRooms = async () => {
 
 export const addMessage = async (roomId: string, message: string, guestName: string, round: number) => {
     const supabase = await createClient()
-    console.log("add message")
-    console.log(round)
-    
 
-    const {data, error: insertError} = await supabase.from('Message')
+    const { data, error: insertError } = await supabase.from('Message')
         .insert({
             room_id: roomId,
             guest_name: guestName,
             content: message,
             round: round
         })
-    
+
     if (insertError) {
         console.error('Error adding message', insertError)
         throw new Error('Failed to add message')
@@ -207,7 +177,6 @@ export const insertQuestions = async (roomId: string, questions: ProcessedQuesti
 }
 
 export const fetchQuestions = async (roomId: string, round: number) => {
-    console.log(roomId, ' ', round)
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('ProcessedQuestions')
@@ -215,8 +184,7 @@ export const fetchQuestions = async (roomId: string, round: number) => {
         .eq('room_id', roomId)
         .eq('round', round)
         .maybeSingle()
-    
-    console.log(data)
+
 
     if (error) {
         console.error('Error fetching questions:', error)
@@ -228,7 +196,6 @@ export const fetchQuestions = async (roomId: string, round: number) => {
 
 export const clearQuestions = async (roomId: string, round: number) => {
     const supabase = await createClient()
-    console.log('Clearing questions for room', roomId, 'round', round)
 
     const { error: deleteError } = await supabase
         .from('ProcessedQuestions')
@@ -247,8 +214,7 @@ export const submitFeedback = async (formData: FormData) => {
     const feedback = formData.get("feedback") as string;
     const roomId = formData.get("roomId") as string;
     const isLiked = formData.get("like") === 'on';
-    console.log(roomId)
-    console.log(isLiked)
+
     if (feedback.trim() === '' && !isLiked) {
         return
     }
@@ -256,7 +222,7 @@ export const submitFeedback = async (formData: FormData) => {
     const supabase = await createClient();
 
     const user = await _getUserData(supabase);
-    
+
     try {
         const { error } = await supabase
             .from('Feedback')
@@ -268,7 +234,7 @@ export const submitFeedback = async (formData: FormData) => {
             });
 
         if (error) throw error;
-        
+
         return { success: true };
     } catch (error) {
         console.error('Error submitting feedback:', error);

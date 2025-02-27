@@ -6,7 +6,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Shuffle } from 'lucide-react';
 import { useQRCode } from 'next-qrcode';
 import { useRouter } from 'next/navigation'
-import { fetchRoomId } from '@/utils/room.v2'
+import { fetchRoom } from '@/utils/room.v2'
 import { createRoom as _createRoom } from '@/utils/room.v2';
 import { Toaster, toast } from 'sonner'
 import _ from 'lodash';
@@ -38,10 +38,11 @@ const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
     }, [])
 
     const handleFetchRandomId = async () => {
-        setFetchingRandomRoomId(true);
-        const data = await fetchRoomId()
-        setRoomId(data.roomId)
-        setFetchingRandomRoomId(false);
+        console.log('handleFetchRandomId')
+        // setFetchingRandomRoomId(true);
+        // const data = await fetchRoom()
+        // setRoomId(data.roomId)
+        // setFetchingRandomRoomId(false);
     };
     return (
         <Card  className="border-0 shadow-none  bg-white p-2 gap-4 flex flex-col min-w-[350px] min-h-[400px] py-5 z-10">
