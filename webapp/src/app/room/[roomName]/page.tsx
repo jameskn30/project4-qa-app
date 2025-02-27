@@ -11,6 +11,7 @@ import Navbar from '@/app/components/Navbar';
 import Loading from './loading';
 import ErrorPage from './error';
 import MessageInput from '@/app/components/MessageInput';
+import ParticipantsList from '@/app/components/ParticipantsList';
 
 // UI Components
 import { Input } from '@/components/ui/input';
@@ -21,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 // Icons
 import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
-import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull } from 'lucide-react';
+import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull, Users } from 'lucide-react';
 
 // Utils & Types
 import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
@@ -45,7 +46,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   setupRealtimeChannel,
   RealtimeChannelApi,
-  RoomData
+  RoomData,
+  Participant
 } from '@/utils/realtime';
 
 
@@ -60,7 +62,9 @@ const RoomPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [roomExists, setRoomExists] = useState(true);
   const [roomClosed, setRoomClosed] = useState(false);
-  const [hostOnline, setHostOnline] = useState(false)
+  const [hostOnline, setHostOnline] = useState(false);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [showParticipants, setShowParticipants] = useState(false);
 
   // User state
   const [username, setUsername] = useState<string | null>(null);
@@ -109,7 +113,7 @@ const RoomPage: React.FC = () => {
 
   const handleDeleteQuestion = useCallback((uuid: string, questions: QuestionItem[]) => {
     try {
-      if(roomData.isHost){
+      if (roomData.isHost) {
         const updatedQuestions = questions.filter(question => question.uuid !== uuid);
         realtimeApi?.broadcastQuestions(updatedQuestions);
       }
@@ -134,6 +138,10 @@ const RoomPage: React.FC = () => {
       setShowMessageInput(false);
     }
   }, [realtimeApi, questionsLeft]);
+
+  const toggleParticipantsDisplay = () => {
+    setShowParticipants(!showParticipants);
+  };
 
   //USE EFFECT
 
@@ -202,7 +210,8 @@ const RoomPage: React.FC = () => {
       setQuestionsLeft,
       setUpvotesLeft,
       setHostOnline,
-      setRoomClosed
+      setRoomClosed,
+      setParticipants
     };
 
     const config = {
@@ -417,7 +426,10 @@ const RoomPage: React.FC = () => {
             }
 
             <div className='h-1/3 lg:h-1/2 lg:flex-grow hidden lg:block bottom-0 left-0 right-0 lg:bottom-auto lg:left-auto lg:right-auto' id='chat-container'>
-              <ChatWindow messages={messages} onSent={onSent} questionsLeft={questionsLeft} upvoteLeft={upvotesLeft} isHost={roomData.isHost} />
+              <ChatWindow
+                messages={messages}
+                participants={participants}
+              />
 
               <div className="lg:hidden">
                 <Button variant="outline" className="lg:hidden flex-shrink text-gray-500 flex justify-between items-center gap-3"> <FaAngleUp /> more chat</Button>
@@ -444,6 +456,7 @@ const RoomPage: React.FC = () => {
                 </Card>
               )
             }
+
           </div>
         </div>
         <Dialog open={showUsernameDialog}>

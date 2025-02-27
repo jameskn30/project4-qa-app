@@ -10,6 +10,13 @@ export interface RoomData {
   isHost: boolean;
 }
 
+export interface Participant {
+  username: string;
+  isHost: boolean;
+  online: boolean;
+  // id?: string; // Optional unique identifier
+}
+
 export interface RealtimeHandlers {
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   setQuestions: (questions: QuestionItem[] | ((prev: QuestionItem[]) => QuestionItem[])) => void;
@@ -19,6 +26,7 @@ export interface RealtimeHandlers {
   setUpvotesLeft: (upvotesLeft: number | ((prev: number) => number)) => void;
   setHostOnline: (online: boolean) => void;
   setRoomClosed: (closed: boolean) => void;
+  setParticipants: (participants: Participant[]) => void;
 }
 
 export interface RealtimeConfig {
@@ -34,6 +42,7 @@ export interface RealtimeChannelApi {
   broadcastQuestions: (questions: QuestionItem[]) => Promise<void>;
   unsubscribe: () => void;
   sendDeleteQuestions: (questionid: string) => Promise<void>;
+  getParticipants: () => Participant[];
 }
 
 export const setupRealtimeChannel = (
@@ -52,7 +61,8 @@ export const setupRealtimeChannel = (
     setQuestionsLeft,
     setUpvotesLeft,
     setHostOnline,
-    setRoomClosed
+    setRoomClosed,
+    setParticipants
   } = handlers;
 
   const { GIVEN_QUESTIONS, GIVEN_UPVOTES } = config;
@@ -139,27 +149,51 @@ export const setupRealtimeChannel = (
     }
   });
 
-  // Simplified presence handling
+  // Function to extract participants from presence state
+  const extractParticipants = (state: any): Participant[] => {
+    if (state){
+    return Object.values(state)
+      .flat()
+      .map((presence: any) => ({
+        username: presence.username,
+        isHost: presence.isHost,
+        online: presence.online,
+        // id: presence.id || `user-${Math.random().toString(36).substr(2, 9)}`
+      }));
+    }
+    return []
+  };
+
+  // Presence handling with participants tracking
   channel
     .on("presence", { event: 'sync' }, () => {
       // If user is host, no need to check presence
       if (roomData.isHost) {
         setHostOnline(true);
-        return;
       }
 
+      // Update participants list based on presence data
+      const presences = channel.presenceState();
+      const participants = extractParticipants(presences);
+      setParticipants(participants);
+      
       // Check if host is in the room
-      const presences = Object.values(channel.presenceState()).flat();
-      setHostOnline(presences.some((presence: any) => presence.isHost === true));
+      setHostOnline(participants.some(p => p.isHost === true));
     })
-    .on("presence", { event: 'join' }, ({ newPresences }: { key: string, newPresences: any[] }) => {
+    .on("presence", { event: 'join' }, ({ newPresences, state }: { key: string, newPresences: any[], state: any }) => {
+      const participants = extractParticipants(state);
+      setParticipants(participants);
+      
       if (roomData.isHost) return;
 
       if (newPresences.some((presence: any) => presence.isHost === true)) {
         setHostOnline(true);
       }
     })
-    .on("presence", { event: 'leave' }, ({ leftPresences }: { key: string, leftPresences: any[] }) => {
+    .on("presence", { event: 'leave' }, ({ leftPresences, state }: { key: string, leftPresences: any[], state: any }) => {
+      const participants = extractParticipants(state);
+      setParticipants(participants);
+      
       if (roomData.isHost) return;
 
       if (leftPresences.some((presence: any) => presence.isHost === true)) {
@@ -174,6 +208,7 @@ export const setupRealtimeChannel = (
         username,
         isHost: roomData.isHost,
         online: true,
+        id: `user-${Math.random().toString(36).substr(2, 9)}`
       };
 
       await channel.track(presenceData);
@@ -202,9 +237,8 @@ export const setupRealtimeChannel = (
   };
 
   const sendDeleteQuestions = async (questionId: string) => {
-
-  }
-
+    // Implementation for deleting questions
+  };
 
   const sendCommand = async (command: string) => {
     await channel.send({
@@ -223,8 +257,12 @@ export const setupRealtimeChannel = (
       });
 
       updateQuestionsOnDb(questions);
-
     }
+  };
+
+  // Function to get current participants
+  const getParticipants = (): Participant[] => {
+    return extractParticipants(channel.presenceState());
   };
 
   // Return the channel and utility functions
@@ -235,7 +273,8 @@ export const setupRealtimeChannel = (
     sendDeleteQuestions,
     sendCommand,
     broadcastQuestions,
-    unsubscribe: () => channel.unsubscribe()
+    unsubscribe: () => channel.unsubscribe(),
+    getParticipants
   };
 };
 

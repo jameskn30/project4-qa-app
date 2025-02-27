@@ -11,10 +11,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 export type Message = {
   username: string;
   content: string;
-  flag: string;
 }
 
-const MessageListItem = ({ username, content, flag }: Message) => {
+const MessageListItem = ({ username, content }: Message) => {
   if (username === 'system')
     return (
       <div className="relative mb-1 px-2 text-sm flex items-center justify-center">
@@ -27,7 +26,7 @@ const MessageListItem = ({ username, content, flag }: Message) => {
       <PopoverTrigger asChild>
         <div className="relative mb-1 px-2 text-sm flex items-center hover:bg-slate-100 hover:cursor-pointer rounded-lg">
           <div className="flex-1">
-            <strong className="text-purple-700">{username}</strong> <span className="ml-1">{flag}</span> <span className="text-gray-700">{content}</span>
+            <strong className="text-purple-600">{username}</strong> <span className="text-gray-700">{content}</span>
           </div>
         </div>
       </PopoverTrigger>
@@ -37,10 +36,7 @@ const MessageListItem = ({ username, content, flag }: Message) => {
 
 interface ChatWindowProps {
   messages: Message[],
-  onSent: (message: string) => void
-  questionsLeft: number
-  upvoteLeft: number
-  isHost: boolean
+  participants: {username: string, isHost: boolean, online: boolean}[],
 }
 
 type Participant = {
@@ -69,18 +65,9 @@ export const ParticipantsList = ({ participants }: ParticipantsListProps) => {
 }
 
 
-const ChatWindow = ({ messages, onSent, questionsLeft, upvoteLeft, isHost }: ChatWindowProps) => {
+const ChatWindow = ({ messages, participants}: ChatWindowProps) => {
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    setParticipants(messages.map((msg) => ({ username: msg.username})));
-
-  }, [messages]);
 
   return (
     <Card className="flex flex-col h-full overflow-y-auto bg-white relative rounded-2xl p-2">
