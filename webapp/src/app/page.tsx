@@ -73,7 +73,7 @@ const Footer = () => {
 
 const WelcomePage = () => {
     const [activeTab, setActiveTab] = useState("signup");
-    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [isLoggingIn] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
 
@@ -119,7 +119,7 @@ const WelcomePage = () => {
                         </p>
 
                         <p className="text-2xl lg:text-3xl max-w-[500px] mx-auto lg:mx-0">
-                            <span className="inline-block -rotate-3 bg-yellow-300">Don't</span> waste time passing the microphone 🎤. Let your audience <span className="inline-block rotate-2 bg-green-300">ask and vote 👍</span> which question they want answered 👏 in <span className="underline">real time</span>
+                            <span className="inline-block -rotate-3 bg-yellow-300">Don&apos;t</span> waste time passing the microphone 🎤. Let your audience <span className="inline-block rotate-2 bg-green-300">ask and vote 👍</span> which question they want answered 👏 in <span className="underline">real time</span>
                         </p>
                     </div>
                 </div>

@@ -6,7 +6,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Shuffle } from 'lucide-react';
 import { useQRCode } from 'next-qrcode';
 import { useRouter } from 'next/navigation'
-import { fetchRoom } from '@/utils/room.v2'
 import { createRoom as _createRoom } from '@/utils/room.v2';
 import { Toaster, toast } from 'sonner'
 import _ from 'lodash';
@@ -15,23 +14,24 @@ import { generateRandomRoomName } from '@/utils/roomNameGenerator';
 const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
     const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
     const [roomId, setRoomId] = useState('loading');
-    const [activeRoom, setActiveRoom] = useState(false);
     const router = useRouter();
     const { Canvas } = useQRCode();
 
-    const handleStartRoom = useCallback(_.debounce(async () => {
-        console.log(`handleStartRoom`)
-        if (roomId === null) return;
-        _createRoom(roomId as string)
-            .then(data => {
-                router.push(`/room/${roomId}`)
-            })
-            .catch(err => {
-                console.error(err);
-                toast.error('Error while creating room');
-
-            })
-    }), [roomId])
+    const handleStartRoom = useCallback(
+        _.debounce(async () => {
+            console.log(`handleStartRoom`)
+            if (roomId === null) return;
+            _createRoom(roomId)
+                .then(() => {
+                    router.push(`/room/${roomId}`)
+                })
+                .catch(err => {
+                    console.error(err);
+                    toast.error('Error while creating room');
+                })
+        }),
+        [roomId, router]
+    );
 
     useEffect(() => {
         handleFetchRandomId()
@@ -41,10 +41,6 @@ const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
         console.log('handleFetchRandomId')
         setFetchingRandomRoomId(true);
         try {
-            // Either use the API or generate locally
-            // const data = await fetchRoom()
-            // setRoomId(data.roomId)
-            
             // Generate a random room name
             const randomRoomName = generateRandomRoomName();
             setRoomId(randomRoomName);
@@ -61,20 +57,16 @@ const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
                 <>
                     <div className="flex gap-3 justify-center">
                         <p className="text-4xl flex-1 text-center">{roomId}</p>
-                        {
-                            !activeRoom && (
-                                <Button
-                                    variant={'ghost'}
-                                    className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none"
-                                    onClick={handleFetchRandomId}>
-                                    <Shuffle/>
-                                </Button>
-                            )
-                        }
+                        <Button
+                            variant={'ghost'}
+                            className="rounded-lg border-2 border-transparent hover:border-slate-300 px-2 bg-white border-none"
+                            onClick={handleFetchRandomId}>
+                            <Shuffle/>
+                        </Button>
                     </div>
                     <div className='flex justify-center'>
                         <Canvas
-                            text={`${URL}/${encodeURIComponent(roomId!!)}`}
+                            text={`${URL}/${encodeURIComponent(roomId)}`}
                             options={{
                                 errorCorrectionLevel: 'M',
                                 margin: 3,

@@ -18,14 +18,12 @@ interface NavbarProps {
   userData?: UserData | null
   signOut?: (() => void) | null
   login?: (() => void) | null
-  signUp?: (() => void) | null
 }
 
 const Navbar = ({
   onLeave = null,
   userData,
   signOut = null,
-  signUp = null,
   login = null,
 }: NavbarProps) => {
   const params = useParams<{ roomId: string }>()

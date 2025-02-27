@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast, Toaster } from 'sonner';
-import _, { add } from 'lodash';
 
 // Components
 import QuestionList from '@/app/components/QuestionList';
@@ -21,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 // Icons
 import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
-import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull, Users } from 'lucide-react';
+import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull } from 'lucide-react';
 
 // Utils & Types
 import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
@@ -37,7 +36,6 @@ import {
   fetchQuestions,
   closeRoom,
   submitFeedback,
-  addMessage
 } from '@/utils/room.v2';
 import { storeSessionData, removeSession, getStoredSessionData } from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
@@ -53,15 +51,15 @@ import {
 const RoomPage: React.FC = () => {
   const router = useRouter();
   const params = useParams<{ roomName: string }>();
-  const roomName = params?.roomName ? decodeURIComponent(params.roomName) : null;
+  const roomName = params?.roomName ? decodeURIComponent(params.roomName as string) : null;
   const supabase = createClient();
 
   // Room state
   const [roomData, setRoomData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [roomExists, setRoomExists] = useState(true);
-  const [roomClosed, setRoomClosed] = useState(false);
-  const [hostOnline, setHostOnline] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [roomExists, setRoomExists] = useState<boolean>(true);
+  const [roomClosed, setRoomClosed] = useState<boolean>(false);
+  const [hostOnline, setHostOnline] = useState<boolean>(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [showParticipants, setShowParticipants] = useState(false);
 
@@ -71,7 +69,7 @@ const RoomPage: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
 
   // UI state
-  const [showUsernameDialog, setShowUsernameDialog] = useState(!username);
+  const [showUsernameDialog, setShowUsernameDialog] = useState<boolean>(true);
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [showRestartRoomDialog, setShowRestartRoomDialog] = useState(false);
   const [showMessageInput, setShowMessageInput] = useState(false);
@@ -116,7 +114,7 @@ const RoomPage: React.FC = () => {
 
   const handleDeleteQuestion = useCallback((uuid: string, questions: QuestionItem[]) => {
     try {
-      if (roomData.isHost) {
+      if (roomData && roomData.isHost) {
         const updatedQuestions = questions.filter(question => question.uuid !== uuid);
         realtimeApi?.broadcastQuestions(updatedQuestions);
       }
@@ -124,7 +122,7 @@ const RoomPage: React.FC = () => {
     } catch (err) {
       console.error(err)
     }
-  }, [realtimeApi, questionsLeft])
+  }, [realtimeApi, roomData, questionsLeft])
 
   const onSent = useCallback((content: string) => {
     if (questionsLeft <= 0) {
@@ -142,9 +140,9 @@ const RoomPage: React.FC = () => {
     }
   }, [realtimeApi, questionsLeft]);
 
-  const toggleParticipantsDisplay = () => {
-    setShowParticipants(!showParticipants);
-  };
+  // const toggleParticipantsDisplay = () => {
+  //   setShowParticipants(!showParticipants);
+  // };
 
   const toggleMobileChat = () => {
     setShowMobileChat(!showMobileChat);
@@ -153,7 +151,6 @@ const RoomPage: React.FC = () => {
   //USE EFFECT
 
   useEffect(() => {
-
     const checkRoomExists = async () => {
       if (roomName !== null) {
         try {
@@ -203,7 +200,7 @@ const RoomPage: React.FC = () => {
 
     getUserData()
 
-  }, [roomName]);
+  }, [roomName, username]);
 
   // Separate channel setup into its own effect
   useEffect(() => {
@@ -241,7 +238,7 @@ const RoomPage: React.FC = () => {
     return () => {
       api.unsubscribe();
     };
-  }, [roomName, username, roomData]);
+  }, [roomName, username, roomData, supabase]);
 
 
   // Initial data sync
@@ -250,8 +247,9 @@ const RoomPage: React.FC = () => {
     console.log(hostOnline)
 
     if (!loading && username && !showUsernameDialog && roomData) {
-
-      storeSessionData(roomName!!, username, questionsLeft, upvotesLeft)
+      if (roomName) {
+        storeSessionData(roomName, username, questionsLeft, upvotesLeft)
+      }
 
       const sync = async () => {
         const [messages, questions] = await Promise.all([
@@ -276,7 +274,7 @@ const RoomPage: React.FC = () => {
     } else {
       console.log('not setting up username and websocket')
     }
-  }, [loading, username, showUsernameDialog, roomData]);
+  }, [loading, username, showUsernameDialog, roomData, roomName, questionsLeft, upvotesLeft, hostOnline]);
 
 
   if (!roomExists) {
@@ -390,7 +388,7 @@ const RoomPage: React.FC = () => {
                 loadingQuestions={loadingQuestions}
                 hostMessage={hostMessage}
                 roundNumber={1}
-                isHost={roomData.isHost}
+                isHost={roomData?.isHost || false}
               />
             </div>
           </div>
@@ -408,7 +406,7 @@ const RoomPage: React.FC = () => {
           </div>
           <div className="lg:flex lg:w-1/3 w-full gap-2 flex-col my-2">
             {
-              roomData.isHost && (
+              roomData?.isHost && (
                 <div className="w-full">
                   <Card className="flex flex-col overflow-y-auto relative rounded-2xl bg-white h-full">
                     <CardHeader>
@@ -458,7 +456,7 @@ const RoomPage: React.FC = () => {
               </div>
             </div>
             {
-              !roomData.isHost && (
+              !roomData?.isHost && (
                 <Card id='chat-container' className="w-full flex flex-col justify-center items-center lg:mb-5 p-2 rounded-xl bg-white gap-2">
                   <p className="font-bold">Ask your questions</p>
                   <div className="flex flex-col gap-2 w-full justify-center">
@@ -481,7 +479,7 @@ const RoomPage: React.FC = () => {
 
           </div>
         </div>
-        <Dialog open={showUsernameDialog}>
+        <Dialog open={showUsernameDialog} onOpenChange={(open) => setShowUsernameDialog(open)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>What's your name? ☺️</DialogTitle>
@@ -579,7 +577,7 @@ const RoomPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <input name="roomId" id="roomId" className='hidden' value={roomData.id} />
+                <input name="roomId" id="roomId" className='hidden' value={roomData?.id || ''} />
                 
                 <div className="space-y-2">
                   <label htmlFor="feedback" className="text-sm font-medium">
@@ -644,7 +642,7 @@ const RoomPage: React.FC = () => {
                 Waiting for host to start the room ...
               </p>
             </div>
-            <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif" />
+            <img alt="Loading animation" src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif" />
           </DialogContent>
         </Dialog>
 

@@ -19,7 +19,6 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-    CardFooter,
 } from "@/components/ui/card"
 import Loading from './loading'
 import { signout } from '@/utils/supabase/auth';
@@ -27,7 +26,7 @@ import JoinRoomForm from '../components/JoinRoomForm';
 import CreateRoomForm from '../components/CreateRoomForm';
 import Navbar from '../components/Navbar';
 import { Button } from '@/components/ui/button';
-import { ConstructionIcon, HardDriveDownload, ThumbsUp, UserRound } from 'lucide-react';
+import {HardDriveDownload, ThumbsUp, UserRound } from 'lucide-react';
 import { fetchMyRooms, fetchFeedback } from '@/utils/room.v2';
 
 import {
@@ -53,12 +52,20 @@ interface FeedbackItem {
     username: string;
     like: boolean;
     created_at: string;
-    email: string,
-    phone_number: string
+    email: string;
+    phone_number: string;
+}
+
+// Define a type for room data
+interface RoomData {
+    id: string;
+    name: string;
+    is_active: boolean;
+    created_at: string;
+    // Add other room properties as needed
 }
 
 const NewRoomPage = () => {
-    const [roomId, setRoomId] = useState(null);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const router = useRouter();
@@ -67,11 +74,11 @@ const NewRoomPage = () => {
     const [authLoading, setAuthLoading] = useState(true);
 
     const [userData, setUserData] = useState<UserData | null>(null)
-    const [activeRoom, setActiveRoom] = useState<any>()
+    const [activeRoom, setActiveRoom] = useState<RoomData | null>(null)
 
-    const [pastRooms, setPastRooms] = useState<any[]>([])
+    const [pastRooms, setPastRooms] = useState<RoomData[]>([])
     const [isStatsDialogOpen, setIsStatsDialogOpen] = useState(false);
-    const [selectedRoom, setSelectedRoom] = useState<any>(null);
+    const [selectedRoom, setSelectedRoom] = useState<RoomData | null>(null);
 
     // Add state for feedback data
     const [feedbackData, setFeedbackData] = useState<FeedbackItem[]>([]);
@@ -79,30 +86,38 @@ const NewRoomPage = () => {
 
     useEffect(() => {
         const getUserData = async () => {
-            const user = await _getUserData()
-            console.log(user)
-            setUserData(user)
-            setIsLoggedIn(!!user)
-            setAuthLoading(false)
+            try {
+                const user = await _getUserData()
+                console.log(user)
+                setUserData(user)
+                setIsLoggedIn(!!user)
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            } finally {
+                setAuthLoading(false)
+            }
+        }
+
+        const getActiveRooms = async () => {
+            try {
+                const data = await fetchMyRooms() as RoomData[]
+                
+                const pastRooms: RoomData[] = []
+
+                data.forEach((room) => {
+                    if (room.is_active) {
+                        setActiveRoom(room)
+                    } else {
+                        pastRooms.push(room)
+                    }
+                })
+                setPastRooms(pastRooms)
+            } catch (error) {
+                console.error("Error fetching rooms:", error);
+            }
         }
 
         getUserData()
-
-        const getActiveRooms = async () => {
-            const data = await fetchMyRooms()
-
-            let pastRooms: any[] = []
-
-            data.forEach((room) => {
-                if (room.is_active) {
-                    setActiveRoom(room)
-                } else {
-                    pastRooms.push(room)
-                }
-            })
-            setPastRooms(pastRooms)
-        }
-
         getActiveRooms()
     }, [])
 
@@ -122,10 +137,12 @@ const NewRoomPage = () => {
     }
 
     const handleJoinActiveRoom = () => {
-        router.push(`/room/${activeRoom.name}`)
+        if (activeRoom) {
+            router.push(`/room/${activeRoom.name}`)
+        }
     }
 
-    const handleViewStats = async (room: any) => {
+    const handleViewStats = async (room: RoomData) => {
         setSelectedRoom(room);
         setIsLoadingFeedback(true);
         console.log('room data = ', room)

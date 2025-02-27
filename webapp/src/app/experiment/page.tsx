@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 const ExperimentPage = () => {
     const [userData, setUserData] = useState<UserData | null>(null)
-    const [channel, setChannel] = useState<any>(null)
+    const [channel, setChannel] = useState(null)
     const supabase = createClient();
 
     useEffect(() => {
@@ -43,7 +43,7 @@ const ExperimentPage = () => {
         return () => {
             roomOne.unsubscribe()
         }
-    }, [])
+    }, [supabase])
 
     const sendMessage = () => {
         if (channel) {
