@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 // Icons
 import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
@@ -91,7 +91,7 @@ const RoomPage: React.FC = () => {
 
   // Add these near other state declarations
   const [feedback, setFeedback] = useState('');
-  const [feedbackSent, setFeedbackSent] = useState(false);
+  // const [feedbackSent, setFeedbackSent] = useState(false);
   const [realtimeApi, setRealtimeApi] = useState<RealtimeChannelApi | null>(null);
 
   // Add state for mobile chat visibility
@@ -377,35 +377,7 @@ const RoomPage: React.FC = () => {
           userData={userData}
         />
 
-        {/* Mobile chat overlay - shows when toggled */}
-        {showMobileChat && (
-          <div className="fixed inset-0 z-50 bg-white/95 flex flex-col p-4 lg:hidden">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-bold">Chat ({messages.length})</h3>
-              <Button variant="ghost" onClick={toggleMobileChat} className="p-2">
-                <span className="sr-only">Close</span>
-                ✕
-              </Button>
-            </div>
-            <div className="flex-grow overflow-y-auto">
-              <ChatWindow
-                messages={messages}
-                participants={participants}
-              />
-            </div>
-            {/* Add mobile message input if needed */}
-            {!roomData?.isHost && questionsLeft > 0 && (
-              <div className="pt-2 border-t mt-2">
-                <Button
-                  onClick={handleQuestionButtonClick}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  Ask a Question ({questionsLeft} left)
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Removed mobile chat overlay in favor of Dialog component */}
 
         <div className="flex-col px-2 flex flex-1 gap-1 w-full lg:px-5 mb-3 h-1/2 lg:flex-row">
           <div className="flex flex-1 flex-col lg:w-2/3 w-full h-1/3 lg:h-full">
@@ -638,6 +610,35 @@ const RoomPage: React.FC = () => {
               </p>
             </div>
             <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif" />
+          </DialogContent>
+        </Dialog>
+
+        {/* Mobile Chat Dialog */}
+        <Dialog open={showMobileChat} onOpenChange={setShowMobileChat}>
+          <DialogContent className="sm:max-w-[95%] h-[80vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex justify-between items-center">
+                <span>Live chat ({messages.length} asked)</span>
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="flex-grow overflow-y-auto my-4">
+              <ChatWindow
+                messages={messages}
+                participants={participants}
+              />
+            </div>
+            
+            <DialogFooter>
+              {!roomData?.isHost && questionsLeft > 0 && (
+                <Button
+                  onClick={handleQuestionButtonClick}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Ask a Question ({questionsLeft} left)
+                </Button>
+              )}
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
