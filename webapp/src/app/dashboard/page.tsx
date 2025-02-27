@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 
 // Third-party imports
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import {
     getUserData as _getUserData,
     UserData
@@ -19,6 +19,7 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
+    CardFooter,
 } from "@/components/ui/card"
 import Loading from './loading'
 import { signout } from '@/utils/supabase/auth';
@@ -26,8 +27,8 @@ import JoinRoomForm from '../components/JoinRoomForm';
 import CreateRoomForm from '../components/CreateRoomForm';
 import Navbar from '../components/Navbar';
 import { Button } from '@/components/ui/button';
-import { UserRound, MessageCircleQuestion, MessageCircleWarning, ThumbsUp } from 'lucide-react';
-import { fetchMyRooms } from '@/utils/room.v2';
+import { ConstructionIcon, HardDriveDownload, ThumbsUp, UserRound } from 'lucide-react';
+import { fetchMyRooms, fetchFeedback } from '@/utils/room.v2';
 
 import {
     Dialog,
@@ -37,6 +38,24 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+
+// Define a type for feedback item
+interface FeedbackItem {
+    feedback: string;
+    username: string;
+    like: boolean;
+    created_at: string;
+    email: string,
+    phone_number: string
+}
 
 const NewRoomPage = () => {
     const [roomId, setRoomId] = useState(null);
@@ -54,8 +73,11 @@ const NewRoomPage = () => {
     const [isStatsDialogOpen, setIsStatsDialogOpen] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
 
-    useEffect(() => {
+    // Add state for feedback data
+    const [feedbackData, setFeedbackData] = useState<FeedbackItem[]>([]);
+    const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
 
+    useEffect(() => {
         const getUserData = async () => {
             const user = await _getUserData()
             console.log(user)
@@ -77,15 +99,12 @@ const NewRoomPage = () => {
                 } else {
                     pastRooms.push(room)
                 }
-
             })
             setPastRooms(pastRooms)
         }
 
         getActiveRooms()
-
     }, [])
-
 
     const handleSignOut = async () => {
         setIsLoggingOut(true);
@@ -106,10 +125,28 @@ const NewRoomPage = () => {
         router.push(`/room/${activeRoom.name}`)
     }
 
-    const handleViewStats = (room: any) => {
+    const handleViewStats = async (room: any) => {
         setSelectedRoom(room);
-        setIsStatsDialogOpen(true);
+        setIsLoadingFeedback(true);
+        console.log('room data = ', room)
+
+        try {
+            // Fetch feedback data for the selected room
+            const feedback = await fetchFeedback(room.name);
+            setFeedbackData(feedback);
+        } catch (error) {
+            console.error("Error fetching feedback:", error);
+            setFeedbackData([]);
+        } finally {
+            setIsLoadingFeedback(false);
+            setIsStatsDialogOpen(true);
+        }
     };
+
+    // Calculate feedback statistics
+    const totalFeedback = feedbackData.length;
+    const totalLikes = feedbackData.filter(item => item.like).length;
+    const likePercentage = totalFeedback > 0 ? Math.round((totalLikes / totalFeedback) * 100) : 0;
 
     if (authLoading) {
         return <Loading />
@@ -189,7 +226,7 @@ const NewRoomPage = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {pastRooms.map((room) => (
-                    <div className='w-[250px] h-[250px]'>
+                    <div className='w-[250px] h-[250px]' key={room.id}>
                         <Card className="w-full h-full flex flex-col justify-center items-center hover:bg-slate-100 hover:cursor-pointer">
                             <CardHeader>
                                 <CardTitle>{room.name} (closed)</CardTitle>
@@ -201,25 +238,6 @@ const NewRoomPage = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className='flex justify-center gap-2 flex-col text-sm'>
-                                    {/* <div className='flex gap-2'>
-                                        <UserRound size={18} />
-                                        <p>50 participants</p>
-                                    </div>
-
-                                    <div className='flex gap-2'>
-                                        <MessageCircleQuestion size={18} />
-                                        <p>103 questions asked </p>
-                                    </div>
-
-                                    <div className='flex gap-2'>
-                                        <MessageCircleWarning size={18} />
-                                        <p>2 followups </p>
-                                    </div> */}
-
-                                    {/* <div className='flex gap-2'>
-                                        <ThumbsUp size={18} />
-                                        <p>183 likes the session </p>
-                                    </div> */}
                                     <Button className="bg-blue-500 text-white hover:bg-blue-700" onClick={() => handleViewStats(room)}>
                                         See stats
                                     </Button>
@@ -231,58 +249,86 @@ const NewRoomPage = () => {
             </div>
 
             <Dialog open={isStatsDialogOpen} onOpenChange={setIsStatsDialogOpen}>
-                <DialogContent className="max-w-4xl">
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Room Statistics - {selectedRoom?.name}</DialogTitle>
                         <DialogDescription>
                             Detailed analytics for your Q&A session
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Participation Overview</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <span>Total Participants:</span>
-                                        <span className="font-bold">50</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Active Participants:</span>
-                                        <span className="font-bold">35</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Average Engagement:</span>
-                                        <span className="font-bold">75%</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Question Statistics</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <span>Total Questions:</span>
-                                        <span className="font-bold">103</span>
+                    {/* Feedback Section */}
+                    <Card className="mt-4">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                Participant Feedback
+                                {isLoadingFeedback && <span className="h-4 w-4 rounded-full bg-blue-500 animate-pulse"></span>}
+                            </CardTitle>
+                            <CardDescription>
+                                <Button variant="outline" onClick={() => toast.error("Feature still in development")}><HardDriveDownload/> Export CSV</Button>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {feedbackData.length > 0 ? (
+                                <>
+                                    {/* Feedback Summary */}
+                                    <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+                                        <div className="grid grid-cols-3 gap-4 text-center">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Responses</p>
+                                                <p className="text-2xl font-bold">{totalFeedback}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Likes</p>
+                                                <p className="text-2xl font-bold flex items-center justify-center">
+                                                    {totalLikes} <ThumbsUp className="ml-2 text-green-500" size={18} />
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Like rates</p>
+                                                <p className="text-2xl font-bold">{likePercentage}%</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span>Answered Questions:</span>
-                                        <span className="font-bold">95</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Follow-ups:</span>
-                                        <span className="font-bold">2</span>
-                                    </div>
+
+                                    {/* Feedback Table */}
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Participant</TableHead>
+                                                <TableHead className="w-[500px]">Feedback</TableHead>
+                                                <TableHead>Like</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead>Phone number</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {feedbackData.map((item, id) => (
+                                                <TableRow key={id}>
+                                                    <TableCell className="font-medium">{item.username || 'Anonymous'}</TableCell>
+                                                    <TableCell>{item.feedback || '-'}</TableCell>
+                                                    <TableCell>
+                                                        {item.like ?
+                                                            <ThumbsUp className="text-green-500" size={16} /> :
+                                                            '-'
+                                                        }
+                                                    </TableCell>
+                                                    <TableCell>{item.email || '-'}</TableCell>
+                                                    <TableCell>{item.phone_number || '-'}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </>
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">
+                                    {isLoadingFeedback
+                                        ? "Loading feedback data..."
+                                        : "No feedback submitted for this room"}
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </DialogContent>
             </Dialog>
         </div>

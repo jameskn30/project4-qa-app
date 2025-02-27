@@ -69,7 +69,7 @@ const Navbar = ({
           <p className="text-sm hidden lg:block"> Give the best Q&A experience to your audience </p>
         </div>
 
-        <div className="hidden lg:flex gap-3">
+        <div className="hidden md:flex gap-3">
           <ul className="flex space-x-4 ">
             {userData && (
               <li>
@@ -122,7 +122,7 @@ const Navbar = ({
           </ul>
         </div>
 
-        <div className="lg:hidden " id="mobile-menu">
+        <div className="md:hidden " id="mobile-menu">
           <Popover>
             <PopoverTrigger asChild>
               <Button className="p-2">

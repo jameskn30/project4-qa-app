@@ -91,7 +91,8 @@ const RoomPage: React.FC = () => {
 
   // Add these near other state declarations
   const [feedback, setFeedback] = useState('');
-  // const [feedbackSent, setFeedbackSent] = useState(false);
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [realtimeApi, setRealtimeApi] = useState<RealtimeChannelApi | null>(null);
 
   // Add state for mobile chat visibility
@@ -547,9 +548,9 @@ const RoomPage: React.FC = () => {
         </Dialog>
 
         <Dialog open={roomClosed} onOpenChange={() => router.push('/')}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Room by host</DialogTitle>
+              <DialogTitle>Room closed by host</DialogTitle>
             </DialogHeader>
             <form className="space-y-4" action={(formData) => {
               submitFeedback(formData).then(_ => {
@@ -563,9 +564,10 @@ const RoomPage: React.FC = () => {
               })
             }}>
               <div className="flex gap-3 flex-col">
-                <p className="mb-4">You can leave feedback, follow-up question, how you like the session, the host will be informed</p>
-                <div className="flex justify-center gap-4 items-center">
-                  <p>Do you think this session helpful?</p>
+                <p className="mb-2">You can leave feedback, follow-up questions, or let us know how you liked the session.</p>
+                
+                <div className="flex justify-center gap-4 items-center mb-2">
+                  <p>Did you find this session helpful?</p>
                   <div className="flex gap-2 justify-center items-center">
                     <Checkbox
                       id="like"
@@ -576,18 +578,51 @@ const RoomPage: React.FC = () => {
                     </label>
                   </div>
                 </div>
+                
                 <input name="roomId" id="roomId" className='hidden' value={roomData.id} />
-                <div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="feedback" className="text-sm font-medium">
+                    Your feedback (optional)
+                  </label>
                   <Input
                     id="feedback"
                     name="feedback"
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     placeholder="Any feedback or follow-up question?"
-                    className="mt-2"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-medium">
+                    Email address (optional)
+                  </label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your.email@example.com"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="text-sm font-medium">
+                    Phone number (optional)
+                  </label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="(123) 456-7890"
                   />
                 </div>
               </div>
+              
               <Button
                 type="submit"
                 className="w-full mt-4 bg-blue-500 hover:bg-blue-600"
@@ -599,7 +634,7 @@ const RoomPage: React.FC = () => {
         </Dialog>
 
         {/* Add the host offline dialog */}
-        <Dialog open={username !== null && !hostOnline}>
+        <Dialog open={username !== null && !hostOnline && !roomClosed}>
           <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="text-center text-red-600">Waiting for host</DialogTitle>
@@ -621,14 +656,14 @@ const RoomPage: React.FC = () => {
                 <span>Live chat ({messages.length} asked)</span>
               </DialogTitle>
             </DialogHeader>
-            
+
             <div className="flex-grow overflow-y-auto my-4">
               <ChatWindow
                 messages={messages}
                 participants={participants}
               />
             </div>
-            
+
             <DialogFooter>
               {!roomData?.isHost && questionsLeft > 0 && (
                 <Button

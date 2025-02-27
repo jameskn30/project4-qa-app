@@ -10,7 +10,7 @@ import { fetchRoom } from '@/utils/room.v2'
 import { createRoom as _createRoom } from '@/utils/room.v2';
 import { Toaster, toast } from 'sonner'
 import _ from 'lodash';
-
+import { generateRandomRoomName } from '@/utils/roomNameGenerator';
 
 const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
     const [fetchingRandomRoomId, setFetchingRandomRoomId] = useState(false);
@@ -39,10 +39,21 @@ const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
 
     const handleFetchRandomId = async () => {
         console.log('handleFetchRandomId')
-        // setFetchingRandomRoomId(true);
-        // const data = await fetchRoom()
-        // setRoomId(data.roomId)
-        // setFetchingRandomRoomId(false);
+        setFetchingRandomRoomId(true);
+        try {
+            // Either use the API or generate locally
+            // const data = await fetchRoom()
+            // setRoomId(data.roomId)
+            
+            // Generate a random room name
+            const randomRoomName = generateRandomRoomName();
+            setRoomId(randomRoomName);
+        } catch (error) {
+            console.error('Error generating room ID:', error);
+            toast.error('Failed to generate room ID');
+        } finally {
+            setFetchingRandomRoomId(false);
+        }
     };
     return (
         <Card  className="border-0 shadow-none  bg-white p-2 gap-4 flex flex-col min-w-[350px] min-h-[400px] py-5 z-10">
