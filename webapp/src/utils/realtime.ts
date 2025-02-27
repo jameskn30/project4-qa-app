@@ -33,6 +33,7 @@ export interface RealtimeChannelApi {
   sendCommand: (command: string) => Promise<void>;
   broadcastQuestions: (questions: QuestionItem[]) => Promise<void>;
   unsubscribe: () => void;
+  sendDeleteQuestions: (questionid: string) => Promise<void>;
 }
 
 export const setupRealtimeChannel = (
@@ -67,6 +68,7 @@ export const setupRealtimeChannel = (
     const { username, content } = payload;
     const message: Message = { username, content, flag: '🇺🇸' };
     setMessages((prevMessages) => [...prevMessages, message]);
+    //Only host allowed to update Postgres DB
     if (roomData?.isHost) {
       addMessage(roomData.id, content, username, 1);
     }
@@ -74,11 +76,12 @@ export const setupRealtimeChannel = (
 
   // Handle questions
   channel.on('broadcast', { event: 'questions' }, ({ payload }: { payload: any }) => {
-    setQuestions(payload.questions.map((question: { uuid: string, rephrase: string, upvotes: number }) => ({
-      uuid: question.uuid,
-      rephrase: question.rephrase,
-      upvotes: question.upvotes,
-    })));
+    setQuestions(payload.questions.map(
+      (question: { uuid: string, rephrase: string, upvotes: number }) => ({
+        uuid: question.uuid,
+        rephrase: question.rephrase,
+        upvotes: question.upvotes,
+      })));
     setLoadingQuestions(false);
     setHostMessage("");
   });
@@ -103,7 +106,7 @@ export const setupRealtimeChannel = (
 
       return updatedQuestions;
     });
-    
+
     // This is redundant since we're already updating upvotesLeft in the component
     if (roomData?.isHost) {
       setUpvotesLeft(prev => prev - 1);
@@ -144,21 +147,21 @@ export const setupRealtimeChannel = (
         setHostOnline(true);
         return;
       }
-      
+
       // Check if host is in the room
       const presences = Object.values(channel.presenceState()).flat();
       setHostOnline(presences.some((presence: any) => presence.isHost === true));
     })
     .on("presence", { event: 'join' }, ({ newPresences }: { key: string, newPresences: any[] }) => {
       if (roomData.isHost) return;
-      
+
       if (newPresences.some((presence: any) => presence.isHost === true)) {
         setHostOnline(true);
       }
     })
     .on("presence", { event: 'leave' }, ({ leftPresences }: { key: string, leftPresences: any[] }) => {
       if (roomData.isHost) return;
-      
+
       if (leftPresences.some((presence: any) => presence.isHost === true)) {
         setHostOnline(false);
       }
@@ -167,14 +170,14 @@ export const setupRealtimeChannel = (
   // Subscribe and track presence
   channel.subscribe(async (status: string) => {
     if (status === 'SUBSCRIBED') {
-      const presenceData = { 
-        username, 
+      const presenceData = {
+        username,
         isHost: roomData.isHost,
         online: true,
       };
-      
+
       await channel.track(presenceData);
-      
+
       if (roomData.isHost) {
         setHostOnline(true);
       }
@@ -198,6 +201,11 @@ export const setupRealtimeChannel = (
     });
   };
 
+  const sendDeleteQuestions = async (questionId: string) => {
+
+  }
+
+
   const sendCommand = async (command: string) => {
     await channel.send({
       type: 'broadcast',
@@ -207,11 +215,16 @@ export const setupRealtimeChannel = (
   };
 
   const broadcastQuestions = async (questions: QuestionItem[]) => {
-    await channel.send({
-      type: 'broadcast',
-      event: 'questions',
-      payload: { questions }
-    });
+    if (roomData?.isHost) {
+      await channel.send({
+        type: 'broadcast',
+        event: 'questions',
+        payload: { questions }
+      });
+
+      updateQuestionsOnDb(questions);
+
+    }
   };
 
   // Return the channel and utility functions
@@ -219,6 +232,7 @@ export const setupRealtimeChannel = (
     channel,
     sendMessage,
     sendUpvote,
+    sendDeleteQuestions,
     sendCommand,
     broadcastQuestions,
     unsubscribe: () => channel.unsubscribe()
@@ -228,7 +242,7 @@ export const setupRealtimeChannel = (
 // Helper to check if the host is online based on presence data
 export const isHostOnline = (presenceState: any, isCurrentUserHost: boolean): boolean => {
   if (isCurrentUserHost) return true;
-  
+
   const presences = Object.values(presenceState).flat();
   return presences.some((presence: any) => presence.isHost === true);
 };

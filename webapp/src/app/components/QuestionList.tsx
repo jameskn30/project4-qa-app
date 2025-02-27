@@ -60,7 +60,7 @@ interface QuestionListProps {
     roundNumber: number
     isHost: boolean
     handleUpvote: (uuid: string) => void
-    handleDeleteQuestion: () => void
+    handleDeleteQuestion: (uuid: string) => void
 }
 
 const QuestionList = ({

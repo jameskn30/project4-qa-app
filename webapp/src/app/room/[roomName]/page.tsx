@@ -42,10 +42,10 @@ import {
 import { storeSessionData, removeSession, getStoredSessionData } from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  setupRealtimeChannel, 
-  RealtimeChannelApi, 
-  RoomData 
+import {
+  setupRealtimeChannel,
+  RealtimeChannelApi,
+  RoomData
 } from '@/utils/realtime';
 
 
@@ -63,7 +63,7 @@ const RoomPage: React.FC = () => {
   const [hostOnline, setHostOnline] = useState(false)
 
   // User state
-  const [username, setUsername] = useState<string|null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [userData, setUserData] = useState<UserData | null>(null);
 
@@ -106,6 +106,18 @@ const RoomPage: React.FC = () => {
       toast.error('Failed to upvote');
     }
   }, [realtimeApi, upvotesLeft]);
+
+  const handleDeleteQuestion = useCallback((uuid: string, questions: QuestionItem[]) => {
+    try {
+      if(roomData.isHost){
+        const updatedQuestions = questions.filter(question => question.uuid !== uuid);
+        realtimeApi?.broadcastQuestions(updatedQuestions);
+      }
+      return
+    } catch (err) {
+      console.error(err)
+    }
+  }, [realtimeApi, questionsLeft])
 
   const onSent = useCallback((content: string) => {
     if (questionsLeft <= 0) {
@@ -355,14 +367,11 @@ const RoomPage: React.FC = () => {
               <QuestionList
                 questions={questions}
                 handleUpvote={handleUpvote}
-                handleGroupQuestions={handleGroupQuestions}
+                handleDeleteQuestion={(uuid) => handleDeleteQuestion(uuid, questions)}
                 loadingQuestions={loadingQuestions}
                 hostMessage={hostMessage}
                 roundNumber={1}
                 isHost={roomData.isHost}
-                handleClearQuestion={() => console.log('clear questions')}
-                handleRestartRound={() => { }}
-                handleCloseRoom={() => { }}
               />
             </div>
           </div>
@@ -566,7 +575,7 @@ const RoomPage: React.FC = () => {
                 Waiting for host to start the room ...
               </p>
             </div>
-            <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif"/>
+            <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif" />
           </DialogContent>
         </Dialog>
       </div>
