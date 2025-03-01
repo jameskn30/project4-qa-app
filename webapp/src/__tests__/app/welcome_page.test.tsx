@@ -1,6 +1,6 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import WelcomePage from '@/app/page';
 
 // Mock Next.js navigation hooks
@@ -43,6 +43,20 @@ describe("Welcome page", () => {
     render(<WelcomePage />);
     
     const navbar = screen.getByTestId('landing-page-navbar');
+    const container = screen.getByTestId('welcome-page-container');
+    const intro = screen.getByTestId('intro-section');
+    const pricing = screen.getByTestId('pricing-section');
+    const testimonial = screen.getByTestId('testimonial-section');
+    const about = screen.getByTestId('about-section');
+    const footer = screen.getByTestId('footer');
+
     expect(navbar).toBeDefined();
+    expect(container).toBeDefined();
+    expect(intro).toBeDefined();
+    expect(pricing).toBeDefined();
+    expect(testimonial).toBeDefined();
+    expect(about).toBeDefined();
+    expect(footer).toBeDefined();
   });
 });
+

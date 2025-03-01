@@ -107,7 +107,7 @@ const WelcomePage = () => {
             <LandingPageNavbar isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={handleSignOut} />
             <Toaster expand={true} position='top-center' richColors />
 
-            <div className={`flex flex-col lg:flex-row h-auto w-auto px-4 lg:px-20 py-10 ${isLoggedIn ? 'justify-center' : ''}`} data-testid="hero-section">
+            <div className={`flex flex-col lg:flex-row h-auto w-auto px-4 lg:px-20 py-10 ${isLoggedIn ? 'justify-center' : ''}`} data-testid="intro-section">
                 <div id="intro-container" className="flex flex-1 mb-10 lg:mb-0" data-testid="intro-container">
                     <div className="flex flex-col font-mono text-center lg:text-left gap-5">
                         {/* <p className="text-6xl lg:text-8xl font-bold text-center w-full">Bolt.qa</p> */}
