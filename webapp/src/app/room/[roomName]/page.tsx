@@ -271,7 +271,7 @@ const RoomPage: React.FC = () => {
     };
 
     sync();
-  }, [roomData?.id, username, roomName, initialized.current]);
+  }, [roomData, username, roomName, initialized, questionsLeft, upvotesLeft]);
 
 
   if (!roomExists) {
@@ -372,10 +372,6 @@ const RoomPage: React.FC = () => {
   const handleQuestionButtonClick = () => {
     setShowMessageInput(true);
   };
-
-  console.log('username ', username)
-  console.log('host online ', hostOnline)
-  console.log('room close ', roomClosed)
 
   return (
     <RoomProvider>

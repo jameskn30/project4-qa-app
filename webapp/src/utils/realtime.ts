@@ -72,8 +72,7 @@ interface PresenceData {
   username: string;
   isHost: boolean;
   online: boolean;
-  precense_ref?: string;
-  // id: string;
+  presence_ref?: string;
 }
 
 export const setupRealtimeChannel = (
@@ -181,22 +180,17 @@ export const setupRealtimeChannel = (
   });
 
   // Function to extract participants from presence state
-  const extractParticipants = (state: RealtimePresenceState | null): Participant[] => {
-    if (state) {
-      return Object.values(state)
-        .flat()
-        .map((presence: any) => ({
-          username: presence.username || 'Anonymous',
-          isHost: presence.isHost || false,
-          online: presence.online || false,
-        }));
-    }
-    return []
-  };
+    const extractParticipants = (state: RealtimePresenceState | null): Participant[] => {
+      console.log('extractParticipants')
+      if (state) {
+        return Object.values(state).flat().map(value => value as PresenceData)
+      }
+      return []
+    };
 
   // Presence handling with participants tracking
   channel
-    .on("presence", { event: 'sync' }, () => {
+    .on('presence', { event: 'sync' }, () => {
       // If user is host, no need to check presence
       if (roomData.isHost) {
         setHostOnline(true);
@@ -210,26 +204,26 @@ export const setupRealtimeChannel = (
       // Check if host is in the room
       setHostOnline(participants.some(p => p.isHost === true));
     })
-    .on("presence", { event: 'join' }, ({ newPresences, state }: { key: string, newPresences: PresenceData[], state: RealtimePresenceState }) => {
-      const participants = extractParticipants(state);
-      setParticipants(participants);
+    .on('presence', { event: 'join' }, ({newPresences}) => {
+      const presences = newPresences.map(p => p as PresenceData)  ;
+      setParticipants(presences);
       
       if (roomData.isHost) return;
 
-      if (newPresences.some((presence) => presence.isHost === true)) {
+      if (presences.some((presence) => presence.isHost === true)) {
         setHostOnline(true);
       }
     })
-    .on("presence", { event: 'leave' }, ({ leftPresences, state }: { key: string, leftPresences: PresenceData[], state: RealtimePresenceState }) => {
-      const participants = extractParticipants(state);
-      setParticipants(participants);
+    .on('presence', { event: 'leave' }, ({leftPresences}) => {
+      const presences = leftPresences.map(p => p as PresenceData)  ;
+      setParticipants(presences);
       
       if (roomData.isHost) return;
 
-      if (leftPresences.some((presence) => presence.isHost === true)) {
+      if (presences.some((presence) => presence.isHost === true)) {
         setHostOnline(false);
       }
-    });
+    })
 
   // Subscribe and track presence
   channel.subscribe(async (status: string) => {

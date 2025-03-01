@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 
 // Utils
-import { submitFeedback } from '@/utils/room.v2';
+// import { submitFeedback } from '@/utils/room.v2';
 
 interface SubmitFeedbackDialogProps {
   isOpen: boolean;
@@ -34,7 +34,8 @@ const SubmitFeedbackDialog: React.FC<SubmitFeedbackDialogProps> = ({
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
-  const handleFormSubmit = async (formData: FormData) => {
+  const handleFormSubmit = async () => {
+  // const handleFormSubmit = async (formData: FormData) => {
     try {
     //   await submitFeedback(formData);
       toast.success("Feedback submitted. Redirecting to home page");

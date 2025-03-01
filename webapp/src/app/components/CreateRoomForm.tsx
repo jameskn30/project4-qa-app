@@ -17,8 +17,9 @@ const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
     const router = useRouter();
     const { Canvas } = useQRCode();
 
-    const handleStartRoom = useCallback(
-        _.debounce(async () => {
+    // Move debounce outside of useCallback to properly handle dependencies
+    const debouncedCreateRoom = useCallback(
+        async () => {
             console.log(`handleStartRoom`)
             if (roomId === null) return;
             _createRoom(roomId)
@@ -29,9 +30,14 @@ const CreateRoomForm = ({ onClose }: { onClose: () => void }) => {
                     console.error(err);
                     toast.error('Error while creating room');
                 })
-        }),
-        [roomId, router]
+        },
+        [roomId, router] // Properly specify dependencies
     );
+
+    // Use the debounce outside the useCallback
+    const handleStartRoom = _.debounce(() => {
+        debouncedCreateRoom();
+    }, 300);
 
     useEffect(() => {
         handleFetchRandomId()
