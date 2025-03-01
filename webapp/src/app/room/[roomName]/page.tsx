@@ -101,6 +101,9 @@ const RoomPage: React.FC = () => {
   // Add state for mobile chat visibility
   const [showMobileChat, setShowMobileChat] = useState(false);
 
+  // console.log('current messages')
+  // console.log(messages)
+
   // Memoize event handlers
   const handleUpvote = useCallback((uuid: string) => {
     if (upvotesLeft <= 0) {
@@ -249,6 +252,8 @@ const RoomPage: React.FC = () => {
           storeSessionData(roomName, username, questionsLeft, upvotesLeft);
         }
 
+        console.log('syncing initial data')
+
         const [messages, questions] = await Promise.all([
           fetchMessages(roomData.id),
           fetchQuestions(roomData.id, 1)
@@ -271,7 +276,7 @@ const RoomPage: React.FC = () => {
     };
 
     sync();
-  }, [roomData, username, roomName, initialized, questionsLeft, upvotesLeft]);
+  }, [roomData, username, roomName, initialized]);
 
 
   if (!roomExists) {

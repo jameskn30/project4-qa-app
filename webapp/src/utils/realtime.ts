@@ -16,7 +16,6 @@ export interface Participant {
   username: string;
   isHost: boolean;
   online: boolean;
-  // id?: string; // Optional unique identifier
 }
 
 export interface RealtimeHandlers {
@@ -99,19 +98,20 @@ export const setupRealtimeChannel = (
 
   const channel = supabase.channel(`room-${roomName}`, {
     config: {
-      broadcast: { self: true },
+      broadcast: { self:true },
     }
   });
 
   // Handle messages
   channel.on('broadcast', { event: 'message' }, ({ payload }: { payload: MessagePayload }) => {
     const { username, content } = payload;
+    console.log('on message ', payload)
     const message: Message = { username, content, flag: '🇺🇸' };
     setMessages((prevMessages) => [...prevMessages, message]);
     //Only host allowed to update Postgres DB
-    if (roomData?.isHost) {
-      addMessage(roomData.id, content, username, 1);
-    }
+    // if (roomData?.isHost) {
+    //   addMessage(roomData.id, content, username, 1);
+    // }
   });
 
   // Handle questions
@@ -181,7 +181,6 @@ export const setupRealtimeChannel = (
 
   // Function to extract participants from presence state
     const extractParticipants = (state: RealtimePresenceState | null): Participant[] => {
-      console.log('extractParticipants')
       if (state) {
         return Object.values(state).flat().map(value => value as PresenceData)
       }
