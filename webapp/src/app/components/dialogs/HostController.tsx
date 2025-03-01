@@ -1,9 +1,11 @@
-import React from 'react';
+'use client'
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { MessagesSquare, ChartColumnBig, ScanQrCode, Trash, Copy } from 'lucide-react';
 import { FaRegComments, FaTrashCan, FaArrowRotateRight, FaSquarePollVertical } from "react-icons/fa6";
+import ShowRoomQRDialog from './ShowRoomQRDialog';
 
 interface HostControllerProps {
   roomName: string | null;
@@ -11,15 +13,18 @@ interface HostControllerProps {
   handleClearQuestion: () => void;
   handleRestartRound: () => void;
   handleCloseRoom: () => void;
+  handleShowQR: () => void;
 }
-
 const HostController: React.FC<HostControllerProps> = ({
   roomName,
   handleGroupQuestions,
   handleClearQuestion,
   handleRestartRound,
-  handleCloseRoom
+  handleCloseRoom,
 }) => {
+  const [showQRDialog, setShowQRDialog] = useState(false);
+  const roomUrl = typeof window !== 'undefined' ? `${window.location.origin}/room/${roomName}` : '';
+
   return (
     <div className="w-full" id='host-control-container'>
       <Card className="flex flex-col overflow-y-auto relative rounded-2xl bg-white h-full">
@@ -50,11 +55,17 @@ const HostController: React.FC<HostControllerProps> = ({
                 <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaSquarePollVertical /> Create polls</Button>
               </PopoverContent>
             </Popover>
-            <Button className='text-center w-full mb-2 bg-green-700 text-white hover:bg-yellow-700 font-bold flex'><ScanQrCode /> Show room QR</Button>
+            <Button onClick={() => setShowQRDialog(true)} className='text-center w-full mb-2 bg-green-700 text-white hover:bg-green-700 font-bold flex'><ScanQrCode /> Show room QR</Button>
             <Button variant="destructive" className='text-center w-full mb-2 font-bold flex' onClick={handleCloseRoom}><Trash /> Close room</Button>
           </CardDescription>
         </CardContent>
       </Card>
+      <ShowRoomQRDialog
+        urlToEncode={roomUrl}
+        title={roomName || 'Room QR Code'}
+        open={showQRDialog}
+        setOpen={setShowQRDialog}
+      />
     </div>
   );
 };

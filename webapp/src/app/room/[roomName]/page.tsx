@@ -14,12 +14,12 @@ import MessageInput from '@/app/components/MessageInput';
 
 // UI Components
 import { Button } from '@/components/ui/button';
-import { Card} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 // Icons
-import {FaAngleUp } from "react-icons/fa6";
-import { MessagesSquare} from 'lucide-react';
+import { FaAngleUp } from "react-icons/fa6";
+import { MessagesSquare } from 'lucide-react';
 
 // Utils & Types
 import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
@@ -35,14 +35,18 @@ import {
   fetchQuestions,
   closeRoom,
 } from '@/utils/room.v2';
-import { storeSessionData, removeSession, getStoredSessionData } from '@/utils/localstorage';
+import {
+  storeSessionData,
+  removeSession,
+} from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
 import {
   setupRealtimeChannel,
   RealtimeChannelApi,
   RoomData,
-  Participant
+  Participant,
 } from '@/utils/realtime';
+
 import HostController from '@/app/components/dialogs/HostController';
 import UsernameDialog from '@/app/components/dialogs/UsernameDialog';
 import RestartRoomDialog from '@/app/components/dialogs/RestartRoomDialog';
@@ -69,7 +73,6 @@ const RoomPage: React.FC = () => {
 
   // User state
   const [username, setUsername] = useState<string | null>(null);
-  const [usernameInput, setUsernameInput] = useState<string>('');
   const [userData, setUserData] = useState<UserData | null>(null);
 
   // UI state
@@ -77,6 +80,8 @@ const RoomPage: React.FC = () => {
   const [showCloseRoomDialog, setShowCloseRoomDialog] = useState(false);
   const [showRestartRoomDialog, setShowRestartRoomDialog] = useState(false);
   const [showMessageInput, setShowMessageInput] = useState(false);
+  const [showQRDialog, setShowQRDialog] = useState(false);
+
 
   // Content state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -141,10 +146,6 @@ const RoomPage: React.FC = () => {
     }
   }, [realtimeApi, questionsLeft]);
 
-  // const toggleParticipantsDisplay = () => {
-  //   setShowParticipants(!showParticipants);
-  // };
-
   const toggleMobileChat = () => {
     setShowMobileChat(!showMobileChat);
   };
@@ -178,17 +179,17 @@ const RoomPage: React.FC = () => {
         if (user) {
           setUsername(user.username);
           setShowUsernameDialog(false);
-        } else {
-          const storedSession = getStoredSessionData();
-
-          if (storedSession) {
-            setUsername(storedSession.username);
-            setQuestionsLeft(storedSession.questionsLeft);
-            setUpvotesLeft(storedSession.upvotesLeft);
-            setShowUsernameDialog(false);
-          }
         }
 
+        // const storedSession = getStoredSessionData();
+        // console.log('stored session ', storedSession)
+
+        // if (storedSession) {
+        //   setUsername(storedSession.username);
+        //   setQuestionsLeft(storedSession.questionsLeft);
+        //   setUpvotesLeft(storedSession.upvotesLeft);
+        //   setShowUsernameDialog(false);
+        // }
         initialized.current = true;
       } catch (err) {
         console.error('Error initializing room:', err);
@@ -281,14 +282,11 @@ const RoomPage: React.FC = () => {
     return <Loading />;
   }
 
-  const handleUsernameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleUsernameSubmit = async (username: string) => {
     try {
-      setUsername(usernameInput);
-      setShowUsernameDialog(false);
-
-      if (roomName) {
-        storeSessionData(roomName, usernameInput, questionsLeft, upvotesLeft);
+      if (username !== null && username.trim() !== '') {
+        setUsername(username);
+        setShowUsernameDialog(false);
       }
     } catch (err) {
       toast.error('Error checking username uniqueness');
@@ -375,6 +373,10 @@ const RoomPage: React.FC = () => {
     setShowMessageInput(true);
   };
 
+  console.log('username ', username)
+  console.log('host online ', hostOnline)
+  console.log('room close ', roomClosed)
+
   return (
     <RoomProvider>
       <div className="flex flex-col h-screen items-center bg-gradient-to-r from-white to-blue-200">
@@ -422,6 +424,7 @@ const RoomPage: React.FC = () => {
                   handleClearQuestion={handleClearQuestion}
                   handleRestartRound={handleRestartRound}
                   handleCloseRoom={handleCloseRoom}
+                  handleShowQR={() => setShowQRDialog(!showQRDialog)}
                 />
               )
             }

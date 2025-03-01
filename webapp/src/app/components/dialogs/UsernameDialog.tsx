@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 interface UsernameDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  handleUsernameSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  handleUsernameSubmit: (username: string) => void;
 }
 
 const UsernameDialog: React.FC<UsernameDialogProps> = ({
@@ -24,7 +24,9 @@ const UsernameDialog: React.FC<UsernameDialogProps> = ({
           <DialogTitle>Enter your name? ☺️</DialogTitle>
         </DialogHeader>
         <DialogDescription>Enter username dialog</DialogDescription>
-        <form onSubmit={handleUsernameSubmit}>
+        <form action={(formData: FormData) => {
+          handleUsernameSubmit(formData.get('username') as string);
+        }}>
           <Input
             type="text"
             id="username"
