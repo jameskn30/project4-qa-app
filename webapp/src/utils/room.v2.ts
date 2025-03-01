@@ -34,6 +34,14 @@ interface RoomSummary {
     created_at: string;
 }
 
+export interface FeedbackItem {
+    feedback: string;
+    like: boolean;
+    username?: string;
+    phone_number?: string;
+    email?: string;
+}
+
 // Helper functions
 const _getUserData = async (client: SupabaseClient | null = null) => {
     const supabase = client || await createClient();
@@ -77,6 +85,7 @@ export const createRoom = async (roomName: string): Promise<void> => {
 };
 
 export const fetchRoom = async (roomName: string): Promise<Room> => {
+    console.log('room name ', roomName)
     const supabase = await createClient();
     let user = null;
     
@@ -84,6 +93,7 @@ export const fetchRoom = async (roomName: string): Promise<Room> => {
         user = await _getUserData(supabase);
     } catch (err) {
         console.log('User not signed in');
+        console.error(err)
     }
 
     const { data, error } = await supabase
@@ -178,7 +188,7 @@ export const fetchMessages = async (roomId: string): Promise<Message[]> => {
     return data || [];
 };
 
-export const groupMessages = async (messages: string[]): Promise<any> => {
+export const groupMessages = async (messages: string[]) => {
     if (!CHATAPI_ENDPOINT) {
         throw new Error('Chat API endpoint not configured');
     }
@@ -207,7 +217,7 @@ export const insertQuestions = async (
     roomId: string, 
     questions: ProcessedQuestion[], 
     round: number
-): Promise<any> => {
+): Promise<void> => {
     const supabase = await createClient();
 
     try {
@@ -219,7 +229,7 @@ export const insertQuestions = async (
             .eq('round', round);
 
         // Then insert new questions
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('ProcessedQuestions')
             .insert({
                 room_id: roomId,
@@ -229,10 +239,9 @@ export const insertQuestions = async (
             .select();
 
         if (error) throw error;
-        return data;
     } catch (error) {
         console.error('Error saving processed questions:', error);
-        throw new Error(`Failed to save processed questions: ${error.message}`);
+        throw new Error(`Failed to save processed questions: ${error}`);
     }
 };
 
@@ -289,7 +298,7 @@ export const submitFeedback = async (formData: FormData): Promise<{ success: boo
     try {
         user = await _getUserData(supabase);
     } catch (error) {
-        // Continue without user ID if not authenticated
+        console.error(error)
     }
 
     try {
@@ -313,7 +322,7 @@ export const submitFeedback = async (formData: FormData): Promise<{ success: boo
     }
 };
 
-export const fetchFeedback = async (roomName: string): Promise<any> => {
+export const fetchFeedback = async (roomName: string): Promise<FeedbackItem[]> => {
     const supabase = await createClient();
     
     try {
@@ -333,19 +342,12 @@ export const fetchFeedback = async (roomName: string): Promise<any> => {
         }
         
         // Extract all room IDs
-        // const roomIds = roomsData.map(room => room.id);
-        
-        // Now query feedback for those rooms
-        console.log('room data ', roomData)
         const roomId = roomData.id
-        console.log('room id  ', roomId)
 
         const { data, error } = await supabase
             .from('Feedback')
             .select('feedback, like, username, phone_number, email')
             .eq('room_id', roomId)
-        
-        console.log('data ', data)  
             
         if (error) {
             console.error('Error fetching feedback:', error);

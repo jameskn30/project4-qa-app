@@ -12,12 +12,14 @@ import { UserData } from '@/utils/supabase/auth'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Spinner } from '@/components/ui/spinner'
 
 interface NavbarProps {
   onLeave?: (() => void) | null
   userData?: UserData | null
   signOut?: (() => void) | null
   login?: (() => void) | null
+  loading: boolean
 }
 
 const Navbar = ({
@@ -25,6 +27,7 @@ const Navbar = ({
   userData,
   signOut = null,
   login = null,
+  loading = false
 }: NavbarProps) => {
   const params = useParams<{ roomId: string }>()
 
@@ -47,12 +50,12 @@ const Navbar = ({
   };
 
   const ProfileButton = () => (
-    <Button 
-      variant="outline" 
+    <Button
+      variant="outline"
       className="flex gap-2 items-center"
       onClick={() => setShowProfileDialog(true)}
     >
-      <SquareUser/>
+      <SquareUser />
       {userData?.username}
     </Button>
   );
@@ -64,11 +67,18 @@ const Navbar = ({
         <div className="flex p-1 space-2 items-center gap-2">
           <Image src="/logo.png" alt="Logo" width={70} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer" />
           <p className="text-2xl font-bold bg-yellow-300 rotate-2">Donask!</p>
-          <p className="text-sm hidden lg:block"> Give the best Q&A experience to your audience </p>
+          <p className="text-sm hidden lg:block"> Q&A assistant</p>
         </div>
 
         <div className="hidden md:flex gap-3">
           <ul className="flex space-x-4 ">
+            {
+              loading && (
+                <li>
+                  <Spinner />
+                </li>
+              )
+            }
             {userData && (
               <li>
                 <ProfileButton />
@@ -83,7 +93,7 @@ const Navbar = ({
                   </Button>
                 </li>
                 <li>
-                  <Button variant="destructive" onClick={signOut ?? (() => {})}>
+                  <Button variant="destructive" onClick={signOut ?? (() => { })}>
                     Sign out
                   </Button>
                 </li>
@@ -160,10 +170,10 @@ const Navbar = ({
                   {userData && (
                     <>
                       <ProfileButton />
-                      <Button 
-                        className="w-full" 
-                        variant="destructive" 
-                        onClick={signOut ?? (() => {})}
+                      <Button
+                        className="w-full"
+                        variant="destructive"
+                        onClick={signOut ?? (() => { })}
                       >
                         Sign out
                       </Button>
@@ -210,7 +220,7 @@ const Navbar = ({
                 id="password"
                 type="password"
                 value={profileForm.password}
-                onChange={(e) => setProfileForm({...profileForm, password: e.target.value})}
+                onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
                 placeholder="Enter new password"
               />
             </div>

@@ -1,7 +1,8 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast, Toaster } from 'sonner';
+import Image from 'next/image'
 
 // Components
 import QuestionList from '@/app/components/QuestionList';
@@ -12,15 +13,13 @@ import ErrorPage from './error';
 import MessageInput from '@/app/components/MessageInput';
 
 // UI Components
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Card} from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 // Icons
-import { FaRegComments, FaArrowRotateRight, FaTrashCan, FaAngleUp, FaSquarePollVertical } from "react-icons/fa6";
-import { ChartColumnBig, MessagesSquare, ScanQrCode, Trash, Copy, Skull } from 'lucide-react';
+import {FaAngleUp } from "react-icons/fa6";
+import { MessagesSquare} from 'lucide-react';
 
 // Utils & Types
 import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
@@ -35,17 +34,20 @@ import {
   insertQuestions,
   fetchQuestions,
   closeRoom,
-  submitFeedback,
 } from '@/utils/room.v2';
 import { storeSessionData, removeSession, getStoredSessionData } from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   setupRealtimeChannel,
   RealtimeChannelApi,
   RoomData,
   Participant
 } from '@/utils/realtime';
+import HostController from '@/app/components/dialogs/HostController';
+import UsernameDialog from '@/app/components/dialogs/UsernameDialog';
+import RestartRoomDialog from '@/app/components/dialogs/RestartRoomDialog';
+import CloseRoomDialog from '@/app/components/dialogs/CloseRoomDialog';
+import SubmitFeedbackDialog from '@/app/components/dialogs/SubmitFeedbackDialog';
 
 
 const RoomPage: React.FC = () => {
@@ -54,14 +56,16 @@ const RoomPage: React.FC = () => {
   const roomName = params?.roomName ? decodeURIComponent(params.roomName as string) : null;
   const supabase = createClient();
 
+  // Add initialization tracker
+  const initialized = useRef(false);
+
   // Room state
-  const [roomData, setRoomData] = useState<any>(null);
+  const [roomData, setRoomData] = useState<RoomData>();
   const [loading, setLoading] = useState<boolean>(true);
   const [roomExists, setRoomExists] = useState<boolean>(true);
   const [roomClosed, setRoomClosed] = useState<boolean>(false);
   const [hostOnline, setHostOnline] = useState<boolean>(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
-  const [showParticipants, setShowParticipants] = useState(false);
 
   // User state
   const [username, setUsername] = useState<string | null>(null);
@@ -79,7 +83,6 @@ const RoomPage: React.FC = () => {
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [hostMessage, setHostMessage] = useState('');
-  const [channel, setChannel] = useState<any>(null);
 
   // Limits
   const GIVEN_QUESTIONS = 1;
@@ -88,9 +91,6 @@ const RoomPage: React.FC = () => {
   const [upvotesLeft, setUpvotesLeft] = useState(GIVEN_UPVOTES);
 
   // Add these near other state declarations
-  const [feedback, setFeedback] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [realtimeApi, setRealtimeApi] = useState<RealtimeChannelApi | null>(null);
 
   // Add state for mobile chat visibility
@@ -122,7 +122,7 @@ const RoomPage: React.FC = () => {
     } catch (err) {
       console.error(err)
     }
-  }, [realtimeApi, roomData, questionsLeft])
+  }, [realtimeApi, roomData])
 
   const onSent = useCallback((content: string) => {
     if (questionsLeft <= 0) {
@@ -135,6 +135,7 @@ const RoomPage: React.FC = () => {
       setQuestionsLeft(prev => prev - 1);
     } catch (error) {
       toast.error("Internal error");
+      console.error(error)
     } finally {
       setShowMessageInput(false);
     }
@@ -150,61 +151,59 @@ const RoomPage: React.FC = () => {
 
   //USE EFFECT
 
+  // Combine initialization effects into a single effect
   useEffect(() => {
-    const checkRoomExists = async () => {
-      if (roomName !== null) {
-        try {
-          const res = await fetchRoom(roomName)
+    // Skip if already initialized or missing roomName
+    if (initialized.current || !roomName) return;
 
-          // const { name, isHost, id } = res;
+    const initializeRoom = async () => {
+      try {
+        setLoading(true);
 
-          if (res) {
-            setRoomExists(true);
-            setRoomData(res)
-
-          } else {
-            console.error('room does not exist')
-            setRoomExists(false);
-
-          }
-
-          setLoading(false)
-
-        } catch (err) {
-          console.error(err)
+        // 1. Fetch room data
+        const res = await fetchRoom(roomName);
+        if (res) {
+          setRoomExists(true);
+          setRoomData(res);
+        } else {
+          console.error('room does not exist');
           setRoomExists(false);
-          setLoading(false)
+          return;
         }
-      };
-    }
 
-    checkRoomExists();
+        // 2. Get user data
+        const user = await _getUserData();
+        setUserData(user);
 
-    const getUserData = async () => {
-      const user = await _getUserData()
-      setUserData(user)
-      if (user) {
-        setUsername(user.username)
-        setShowUsernameDialog(false)
-      } else {
-        const storedSession = getStoredSessionData();
+        if (user) {
+          setUsername(user.username);
+          setShowUsernameDialog(false);
+        } else {
+          const storedSession = getStoredSessionData();
 
-        if (storedSession && !username) {
-          setUsername(storedSession.username);
-          setQuestionsLeft(storedSession.questionsLeft);
-          setUpvotesLeft(storedSession.upvotesLeft);
-          setShowUsernameDialog(false)
+          if (storedSession) {
+            setUsername(storedSession.username);
+            setQuestionsLeft(storedSession.questionsLeft);
+            setUpvotesLeft(storedSession.upvotesLeft);
+            setShowUsernameDialog(false);
+          }
         }
+
+        initialized.current = true;
+      } catch (err) {
+        console.error('Error initializing room:', err);
+        setRoomExists(false);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    getUserData()
+    initializeRoom();
+  }, [roomName]);
 
-  }, [roomName, username]);
-
-  // Separate channel setup into its own effect
+  // Separate channel setup into its own effect, with proper dependencies
   useEffect(() => {
-    if (!username || !roomName || !roomData) return;
+    if (!username || !roomName || !roomData || !initialized.current) return;
 
     const handlers = {
       setMessages,
@@ -226,32 +225,29 @@ const RoomPage: React.FC = () => {
     const api = setupRealtimeChannel(
       supabase,
       roomName,
-      roomData as RoomData,
+      roomData,
       username,
       handlers,
       config
     );
 
     setRealtimeApi(api);
-    setChannel(api.channel);
 
     return () => {
       api.unsubscribe();
     };
   }, [roomName, username, roomData, supabase]);
 
-
-  // Initial data sync
+  // Initial data sync - only run once when all required data is available
   useEffect(() => {
-    console.log('setting up username and websocket')
-    console.log(hostOnline)
+    if (!initialized.current || !username || !roomName || !roomData) return;
 
-    if (!loading && username && !showUsernameDialog && roomData) {
-      if (roomName) {
-        storeSessionData(roomName, username, questionsLeft, upvotesLeft)
-      }
+    const sync = async () => {
+      try {
+        if (roomName) {
+          storeSessionData(roomName, username, questionsLeft, upvotesLeft);
+        }
 
-      const sync = async () => {
         const [messages, questions] = await Promise.all([
           fetchMessages(roomData.id),
           fetchQuestions(roomData.id, 1)
@@ -263,18 +259,18 @@ const RoomPage: React.FC = () => {
           flag: '🇺🇸'
         })));
 
-        setQuestions(questions.map((question: any) => ({
+        setQuestions(questions.map((question: QuestionItem) => ({
           uuid: question.uuid,
           rephrase: question.rephrase,
           upvotes: question.upvotes,
         })));
-      };
+      } catch (error) {
+        console.error('Error syncing initial data:', error);
+      }
+    };
 
-      sync();
-    } else {
-      console.log('not setting up username and websocket')
-    }
-  }, [loading, username, showUsernameDialog, roomData, roomName, questionsLeft, upvotesLeft, hostOnline]);
+    sync();
+  }, [roomData?.id, username, roomName, initialized.current]);
 
 
   if (!roomExists) {
@@ -290,8 +286,13 @@ const RoomPage: React.FC = () => {
     try {
       setUsername(usernameInput);
       setShowUsernameDialog(false);
-    } catch (error) {
+
+      if (roomName) {
+        storeSessionData(roomName, usernameInput, questionsLeft, upvotesLeft);
+      }
+    } catch (err) {
       toast.error('Error checking username uniqueness');
+      console.error(err)
     }
   };
 
@@ -304,7 +305,7 @@ const RoomPage: React.FC = () => {
 
       // Broadcast the grouped questions to all room participants
       realtimeApi?.broadcastQuestions(
-        res.message.map((item: any) => ({
+        res.message.map((item: QuestionItem) => ({
           uuid: item.uuid,
           rephrase: item.rephrase,
           upvotes: item.upvotes,
@@ -312,9 +313,11 @@ const RoomPage: React.FC = () => {
       );
 
       //insert or update the questions
-      await insertQuestions(roomData.id, res.message, 1);
+      if (roomData) {
+        await insertQuestions(roomData.id, res.message, 1);
+        toast.success('Grouped questions');
+      }
 
-      toast.success('Grouped questions');
     } catch (error) {
       toast.error('Error grouping questions');
       console.error(error);
@@ -324,8 +327,10 @@ const RoomPage: React.FC = () => {
   };
 
   const handleClearQuestion = async () => {
-    await clearQuestions(roomData.id, 1);
-    realtimeApi?.sendCommand('clear_questions');
+    if (roomData) {
+      await clearQuestions(roomData.id, 1);
+      realtimeApi?.sendCommand('clear_questions');
+    }
   }
 
   const handleRestartRound = () => {
@@ -344,15 +349,18 @@ const RoomPage: React.FC = () => {
   const confirmCloseRoom = () => {
     console.log("confirmCloseRoom");
 
-    closeRoom(roomData.id)
-      .then(_ => {
-        realtimeApi?.sendCommand('close_room');
-        toast.success("Room closed successfully");
-      })
-      .catch(err => {
-        toast.error("Error while closing room, try again later");
-        console.error(err);
-      });
+    if (roomData) {
+
+      closeRoom(roomData.id)
+        .then(() => {
+          realtimeApi?.sendCommand('close_room');
+          toast.success("Room closed successfully");
+        })
+        .catch(err => {
+          toast.error("Error while closing room, try again later");
+          console.error(err);
+        });
+    }
   }
 
   const onLeave = () => {
@@ -374,6 +382,7 @@ const RoomPage: React.FC = () => {
         <Navbar
           onLeave={onLeave}
           userData={userData}
+          loading={false}
         />
 
         {/* Removed mobile chat overlay in favor of Dialog component */}
@@ -407,41 +416,13 @@ const RoomPage: React.FC = () => {
           <div className="lg:flex lg:w-1/3 w-full gap-2 flex-col my-2">
             {
               roomData?.isHost && (
-                <div className="w-full">
-                  <Card className="flex flex-col overflow-y-auto relative rounded-2xl bg-white h-full">
-                    <CardHeader>
-                      <CardTitle className='flex justify-center items-center gap-1'>
-                        You are host of: <span className="bg-yellow-300 text-black rotate-2 p-1">{roomName}</span>
-                        <Button variant="ghost"><Copy /></Button>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className='grid grid-cols-2 w-full gap-1'>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><MessagesSquare /> Live Q&A</Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-48 p-2 backdrop-blur-sm">
-                            <Button onClick={handleGroupQuestions} className='justify-between w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaRegComments /> Group questions</Button>
-                            <Button onClick={handleClearQuestion} className='justify-between w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><FaTrashCan /> Clear Q&A</Button>
-                            <Button onClick={handleRestartRound} className='justify-between w-full mb-2 bg-red-500 text-white hover:bg-red-700 font-bold flex'><FaArrowRotateRight /> Restart Q&A</Button>
-                          </PopoverContent>
-                        </Popover>
-                        {/* Poll button */}
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button className='text-center w-full mb-2 bg-yellow-500 text-white hover:bg-yellow-700 font-bold flex'><ChartColumnBig /> Start polls</Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-48 p-2 backdrop-blur-sm">
-                            <Button className='text-center w-full mb-2 bg-blue-500 text-white hover:bg-blue-700 font-bold flex'><FaSquarePollVertical /> Create polls</Button>
-                          </PopoverContent>
-                        </Popover>
-                        <Button className='text-center w-full mb-2 bg-green-700 text-white hover:bg-yellow-700 font-bold flex'><ScanQrCode /> Show room QR</Button>
-                        <Button variant="destructive" className='text-center w-full mb-2 font-bold flex' onClick={handleCloseRoom}><Trash /> Close room</Button>
-                      </CardDescription>
-                    </CardContent>
-                  </Card>
-                </div>
+                <HostController
+                  roomName={roomName}
+                  handleGroupQuestions={handleGroupQuestions}
+                  handleClearQuestion={handleClearQuestion}
+                  handleRestartRound={handleRestartRound}
+                  handleCloseRoom={handleCloseRoom}
+                />
               )
             }
 
@@ -479,63 +460,26 @@ const RoomPage: React.FC = () => {
 
           </div>
         </div>
-        <Dialog open={showUsernameDialog} onOpenChange={(open) => setShowUsernameDialog(open)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>What's your name? ☺️</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleUsernameSubmit}>
-              <Input
-                type="text"
-                id="username"
-                name="username"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                required
-              />
-              <Button type="submit" variant="default" className="mt-4 w-full bg-blue-500 hover:bg-blue-700 text-white py-2 rounded-md">
-                Submit
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
 
-        <Dialog open={showRestartRoomDialog} onOpenChange={setShowRestartRoomDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className='flex gap-2 justify-center text-xl'>
-                <Skull className="h-5 w-5" />
-                Confirm Start New Q&A Round
-              </DialogTitle>
-            </DialogHeader>
-            <p className="mt-4">Are you sure you want to start a new round?</p>
-            <p className="mt-4">All users questions will be archived and everyone will have <br /> <span className="bg-orange-200"> {GIVEN_QUESTIONS} questions </span>and <span className="bg-orange-200">{GIVEN_UPVOTES} upvotes</span> again </p>
-            <div className="mt-4 flex justify-center gap-4">
-              <Button variant={"destructive"} onClick={confirmRestartRound}>Yes, Restart</Button>
-              <Button variant="secondary" onClick={() => setShowRestartRoomDialog(false)}>Cancel</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <UsernameDialog
+          open={showUsernameDialog}
+          onOpenChange={(open) => setShowUsernameDialog(open)}
+          handleUsernameSubmit={handleUsernameSubmit}
+        />
 
-        <Dialog open={showCloseRoomDialog} onOpenChange={setShowCloseRoomDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className='flex gap-2 justify-center text-xl'>
-                <Skull className="h-5 w-5" />
-                <span className="bg-red-200 p-1">
-                  DANGER, DANGER !!
-                </span>
-              </DialogTitle>
-            </DialogHeader>
-            <p className="mt-4">
-              This action will save your activities (questions, messages, ...) and will kick all participants out. It can't be undone</p>
-            <div className="mt-4 flex justify-center gap-4">
-              <Button variant={"destructive"} onClick={confirmCloseRoom}>Yes, Close Room</Button>
-              <Button variant="secondary" onClick={() => setShowCloseRoomDialog(false)}>Cancel</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <RestartRoomDialog
+          isOpen={showRestartRoomDialog}
+          onOpenChange={setShowRestartRoomDialog}
+          onConfirm={confirmRestartRound}
+          givenQuestions={GIVEN_QUESTIONS}
+          givenUpvotes={GIVEN_UPVOTES}
+        />
+
+        <CloseRoomDialog
+          isOpen={showCloseRoomDialog}
+          onOpenChange={setShowCloseRoomDialog}
+          onConfirm={confirmCloseRoom}
+        />
 
         <Dialog open={showMessageInput} onOpenChange={setShowMessageInput}>
           <DialogContent>
@@ -545,91 +489,11 @@ const RoomPage: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={roomClosed} onOpenChange={() => router.push('/')}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Room closed by host</DialogTitle>
-            </DialogHeader>
-            <form className="space-y-4" action={(formData) => {
-              submitFeedback(formData).then(_ => {
-                toast.success("Feedback submitted. Redirecting to home page")
-                setTimeout(() => {
-                  router.push('/')
-                }, 1000)
-              }
-              ).catch(err => {
-                toast.error("Some error happened, please close this tab ")
-              })
-            }}>
-              <div className="flex gap-3 flex-col">
-                <p className="mb-2">You can leave feedback, follow-up questions, or let us know how you liked the session.</p>
-                
-                <div className="flex justify-center gap-4 items-center mb-2">
-                  <p>Did you find this session helpful?</p>
-                  <div className="flex gap-2 justify-center items-center">
-                    <Checkbox
-                      id="like"
-                      name="like"
-                    />
-                    <label htmlFor="like">
-                      👍 Yes
-                    </label>
-                  </div>
-                </div>
-                
-                <input name="roomId" id="roomId" className='hidden' value={roomData?.id || ''} />
-                
-                <div className="space-y-2">
-                  <label htmlFor="feedback" className="text-sm font-medium">
-                    Your feedback (optional)
-                  </label>
-                  <Input
-                    id="feedback"
-                    name="feedback"
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="Any feedback or follow-up question?"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
-                    Email address (optional)
-                  </label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your.email@example.com"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-medium">
-                    Phone number (optional)
-                  </label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="(123) 456-7890"
-                  />
-                </div>
-              </div>
-              
-              <Button
-                type="submit"
-                className="w-full mt-4 bg-blue-500 hover:bg-blue-600"
-              >
-                Submit and leave
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <SubmitFeedbackDialog
+          roomId={roomData?.id}
+          isOpen={roomClosed}
+          onOpenChange={setRoomClosed}
+        />
 
         {/* Add the host offline dialog */}
         <Dialog open={username !== null && !hostOnline && !roomClosed}>
@@ -642,7 +506,7 @@ const RoomPage: React.FC = () => {
                 Waiting for host to start the room ...
               </p>
             </div>
-            <img alt="Loading animation" src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif" />
+            <Image alt="Loading animation" width={600} height={400} src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDF3MnN5cG1hZXNmcmoybWhpb3hudHp1YjgwcHBlc3gxYnMwZHQyNyZlcD12MV9pbnRlcm5naWZfYnlfaWQmY3Q9Zw/QBd2kLB5qDmysEXre9/giphy.gif" />
           </DialogContent>
         </Dialog>
 

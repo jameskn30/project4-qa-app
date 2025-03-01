@@ -24,7 +24,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, participants = [] }) 
   }, [messages]);
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden border rounded-lg shadow-sm">
+    <Card className="h-full flex flex-col overflow-hidden border rounded-xl shadow-sm">
       <CardHeader className="py-2 px-4 border-b flex justify-between items-center">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <MessageCircle size={16} className="text-blue-500" />

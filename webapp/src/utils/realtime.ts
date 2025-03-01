@@ -2,6 +2,8 @@ import _ from 'lodash';
 import { Message } from '@/app/components/ChatWindow';
 import { QuestionItem } from '@/app/components/QuestionList';
 import { addMessage, insertQuestions } from '@/utils/room.v2';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePresenceState } from '@supabase/supabase-js';
 
 // Types for better TypeScript support
 export interface RoomData {
@@ -35,7 +37,7 @@ export interface RealtimeConfig {
 }
 
 export interface RealtimeChannelApi {
-  channel: any;
+  channel: RealtimeChannel;
   sendMessage: (content: string) => Promise<void>;
   sendUpvote: (questionId: string) => Promise<void>;
   sendCommand: (command: string) => Promise<void>;
@@ -45,8 +47,37 @@ export interface RealtimeChannelApi {
   getParticipants: () => Participant[];
 }
 
+interface MessagePayload {
+  username: string;
+  content: string;
+}
+
+interface QuestionsPayload {
+  questions: Array<{
+    uuid: string;
+    rephrase: string;
+    upvotes: number;
+  }>;
+}
+
+interface UpvotePayload {
+  questionId: string;
+}
+
+interface CommandPayload {
+  command: string;
+}
+
+interface PresenceData {
+  username: string;
+  isHost: boolean;
+  online: boolean;
+  precense_ref?: string;
+  // id: string;
+}
+
 export const setupRealtimeChannel = (
-  supabase: any,
+  supabase: SupabaseClient,
   roomName: string,
   roomData: RoomData,
   username: string,
@@ -74,7 +105,7 @@ export const setupRealtimeChannel = (
   });
 
   // Handle messages
-  channel.on('broadcast', { event: 'message' }, ({ payload }: { payload: any }) => {
+  channel.on('broadcast', { event: 'message' }, ({ payload }: { payload: MessagePayload }) => {
     const { username, content } = payload;
     const message: Message = { username, content, flag: '🇺🇸' };
     setMessages((prevMessages) => [...prevMessages, message]);
@@ -85,9 +116,9 @@ export const setupRealtimeChannel = (
   });
 
   // Handle questions
-  channel.on('broadcast', { event: 'questions' }, ({ payload }: { payload: any }) => {
+  channel.on('broadcast', { event: 'questions' }, ({ payload }: { payload: QuestionsPayload }) => {
     setQuestions(payload.questions.map(
-      (question: { uuid: string, rephrase: string, upvotes: number }) => ({
+      (question) => ({
         uuid: question.uuid,
         rephrase: question.rephrase,
         upvotes: question.upvotes,
@@ -102,7 +133,7 @@ export const setupRealtimeChannel = (
   }, 2000);
 
   // Handle upvotes
-  channel.on('broadcast', { event: 'upvote' }, ({ payload }: { payload: any }) => {
+  channel.on('broadcast', { event: 'upvote' }, ({ payload }: { payload: UpvotePayload }) => {
     setQuestions(prevQuestions => {
       const updatedQuestions = prevQuestions.map(question =>
         question.uuid === payload.questionId
@@ -124,7 +155,7 @@ export const setupRealtimeChannel = (
   });
 
   // Handle commands with switch statement
-  channel.on('broadcast', { event: 'command' }, ({ payload }: { payload: any }) => {
+  channel.on('broadcast', { event: 'command' }, ({ payload }: { payload: CommandPayload }) => {
     switch (payload.command) {
       case 'clear_questions':
         setLoadingQuestions(true);
@@ -150,16 +181,15 @@ export const setupRealtimeChannel = (
   });
 
   // Function to extract participants from presence state
-  const extractParticipants = (state: any): Participant[] => {
-    if (state){
-    return Object.values(state)
-      .flat()
-      .map((presence: any) => ({
-        username: presence.username,
-        isHost: presence.isHost,
-        online: presence.online,
-        // id: presence.id || `user-${Math.random().toString(36).substr(2, 9)}`
-      }));
+  const extractParticipants = (state: RealtimePresenceState | null): Participant[] => {
+    if (state) {
+      return Object.values(state)
+        .flat()
+        .map((presence: any) => ({
+          username: presence.username || 'Anonymous',
+          isHost: presence.isHost || false,
+          online: presence.online || false,
+        }));
     }
     return []
   };
@@ -180,23 +210,23 @@ export const setupRealtimeChannel = (
       // Check if host is in the room
       setHostOnline(participants.some(p => p.isHost === true));
     })
-    .on("presence", { event: 'join' }, ({ newPresences, state }: { key: string, newPresences: any[], state: any }) => {
+    .on("presence", { event: 'join' }, ({ newPresences, state }: { key: string, newPresences: PresenceData[], state: RealtimePresenceState }) => {
       const participants = extractParticipants(state);
       setParticipants(participants);
       
       if (roomData.isHost) return;
 
-      if (newPresences.some((presence: any) => presence.isHost === true)) {
+      if (newPresences.some((presence) => presence.isHost === true)) {
         setHostOnline(true);
       }
     })
-    .on("presence", { event: 'leave' }, ({ leftPresences, state }: { key: string, leftPresences: any[], state: any }) => {
+    .on("presence", { event: 'leave' }, ({ leftPresences, state }: { key: string, leftPresences: PresenceData[], state: RealtimePresenceState }) => {
       const participants = extractParticipants(state);
       setParticipants(participants);
       
       if (roomData.isHost) return;
 
-      if (leftPresences.some((presence: any) => presence.isHost === true)) {
+      if (leftPresences.some((presence) => presence.isHost === true)) {
         setHostOnline(false);
       }
     });
@@ -204,11 +234,10 @@ export const setupRealtimeChannel = (
   // Subscribe and track presence
   channel.subscribe(async (status: string) => {
     if (status === 'SUBSCRIBED') {
-      const presenceData = {
+      const presenceData: PresenceData = {
         username,
         isHost: roomData.isHost,
         online: true,
-        id: `user-${Math.random().toString(36).substr(2, 9)}`
       };
 
       await channel.track(presenceData);
@@ -238,6 +267,7 @@ export const setupRealtimeChannel = (
 
   const sendDeleteQuestions = async (questionId: string) => {
     // Implementation for deleting questions
+    console.log('delete question', questionId);
   };
 
   const sendCommand = async (command: string) => {
@@ -279,9 +309,11 @@ export const setupRealtimeChannel = (
 };
 
 // Helper to check if the host is online based on presence data
-export const isHostOnline = (presenceState: any, isCurrentUserHost: boolean): boolean => {
+export const isHostOnline = (presenceState: RealtimePresenceState | null, isCurrentUserHost: boolean): boolean => {
   if (isCurrentUserHost) return true;
 
-  const presences = Object.values(presenceState).flat();
-  return presences.some((presence: any) => presence.isHost === true);
+  if (!presenceState) return false;
+  
+  const presences = Object.values(presenceState).flat() as unknown as PresenceData[];
+  return presences.some((presence) => presence.isHost === true);
 };

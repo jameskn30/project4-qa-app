@@ -27,7 +27,7 @@ import CreateRoomForm from '../components/CreateRoomForm';
 import Navbar from '../components/Navbar';
 import { Button } from '@/components/ui/button';
 import {HardDriveDownload, ThumbsUp, UserRound } from 'lucide-react';
-import { fetchMyRooms, fetchFeedback } from '@/utils/room.v2';
+import { fetchMyRooms, fetchFeedback, FeedbackItem } from '@/utils/room.v2';
 
 import {
     Dialog,
@@ -47,14 +47,14 @@ import {
 } from "@/components/ui/table"
 
 // Define a type for feedback item
-interface FeedbackItem {
-    feedback: string;
-    username: string;
-    like: boolean;
-    created_at: string;
-    email: string;
-    phone_number: string;
-}
+// interface FeedbackItem {
+//     feedback: string;
+//     username: string;
+//     like: boolean;
+//     created_at: string;
+//     email: string;
+//     phone_number: string;
+// }
 
 // Define a type for room data
 interface RoomData {
@@ -70,7 +70,7 @@ const NewRoomPage = () => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const router = useRouter();
 
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    // const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
 
     const [userData, setUserData] = useState<UserData | null>(null)
@@ -90,7 +90,7 @@ const NewRoomPage = () => {
                 const user = await _getUserData()
                 console.log(user)
                 setUserData(user)
-                setIsLoggedIn(!!user)
+                // setIsLoggedIn(!!user)
             } catch (error) {
                 console.error("Error fetching user data:", error);
             } finally {
@@ -132,10 +132,6 @@ const NewRoomPage = () => {
         setIsDialogOpen(false)
     }
 
-    const goToHomepage = () => {
-        router.push('/')
-    }
-
     const handleJoinActiveRoom = () => {
         if (activeRoom) {
             router.push(`/room/${activeRoom.name}`)
@@ -175,7 +171,8 @@ const NewRoomPage = () => {
                 userData={userData}
                 login={() => console.log('nav bar login')}
                 signOut={handleSignOut}
-                signUp={() => console.log('nav bar sign up')}
+                loading={isLoggingOut}
+                // signUp={() => console.log('nav bar sign up')}
             />
             <Toaster expand={true} position='top-center' richColors />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">

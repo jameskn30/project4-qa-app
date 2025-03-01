@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 const Loading = () => {
   const GIF = [
@@ -11,7 +12,7 @@ const Loading = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <img src={randomGif} width="200" height="200" alt="Loading" />
+      <Image src={randomGif} width="200" height="200" alt="Loading" />
       <div className="mt-4 text-xl text-gray-700">Hang tight! Joining room...</div>
     </div>
   );

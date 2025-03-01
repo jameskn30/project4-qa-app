@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 
 export async function POST(request: Request) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const formData = await request.json()
 
   const data = {

@@ -16,8 +16,10 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
     const scrollToWaitlist = () => {
         const element = document.getElementById('waitlist');
         const yOffset = -100; // Margin of 10px
-        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+        if (element){
+            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
     };
 
     return (

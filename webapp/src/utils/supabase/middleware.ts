@@ -1,5 +1,4 @@
 import { createServerClient } from "@supabase/ssr";
-import { url } from "inspector";
 import { NextResponse, type NextRequest } from "next/server";
 
 export const updateSession = async (request: NextRequest) => {
@@ -18,7 +17,7 @@ export const updateSession = async (request: NextRequest) => {
                     },
                     setAll(cookieToSet) {
 
-                        cookieToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+                        cookieToSet.forEach(({ name, value }) => request.cookies.set(name, value))
 
                         supabaseResponse = NextResponse.next({ request })
 
