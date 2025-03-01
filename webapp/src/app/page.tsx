@@ -23,7 +23,7 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
     };
 
     return (
-        <nav className="sticky top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36">
+        <nav className="sticky top-4 w-full flex justify-between py-3 gap-3 px-3 z-10 md:px-10 lg:px-36" data-testid="landing-page-navbar">
 
             <div className="flex p-1 space-2  gap-3 justify-end w-full ">
                 <Button variant="secondary">
@@ -53,7 +53,7 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
 
 const Footer = () => {
     return (
-        <footer className="w-full bg-gray-700 text-white py-1 flex justify-center mt-10 fixed bottom-0">
+        <footer className="w-full bg-gray-700 text-white py-1 flex justify-center mt-10 fixed bottom-0" data-testid="footer">
             <div className="flex flex-col md:flex-row items-center justify-center container px-4">
                 <div className="md:mb-0 flex items-center gap-7 flex-col lg:flex-row py-3">
                     <h2 className="text-xl font-bold">Connect:</h2>
@@ -103,15 +103,15 @@ const WelcomePage = () => {
     };
 
     return (
-        <div className="relative flex flex-col bg-gradient-to-r from-white to-blue-200 items-center min-h-screen h-full">
+        <div className="relative flex flex-col bg-gradient-to-r from-white to-blue-200 items-center min-h-screen h-full" data-testid="welcome-page-container">
             <LandingPageNavbar isLoggedIn={isLoggedIn} isLoadingAuth={authLoading} onSignOut={handleSignOut} />
             <Toaster expand={true} position='top-center' richColors />
 
-            <div className={`flex flex-col lg:flex-row h-auto w-auto px-4 lg:px-20 py-10 ${isLoggedIn ? 'justify-center' : ''}`}>
-                <div id="intro-container" className="flex flex-1 mb-10 lg:mb-0">
+            <div className={`flex flex-col lg:flex-row h-auto w-auto px-4 lg:px-20 py-10 ${isLoggedIn ? 'justify-center' : ''}`} data-testid="hero-section">
+                <div id="intro-container" className="flex flex-1 mb-10 lg:mb-0" data-testid="intro-container">
                     <div className="flex flex-col font-mono text-center lg:text-left gap-5">
                         {/* <p className="text-6xl lg:text-8xl font-bold text-center w-full">Bolt.qa</p> */}
-                        <div className="flex space-2 items-center">
+                        <div className="flex space-2 items-center" data-testid="logo-container">
                             <Image src="/logo.png" alt="Logo" width={150} height={30} className="transition-transform duration-300 ease-in-out transform hover:scale-125 hover:cursor-pointer" />
                             <p className='text-6xl font-bold'>Donask</p>
                         </div>
@@ -126,7 +126,7 @@ const WelcomePage = () => {
                     </div>
                 </div>
 
-                <div className="flex w-full lg:w-1/3 justify-center items-center">
+                <div className="flex w-full lg:w-1/3 justify-center items-center" data-testid="join-room-container">
                     <div className=" w-[300px] h-[300px]">
                         <JoinRoomForm />
                     </div>
@@ -136,10 +136,10 @@ const WelcomePage = () => {
             </div>
 
             {/* Quick demo sections */}
-            <div className='w-full py-5  6bg-slate-300'>
+            <div className='w-full py-5  6bg-slate-300' data-testid="auth-section">
                 {!isLoggedIn && (
                     <div className="flex items-center" id="waitlist-container mt-10">
-                        <section id="waitlist" className="w-full flex justify-center">
+                        <section id="waitlist" className="w-full flex justify-center" data-testid="waitlist-section">
                             <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-[350px] h-[500px]">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="login">Login</TabsTrigger>
@@ -159,21 +159,21 @@ const WelcomePage = () => {
             </div>
 
             {/* Pricing section */}
-            <div className='w-full h-96 bg-blue-300 flex flex-col justify-center items-center'>
+            <div className='w-full h-96 bg-blue-300 flex flex-col justify-center items-center' data-testid="pricing-section">
                 <h2 className="text-4xl font-bold mb-4">Pricing</h2>
                 <p className="text-lg text-center max-w-2xl">Choose the plan that fits your needs. We offer flexible pricing options for individuals and organizations.</p>
                 <Button className="mt-4">View Pricing</Button>
             </div>
 
             {/* Customer testimony section */}
-            <div className='w-full h-96 bg-green-300 flex flex-col justify-center items-center'>
+            <div className='w-full h-96 bg-green-300 flex flex-col justify-center items-center' data-testid="testimonial-section">
                 <h2 className="text-4xl font-bold mb-4">Customer Testimonials</h2>
                 <p className="text-lg text-center max-w-2xl">Hear from our satisfied customers about how Bolt.qa has transformed their events and meetings.</p>
                 <Button className="mt-4">Read Testimonials</Button>
             </div>
 
             {/* Brief about me section */}
-            <div className='w-full h-96 bg-yellow-300 flex flex-col justify-center items-center'>
+            <div className='w-full h-96 bg-yellow-300 flex flex-col justify-center items-center' data-testid="about-section">
                 <h2 className="text-4xl font-bold mb-4">About Me</h2>
                 <p className="text-lg text-center max-w-2xl">Learn more about the creator of Bolt.qa and the journey behind building this platform.</p>
                 <Button className="mt-4">About Me</Button>
@@ -181,7 +181,7 @@ const WelcomePage = () => {
 
             {
                 authLoading && (
-                    <div className="flex justify-center items-center h-full">
+                    <div className="flex justify-center items-center h-full" data-testid="loading-spinner">
                         <Spinner />
                     </div>
                 )
