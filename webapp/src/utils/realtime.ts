@@ -108,10 +108,10 @@ export const setupRealtimeChannel = (
     console.log('on message ', payload)
     const message: Message = { username, content, flag: '🇺🇸' };
     setMessages((prevMessages) => [...prevMessages, message]);
-    //Only host allowed to update Postgres DB
-    // if (roomData?.isHost) {
-    //   addMessage(roomData.id, content, username, 1);
-    // }
+    // Only host allowed to update Postgres DB
+    if (roomData?.isHost) {
+      addMessage(roomData.id, content, username, 1);
+    }
   });
 
   // Handle questions

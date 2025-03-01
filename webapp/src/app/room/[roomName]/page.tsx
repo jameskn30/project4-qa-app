@@ -35,10 +35,6 @@ import {
   fetchQuestions,
   closeRoom,
 } from '@/utils/room.v2';
-import {
-  storeSessionData,
-  removeSession,
-} from '@/utils/localstorage';
 import { createClient } from '@/utils/supabase/client';
 import {
   setupRealtimeChannel,
@@ -248,9 +244,9 @@ const RoomPage: React.FC = () => {
 
     const sync = async () => {
       try {
-        if (roomName) {
-          storeSessionData(roomName, username, questionsLeft, upvotesLeft);
-        }
+        // if (roomName) {
+        //   storeSessionData(roomName, username, questionsLeft, upvotesLeft);
+        // }
 
         console.log('syncing initial data')
 
@@ -370,7 +366,7 @@ const RoomPage: React.FC = () => {
     if (realtimeApi) {
       realtimeApi.unsubscribe();
     }
-    removeSession();
+    // removeSession();
     router.push("/");
   };
 
