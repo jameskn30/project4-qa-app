@@ -20,7 +20,7 @@ interface QuestionProps {
 const Question = ({ question, order, isHost, handleUpvote, handleDeleteQuestion }: QuestionProps) => {
     return (
         <div className="flex p-2 gap-2">
-            <div className="rounded-lg border bg-orange-50 flex-1 justify-center items-center flex p-3">
+            <div className="rounded-lg border white flex-1 justify-center items-center flex p-3">
                 <span className="text-lg font-bold text-slate-700">{order}</span>
                 <span className="flex-1 mx-4 text-gray-700">{question.rephrase}</span>
                 <div className="flex flex-col justify-center gap-2 items-center">

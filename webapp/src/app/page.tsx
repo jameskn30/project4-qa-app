@@ -37,7 +37,7 @@ const LandingPageNavbar = ({ isLoggedIn, isLoadingAuth, onSignOut }: { isLoggedI
                             <Button variant={'destructive'} onClick={scrollToWaitlist}>Login/Signup</Button>
                         ) : (
                             <>
-                                <Button variant={'ghost'} asChild className="px-2 py-1 hover:bg-slate-300 text-slate-800 rounded-xl bg-white border-none">
+                                <Button variant='outline' asChild >
                                     <Link href="/dashboard">Dashboard</Link>
 
                                 </Button>
@@ -83,7 +83,6 @@ const WelcomePage = () => {
         const getUserData = async () => {
             // const { data: { session } } = await supabase.auth.getSession();
             const user = await _getUserData()
-            console.log(user)
             setIsLoggedIn(!!user);
             setAuthLoading(false);
         };

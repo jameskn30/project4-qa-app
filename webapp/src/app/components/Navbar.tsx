@@ -133,7 +133,7 @@ const Navbar = ({
         <div className="md:hidden " id="mobile-menu">
           <Popover>
             <PopoverTrigger asChild>
-              <Button className="p-2">
+              <Button className="p-2" variant={'outline'}>
                 <FaBars />
               </Button>
             </PopoverTrigger>
@@ -160,10 +160,7 @@ const Navbar = ({
                   {userData === null && (
                     <>
                       <Button className="w-full" variant="outline" onClick={login ? login : () => { console.log('login') }}>
-                        Login
-                      </Button>
-                      <Button className="w-full" variant="outline" onClick={signOut ? signOut : () => { console.log('sign out') }}>
-                        Sign Up
+                        Login or Sign up
                       </Button>
                     </>
                   )}

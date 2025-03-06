@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 // Icons
 import { FaAngleUp } from "react-icons/fa6";
-import { MessagesSquare } from 'lucide-react';
+import { Hand, MessagesSquare, PanelBottomOpen } from 'lucide-react';
 
 // Utils & Types
 import { RoomProvider } from '@/app/room/[roomName]/RoomContext';
@@ -446,10 +446,12 @@ const RoomPage: React.FC = () => {
                       <Button
                         id='question-button'
                         onClick={handleQuestionButtonClick}
-                        className="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-700">
+                        className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                          <Hand/>
                         {questionsLeft} questions left
                       </Button>
-                      <Button className="flex-1 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700">
+                      <Button className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                        <PanelBottomOpen/>
                         {upvotesLeft} upvotes left
                       </Button>
                     </div>
@@ -519,7 +521,7 @@ const RoomPage: React.FC = () => {
               </DialogTitle>
             </DialogHeader>
 
-            <div className="flex-grow overflow-y-auto my-4">
+            <div className="flex-grow overflow-y-auto">
               <ChatWindow
                 messages={messages}
                 participants={participants}
